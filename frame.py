@@ -12,4 +12,7 @@ class Bead(Atom):
 
 class Frame:
     def __init__(self):
-        pass
+        self.atoms = []
+
+    def addAtom(self, atom):
+        self.atoms.append(atom)
