@@ -1,14 +1,25 @@
 import unittest
+import filecmp
 
-from frame import *
+from pycgtool.frame import *
 
 
 class MappingTest(unittest.TestCase):
     def test_mapping_create(self):
-        mappings = mappings_from_file("data/water.map")
-        self.assertEqual(1, len(mappings))
-        self.assertEqual(3, len(mappings["SOL"].atoms))
-        self.assertEqual("OW", len(mappings["SOL"].atoms[0].name))
+        mapping = Mapping("test/data/water.map")
+        self.assertEqual(1, len(mapping))
+        self.assertTrue("SOL" in mapping)
+        self.assertEqual(1, len(mapping["SOL"]))
+        self.assertEqual(3, len(mapping["SOL"][0].atoms))
+        self.assertEqual("OW", mapping["SOL"][0].atoms[0])
+
+    def test_mapping_apply(self):
+        mapping = Mapping("test/data/water.map")
+        frame = Frame("test/data/water.gro")
+        cgframe = mapping.apply(frame)
+        self.assertEqual(len(frame), len(cgframe))
+        cgframe.output_gro("water-cg.gro")
+        self.assertTrue(filecmp.cmp("test/data/water-cg.gro", "water-cg.gro"))
 
 
 class AtomTest(unittest.TestCase):
@@ -52,11 +63,16 @@ class FrameTest(unittest.TestCase):
         self.assertTrue(residue is frame.residues[0])
 
     def test_frame_read_gro(self):
-        frame = Frame(gro="data/water.gro")
-        self.assertEqual(4074, len(frame.residues))
+        frame = Frame("test/data/water.gro")
+        self.assertEqual(221, len(frame.residues))
         self.assertEqual("SOL", frame.residues[0].name)
         self.assertEqual(3, len(frame.residues[0].atoms))
         self.assertEqual("OW", frame.residues[0].atoms[0].name)
+
+    def test_frame_output_gro(self):
+        frame = Frame("test/data/water.gro")
+        frame.output_gro("water-out.gro")
+        self.assertTrue(filecmp.cmp("test/data/water.gro", "water-out.gro"))
 
 
 if __name__ == '__main__':

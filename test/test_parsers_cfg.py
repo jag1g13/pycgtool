@@ -1,0 +1,34 @@
+import unittest
+import pytest
+
+from pycgtool.parsers.cfg import CFG
+
+
+class TestParsersCFG(unittest.TestCase):
+    watline = ["W", "P4", "OW", "HW1", "HW2"]
+
+    def test_cfg_with(self):
+        with CFG("test/data/water.map") as cfg:
+            pass
+
+    def test_cfg_iterate_sections(self):
+        with CFG("test/data/water.map") as cfg:
+            for section in cfg:
+                self.assertEqual("SOL", section.name)
+
+    def test_cfg_iterate_lines(self):
+        with CFG("test/data/water.map") as cfg:
+            for section in cfg:
+                self.assertEqual("SOL", section.name)
+                for line in section:
+                    self.assertEqual(self.watline, line)
+
+    def test_cfg_get_section(self):
+        with CFG("test/data/water.map") as cfg:
+            self.assertTrue("SOL" in cfg)
+            for line in cfg["SOL"]:
+                self.assertEqual(self.watline, line)
+
+
+if __name__ == '__main__':
+    unittest.main()
