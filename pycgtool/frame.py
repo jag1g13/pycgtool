@@ -3,11 +3,11 @@ from .parsers.cfg import CFG
 
 
 class BeadMap:
-    __slots__ = ["name", "type", "atoms"]
+    __slots__ = ["name", "typ", "atoms"]
 
-    def __init__(self, name=None, type=None, atoms=None):
+    def __init__(self, name=None, typ=None, atoms=None):
         self.name = name
-        self.type = type
+        self.typ = typ
         self.atoms = atoms
 
     def __iter__(self):
@@ -24,11 +24,11 @@ class Mapping:
         if filename is not None:
             with CFG(filename) as cfg:
                 for mol in cfg:
-                    if not mol.name in self._mappings:
-                        self._mappings[mol.name] = []
-                    for bead, type, *atoms in mol:
-                        if bead not in self._mappings:
-                            self._mappings[mol.name].append(BeadMap(name=bead, type=type, atoms=atoms))
+                    self._mappings[mol.name] = []
+                    molmap = self._mappings[mol.name]
+                    for name, typ, *atoms in mol:
+                        newbead = BeadMap(name=name, typ=typ, atoms=atoms)
+                        molmap.append(newbead)
 
     def __len__(self):
         return len(self._mappings)
@@ -44,25 +44,68 @@ class Mapping:
         cgframe.name = frame.name
         cgframe.box = frame.box
         cgframe.natoms = 0
-        cgframe.residues = [Residue(name=res.name, num=res.num) for res in frame.residues]
-        for res, aares in zip(cgframe, frame):
-            res.atoms = [Atom(name=atom.name, type=atom.type) for atom in self._mappings[res.name]]
-            for bead, map in zip(res, self._mappings[res.name]):
+        # cgframe.residues = [Residue(name=res.name, num=res.num) for res in frame.residues]
+        cgframe.residues = []
+
+        for aares in frame:
+            try:
+                molmap = self._mappings[aares.name]
+            except KeyError:
+                print("Residue {0} not found in mapping - will be ignored.".format(aares.name))
+                continue
+            res = Residue(name=aares.name, num=aares.num)
+            res.atoms = [Atom(name=atom.name, typ=atom.typ) for atom in molmap]
+
+            # Perform mapping
+            for bead, map in zip(res, molmap):
                 bead.coords = np.zeros(3)
                 for atom in map:
                     bead.coords += aares[atom].coords
                 bead.coords /= len(map)
                 cgframe.natoms += 1
+
+            cgframe.residues.append(res)
         return cgframe
 
 
-class Atom:
-    __slots__ = ["name", "num", "type", "coords"]
+class Bond:
+    __slots__ = ["atoms", "values"]
 
-    def __init__(self, name=None, num=None, type=None, coords=None):
+    def __init__(self, atoms=None):
+        self.atoms = atoms
+        self.values = []
+
+
+class Measure:
+    def __init__(self, filename):
+        with CFG(filename) as cfg:
+            self._molecules = {}
+            for mol in cfg:
+                self._molecules[mol.name] = []
+                molbnds = self._molecules[mol.name]
+                for atomlist in mol:
+                    molbnds.append(Bond(atoms=atomlist))
+
+    # def apply(self, frame):
+    #     pass
+
+    def __len__(self):
+        return len(self._molecules)
+
+    def __contains__(self, item):
+        return item in self._molecules
+
+    def __getitem__(self, item):
+        return self._molecules[item]
+
+
+class Atom:
+    __slots__ = ["name", "num", "typ", "coords"]
+
+    def __init__(self, name=None, num=None, typ=None, coords=None):
         self.name = name
         self.num = num
-        self.type = type
+        self.typ = typ
         self.coords = coords
 
 

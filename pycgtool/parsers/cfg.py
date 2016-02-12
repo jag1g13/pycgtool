@@ -15,6 +15,10 @@ class Section:
         self._lines.append(line)
 
 
+class DuplicateSectionError(Exception):
+    pass
+
+
 class CFG:
     __slots__ = ["filename", "_sections", "_section_names", "_iter_section"]
 
@@ -33,6 +37,10 @@ class CFG:
                     continue
                 if line[0] == "[":
                     curr_section = line.strip("[ ]")
+                    if curr_section in self._sections:
+                        raise DuplicateSectionError("Section {0} appears twice in file {1}".format(
+                            curr_section, self.filename
+                        ))
                     self._section_names.append(curr_section)
                     self._sections[curr_section] = Section(name=curr_section)
                     continue

@@ -22,20 +22,36 @@ class MappingTest(unittest.TestCase):
         self.assertTrue(filecmp.cmp("test/data/water-cg.gro", "water-cg.gro"))
 
 
+class MeasureTest(unittest.TestCase):
+    def test_measure_create(self):
+        measure = Measure("test/data/sugar.bnds")
+        self.assertEqual(2, len(measure))
+        self.assertTrue("SOL" in measure)
+        self.assertTrue("GLCA" in measure)
+        self.assertEqual(0, len(measure["SOL"]))
+        self.assertEqual(18, len(measure["GLCA"]))
+
+    def test_measure_apply(self):
+        measure = Measure("test/data/sugar.bnds")
+        frame = Frame("test/data/sugar-cg.gro")
+        measure.apply(frame)
+        self.assertEqual(1, len(measure["GLCA"][0].values))
+
+
 class AtomTest(unittest.TestCase):
     def test_atom_create(self):
-        atom = Atom(name="Name", num=0, type="Type")
+        atom = Atom(name="Name", num=0, typ="Type")
         self.assertEqual("Name", atom.name)
         self.assertEqual(0, atom.num)
-        self.assertEqual("Type", atom.type)
+        self.assertEqual("Type", atom.typ)
 
 
 class BeadTest(unittest.TestCase):
     def test_bead_create(self):
-        bead = Bead(name="Name", num=0, type="Type")
+        bead = Bead(name="Name", num=0, typ="Type")
         self.assertEqual("Name", bead.name)
         self.assertEqual(0, bead.num)
-        self.assertEqual("Type", bead.type)
+        self.assertEqual("Type", bead.typ)
 
 
 class ResidueTest(unittest.TestCase):
@@ -44,7 +60,7 @@ class ResidueTest(unittest.TestCase):
         self.assertEqual("Resname", residue.name)
 
     def test_residue_add_atoms(self):
-        atom = Atom(name="Name", num=0, type="Type")
+        atom = Atom(name="Name", num=0, typ="Type")
         residue = Residue()
         residue.add_atom(atom)
         self.assertEqual(atom, residue.atoms[0])
