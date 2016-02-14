@@ -27,15 +27,18 @@ class MeasureTest(unittest.TestCase):
         measure = Measure("test/data/sugar.bnds")
         self.assertEqual(2, len(measure))
         self.assertTrue("SOL" in measure)
-        self.assertTrue("GLCA" in measure)
+        self.assertTrue("ALLA" in measure)
         self.assertEqual(0, len(measure["SOL"]))
-        self.assertEqual(18, len(measure["GLCA"]))
+        self.assertEqual(18, len(measure["ALLA"]))
 
     def test_measure_apply(self):
         measure = Measure("test/data/sugar.bnds")
         frame = Frame("test/data/sugar-cg.gro")
         measure.apply(frame)
-        self.assertEqual(1, len(measure["GLCA"][0].values))
+        self.assertEqual(1, len(measure["ALLA"][0].values))
+        self.assertAlmostEqual(0.2225376, measure["ALLA"][0].values[0])
+        self.assertEqual(1, len(measure["ALLA"][6].values))
+        self.assertAlmostEqual(0.2225376, measure["ALLA"][6].values[0])
 
 
 class AtomTest(unittest.TestCase):

@@ -76,6 +76,14 @@ class Bond:
         self.values = []
 
 
+def angle(a, b, c=None):
+    if c is None:
+        c = np.cross(a, b)
+    det = np.linalg.det([a, b, c])
+    dot = np.dot(a, b)
+    return np.arctan2(det, dot) - np.pi/2
+
+
 class Measure:
     def __init__(self, filename):
         with CFG(filename) as cfg:
@@ -86,8 +94,31 @@ class Measure:
                 for atomlist in mol:
                     molbnds.append(Bond(atoms=atomlist))
 
-    # def apply(self, frame):
-    #     pass
+    def apply(self, frame):
+        def calc_length(res, atoms):
+            vec = res[atoms[1]].coords - res[atoms[0]].coords
+            return np.sqrt(np.sum(vec*vec))
+
+        def calc_angle(res, atoms):
+            for atom in atoms:
+                print(res[atom].coords)
+            veca = res[atoms[1]].coords - res[atoms[0]].coords
+            vecb = res[atoms[2]].coords - res[atoms[1]].coords
+            ret = np.degrees(angle(veca, vecb))
+            # print(ret)
+            return ret
+
+        def calc_dihedral(res, atoms):
+            raise NotImplementedError
+
+        for res in frame:
+            mol_meas = self._molecules[res.name]
+            for bond in mol_meas:
+                calc = {2: calc_length,
+                        3: calc_angle,
+                        4: calc_dihedral}
+                val = calc[len(bond.atoms)](res, bond.atoms)
+                bond.values.append(val)
 
     def __len__(self):
         return len(self._molecules)
@@ -111,7 +142,7 @@ class Atom:
 
 class Bead(Atom):
     def __init__(self, *args, **kwargs):
-        super(Bead, self).__init__(**kwargs)
+        super(Bead, self).__init__(*args, **kwargs)
 
 
 class Residue:
