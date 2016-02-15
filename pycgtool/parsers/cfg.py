@@ -16,7 +16,8 @@ class Section:
 
 
 class DuplicateSectionError(Exception):
-    pass
+    def __repr__(self):
+        return "Section {0} appears twice in file {1}.".format(*self.args)
 
 
 class CFG:
@@ -38,9 +39,7 @@ class CFG:
                 if line[0] == "[":
                     curr_section = line.strip("[ ]")
                     if curr_section in self._sections:
-                        raise DuplicateSectionError("Section {0} appears twice in file {1}".format(
-                            curr_section, self.filename
-                        ))
+                        raise DuplicateSectionError(curr_section, self.filename)
                     self._section_names.append(curr_section)
                     self._sections[curr_section] = Section(name=curr_section)
                     continue

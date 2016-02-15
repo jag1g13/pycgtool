@@ -1,4 +1,7 @@
 import numpy as np
+
+from simpletraj import trajectory
+
 from .parsers.cfg import CFG
 
 
@@ -39,15 +42,19 @@ class Mapping:
     def __getitem__(self, item):
         return self._mappings[item]
 
-    def apply(self, frame):
+    def __iter__(self):
+        return iter(self._mappings)
+
+    def apply(self, frame, exclude=set()):
         cgframe = Frame()
         cgframe.name = frame.name
         cgframe.box = frame.box
         cgframe.natoms = 0
-        # cgframe.residues = [Residue(name=res.name, num=res.num) for res in frame.residues]
         cgframe.residues = []
 
         for aares in frame:
+            if aares.name in exclude:
+                continue
             try:
                 molmap = self._mappings[aares.name]
             except KeyError:
@@ -57,7 +64,8 @@ class Mapping:
             res.atoms = [Atom(name=atom.name, typ=atom.typ) for atom in molmap]
 
             # Perform mapping
-            for bead, map in zip(res, molmap):
+            for i, (bead, map) in enumerate(zip(res, molmap)):
+                res.name_to_num[bead.name] = i
                 bead.coords = np.zeros(3)
                 for atom in map:
                     bead.coords += aares[atom].coords
@@ -100,8 +108,8 @@ class Measure:
             return np.sqrt(np.sum(vec*vec))
 
         def calc_angle(res, atoms):
-            for atom in atoms:
-                print(res[atom].coords)
+            # for atom in atoms:
+                # print(res[atom].coords)
             veca = res[atoms[1]].coords - res[atoms[0]].coords
             vecb = res[atoms[2]].coords - res[atoms[1]].coords
             ret = np.degrees(angle(veca, vecb))
@@ -114,11 +122,14 @@ class Measure:
         for res in frame:
             mol_meas = self._molecules[res.name]
             for bond in mol_meas:
-                calc = {2: calc_length,
-                        3: calc_angle,
-                        4: calc_dihedral}
-                val = calc[len(bond.atoms)](res, bond.atoms)
-                bond.values.append(val)
+                try:
+                    calc = {2: calc_length,
+                            3: calc_angle,
+                            4: calc_dihedral}
+                    val = calc[len(bond.atoms)](res, bond.atoms)
+                    bond.values.append(val)
+                except NotImplementedError:
+                    pass
 
     def __len__(self):
         return len(self._molecules)
@@ -129,6 +140,9 @@ class Measure:
     def __getitem__(self, item):
         return self._molecules[item]
 
+    def __iter__(self):
+        return iter(self._molecules)
+
 
 class Atom:
     __slots__ = ["name", "num", "typ", "coords"]
@@ -138,11 +152,6 @@ class Atom:
         self.num = num
         self.typ = typ
         self.coords = coords
-
-
-class Bead(Atom):
-    def __init__(self, *args, **kwargs):
-        super(Bead, self).__init__(*args, **kwargs)
 
 
 class Residue:
@@ -169,10 +178,13 @@ class Residue:
 
 
 class Frame:
-    def __init__(self, gro=None):
+    def __init__(self, gro=None, xtc=None):
         self.residues = []
+        self.number = -1
         if gro is not None:
             self._parse_gro(gro)
+        if xtc is not None:
+            self.xtc = trajectory.XtcTrajectory(xtc)
 
     def __len__(self):
         return len(self.residues)
@@ -188,6 +200,20 @@ class Frame:
                 atoms.append(repr(atom.coords))
         rep += "\n".join(atoms)
         return rep
+
+    def next_frame(self):
+        try:
+            self.xtc.get_frame(self.number)
+            i = 0
+            x = self.xtc.x / 10.
+            for res in self.residues:
+                for atom in res:
+                    atom.coords = x[i]
+                    i += 1
+            self.number += 1
+            return True
+        except IndexError:
+            return False
 
     def _parse_gro(self, filename):
         with open(filename) as gro:

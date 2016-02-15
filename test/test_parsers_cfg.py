@@ -1,7 +1,7 @@
 import unittest
 import pytest
 
-from pycgtool.parsers.cfg import CFG
+from pycgtool.parsers.cfg import CFG, DuplicateSectionError
 
 
 class TestParsersCFG(unittest.TestCase):
@@ -28,6 +28,10 @@ class TestParsersCFG(unittest.TestCase):
             self.assertTrue("SOL" in cfg)
             for line in cfg["SOL"]:
                 self.assertEqual(self.watline, line)
+
+    def test_cfg_duplicate_error(self):
+        with self.assertRaises(DuplicateSectionError):
+            CFG("test/data/twice.cfg")
 
 
 if __name__ == '__main__':
