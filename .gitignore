@@ -3,3 +3,5 @@
 .cache/
 /*.gro
 /env
+.coverage
+/cover

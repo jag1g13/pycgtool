@@ -3,6 +3,7 @@ import numpy as np
 from simpletraj import trajectory
 
 from .parsers.cfg import CFG
+from .util import stat_moments
 
 
 class BeadMap:
@@ -77,11 +78,27 @@ class Mapping:
 
 
 class Bond:
-    __slots__ = ["atoms", "values"]
+    __slots__ = ["atoms", "values", "eqm", "fconst"]
 
     def __init__(self, atoms=None):
         self.atoms = atoms
         self.values = []
+        self.eqm = None
+        self.fconst = None
+
+    def boltzmann_invert(self, temp=310):
+        # TODO needs tests
+        mean, var = stat_moments(self.values)
+        sdev = np.sqrt(var)
+
+        rt = 8.314 * temp / 1000.
+        rad2 = np.pi * np.pi / (180. * 180.)
+        conv = {2: lambda: rt / var,
+                3: lambda: rt / (np.sin(np.radians(mean))**2 * var * rad2),
+                4: lambda: rt / (var * rad2)}
+
+        self.eqm = mean
+        self.fconst = conv[len(self.atoms)]()
 
 
 def angle(a, b, c=None):
@@ -130,6 +147,11 @@ class Measure:
                     bond.values.append(val)
                 except NotImplementedError:
                     pass
+
+    def boltzmann_invert(self):
+        for mol in self._molecules:
+            for bond in self._molecules[mol.name]:
+                bond.boltzmann_invert()
 
     def __len__(self):
         return len(self._molecules)
@@ -205,7 +227,9 @@ class Frame:
         try:
             self.xtc.get_frame(self.number)
             i = 0
-            x = self.xtc.x / 10.
+            # Do this first outside the loop - numpy is fast
+            self.xtc.x /= 10.
+            x = self.xtc.x
             for res in self.residues:
                 for atom in res:
                     atom.coords = x[i]

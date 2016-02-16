@@ -48,6 +48,9 @@ class MeasureTest(unittest.TestCase):
         self.assertEqual(1, len(measure["ALLA"][12].values))
         self.assertAlmostEqual(0.2225376, measure["ALLA"][12].values[0])
 
+    def test_measure_boltzmann_invert(self):
+        pass
+
 
 class AtomTest(unittest.TestCase):
     def test_atom_create(self):
