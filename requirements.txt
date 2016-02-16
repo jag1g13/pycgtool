@@ -1,0 +1,4 @@
+numpy==1.10.4
+py==1.4.31
+pytest==2.8.7
+simpletraj==0.3
