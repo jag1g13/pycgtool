@@ -13,10 +13,9 @@ def main(args):
 
     if args.map is not None:
         mapping = Mapping(args.map)
-        cgframe = mapping.apply(frame, exclude={"SOL"})
 
     # Main loop - perform mapping and measurement on every frame in XTC
-    while frame.next_frame():
+    while True:
         if args.map is None:
             cgframe = frame
         else:
@@ -25,22 +24,24 @@ def main(args):
         if args.bnd is not None:
             bonds.apply(cgframe)
 
+        if not frame.next_frame():
+            break
+
     if args.bnd is not None:
+        bonds.boltzmann_invert()
         for mol in bonds:
             print("Bonds in {0}:".format(mol))
             for bond in bonds[mol]:
-                # print(len(bond.values))
-                try:
-                    print(sum(bond.values) / len(bond.values))
-                except ZeroDivisionError:
-                    print("Bond has no values")
+                print(bond.eqm, bond.fconst)
+
+        bonds.write_itp("out.itp", mapping=mapping)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Perform coarse-grain mapping of atomistic trajectory")
     required = parser.add_argument_group("Required arguments")
     required.add_argument('-g', '--gro', type=str, required=True, help="GROMACS GRO file")
-    required.add_argument('-x', '--xtc', type=str, required=True, help="GROMACS XTC file")
+    required.add_argument('-x', '--xtc', type=str, help="GROMACS XTC file")
     required.add_argument('-m', '--map', type=str, help="Mapping file")
     required.add_argument('-b', '--bnd', type=str, help="Bonds file")
 

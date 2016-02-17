@@ -1,24 +1,32 @@
 import numpy as np
+import functools
 
 from simpletraj import trajectory
 
 from .parsers.cfg import CFG
 from .util import stat_moments
 
+np.seterr(all="raise")
+
 
 class BeadMap:
-    __slots__ = ["name", "typ", "atoms"]
+    __slots__ = ["name", "typ", "type", "atoms", "charge"]
 
-    def __init__(self, name=None, typ=None, atoms=None):
+    def __init__(self, name=None, type=None, atoms=None, charge=0):
         self.name = name
-        self.typ = typ
+        self.type = type
         self.atoms = atoms
+        self.charge = charge
 
     def __iter__(self):
         return iter(self.atoms)
 
     def __len__(self):
         return len(self.atoms)
+
+
+class EmptyBeadError(Exception):
+    pass
 
 
 class Mapping:
@@ -31,7 +39,7 @@ class Mapping:
                     self._mappings[mol.name] = []
                     molmap = self._mappings[mol.name]
                     for name, typ, *atoms in mol:
-                        newbead = BeadMap(name=name, typ=typ, atoms=atoms)
+                        newbead = BeadMap(name=name, type=typ, atoms=atoms)
                         molmap.append(newbead)
 
     def __len__(self):
@@ -62,15 +70,27 @@ class Mapping:
                 print("Residue {0} not found in mapping - will be ignored.".format(aares.name))
                 continue
             res = Residue(name=aares.name, num=aares.num)
-            res.atoms = [Atom(name=atom.name, typ=atom.typ) for atom in molmap]
+            res.atoms = [Atom(name=atom.name, type=atom.type) for atom in molmap]
 
             # Perform mapping
-            for i, (bead, map) in enumerate(zip(res, molmap)):
+            for i, (bead, bmap) in enumerate(zip(res, molmap)):
                 res.name_to_num[bead.name] = i
                 bead.coords = np.zeros(3)
-                for atom in map:
-                    bead.coords += aares[atom].coords
-                bead.coords /= len(map)
+                n = 0
+                for atom in bmap:
+                    try:
+                        bead.coords += aares[atom].coords
+                        n += 1
+                    except KeyError:
+                        print(atom)
+                        pass
+                # bead.coords = functools.reduce(lambda a,b: a + aares[b].coords, bmap, 0)
+                try:
+                    bead.coords /= n
+                except FloatingPointError:
+                    raise EmptyBeadError("Bead {0} in molecule {1} contains no atoms.".format(
+                        bead.name, aares.name
+                    ))
                 cgframe.natoms += 1
 
             cgframe.residues.append(res)
@@ -78,18 +98,16 @@ class Mapping:
 
 
 class Bond:
-    __slots__ = ["atoms", "values", "eqm", "fconst"]
+    __slots__ = ["atoms", "atom_numbers", "values", "eqm", "fconst"]
 
-    def __init__(self, atoms=None):
+    def __init__(self, atoms=None, atom_numbers=None):
         self.atoms = atoms
+        self.atom_numbers = atom_numbers
         self.values = []
-        self.eqm = None
-        self.fconst = None
 
     def boltzmann_invert(self, temp=310):
         # TODO needs tests
         mean, var = stat_moments(self.values)
-        sdev = np.sqrt(var)
 
         rt = 8.314 * temp / 1000.
         rad2 = np.pi * np.pi / (180. * 180.)
@@ -98,26 +116,98 @@ class Bond:
                 4: lambda: rt / (var * rad2)}
 
         self.eqm = mean
-        self.fconst = conv[len(self.atoms)]()
+        try:
+            self.fconst = conv[len(self.atoms)]()
+        except FloatingPointError:
+            self.fconst = 0
+
+    def __repr__(self):
+        try:
+            return "<Bond containing atoms {0} with r_0 {1:.3f} and force constant {2:.3e}>".format(
+                ", ".join(self.atoms), self.eqm, self.fconst
+            )
+        except AttributeError:
+            return "<Bond containing atoms {0}>".format(", ".join(self.atoms))
+
 
 
 def angle(a, b, c=None):
     if c is None:
         c = np.cross(a, b)
-    det = np.linalg.det([a, b, c])
     dot = np.dot(a, b)
-    return np.arctan2(det, dot) - np.pi/2
+    abscross = np.sqrt(np.dot(c, c))
+    return np.arctan2(abscross, dot)
 
 
 class Measure:
-    def __init__(self, filename):
-        with CFG(filename) as cfg:
-            self._molecules = {}
-            for mol in cfg:
-                self._molecules[mol.name] = []
-                molbnds = self._molecules[mol.name]
-                for atomlist in mol:
-                    molbnds.append(Bond(atoms=atomlist))
+    def __init__(self, filename=None):
+        self._molecules = {}
+
+        if filename is not None:
+            with CFG(filename) as cfg:
+                for mol in cfg:
+                    self._molecules[mol.name] = []
+                    molbnds = self._molecules[mol.name]
+                    for atomlist in mol:
+                        molbnds.append(Bond(atoms=atomlist))
+
+    def _populate_atom_numbers(self, mapping):
+        for mol in self._molecules:
+            molmap = mapping[mol]
+            for bond in self._molecules[mol]:
+                ind = lambda name: [bead.name for bead in molmap].index(name)
+                bond.atom_numbers = [ind(atom) for atom in bond.atoms]
+
+    def write_itp(self, filename, mapping):
+        self._populate_atom_numbers(mapping)
+
+        with open(filename, "w") as itp:
+            header = ("; \n"
+                      "; Topology prepared automatically using PyCGTOOL \n"
+                      "; James Graham <J.A.Graham@soton.ac.uk> 2016 \n"
+                      "; University of Southampton \n"
+                      "; https://github.com/jag1g13/pycgtool \n"
+                      ";")
+            print(header, file=itp)
+
+            # Print molecule
+            for mol in self._molecules:
+                print("\n[ moleculetype ]", file=itp)
+                print("{0:4s} {1:4d}".format(mol, 1), file=itp)
+
+                print("\n[ atoms ]", file=itp)
+                for i, bead in enumerate(mapping[mol]):
+                    print("{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f}".format(
+                        i+1, bead.type, 1, mol, bead.name, 1, bead.charge
+                    ), file=itp)
+
+                bonds = [bond for bond in self._molecules[mol] if len(bond.atoms) == 2]
+                if len(bonds):
+                    print("\n[ bonds ]", file=itp)
+                for bond in bonds:
+                    print("{0:4d} {1:4d} {2:4d} {3:12.5f} {4:12.5f}".format(
+                        bond.atom_numbers[0]+1, bond.atom_numbers[1]+1,
+                        1, bond.eqm, bond.fconst
+                    ), file=itp)
+
+                bonds = [bond for bond in self._molecules[mol] if len(bond.atoms) == 3]
+                if len(bonds):
+                    print("\n[ angles ]", file=itp)
+                for bond in bonds:
+                    print("{0:4d} {1:4d} {2:4d} {3:4d} {4:12.5f} {5:12.5f}".format(
+                        bond.atom_numbers[0]+1, bond.atom_numbers[1]+1, bond.atom_numbers[2]+1,
+                        1, bond.eqm, bond.fconst
+                    ), file=itp)
+
+                bonds = [bond for bond in self._molecules[mol] if len(bond.atoms) == 4]
+                if len(bonds):
+                    print("\n[ dihedrals ]", file=itp)
+                for bond in bonds:
+                    print("{0:4d} {1:4d} {2:4d} {3:4d} {4:4d} {5:12.5f} {6:12.5f} {7:4d}".format(
+                        bond.atom_numbers[0]+1, bond.atom_numbers[1]+1,
+                        bond.atom_numbers[2]+1, bond.atom_numbers[3]+1,
+                        1, bond.eqm, bond.fconst, 1
+                    ), file=itp)
 
     def apply(self, frame):
         def calc_length(res, atoms):
@@ -129,12 +219,22 @@ class Measure:
                 # print(res[atom].coords)
             veca = res[atoms[1]].coords - res[atoms[0]].coords
             vecb = res[atoms[2]].coords - res[atoms[1]].coords
-            ret = np.degrees(angle(veca, vecb))
+            ret = np.degrees(np.pi - angle(veca, vecb))
             # print(ret)
             return ret
 
         def calc_dihedral(res, atoms):
-            raise NotImplementedError
+            vec1 = res[atoms[1]].coords - res[atoms[0]].coords
+            vec2 = res[atoms[2]].coords - res[atoms[1]].coords
+            vec3 = res[atoms[3]].coords - res[atoms[2]].coords
+
+            c1 = np.cross(vec1, vec2)
+            c2 = np.cross(vec2, vec3)
+            c3 = np.cross(c1, c2)
+
+            ang = np.degrees(angle(c1, c2))
+            direction = np.dot(vec2, c3)
+            return ang if direction > 0 else -ang
 
         for res in frame:
             mol_meas = self._molecules[res.name]
@@ -150,7 +250,7 @@ class Measure:
 
     def boltzmann_invert(self):
         for mol in self._molecules:
-            for bond in self._molecules[mol.name]:
+            for bond in self._molecules[mol]:
                 bond.boltzmann_invert()
 
     def __len__(self):
@@ -167,12 +267,13 @@ class Measure:
 
 
 class Atom:
-    __slots__ = ["name", "num", "typ", "coords"]
+    __slots__ = ["name", "num", "type", "mass", "coords"]
 
-    def __init__(self, name=None, num=None, typ=None, coords=None):
+    def __init__(self, name=None, num=None, type=None, mass=None, coords=None):
         self.name = name
         self.num = num
-        self.typ = typ
+        self.type = type
+        self.mass = mass
         self.coords = coords
 
 
@@ -236,7 +337,7 @@ class Frame:
                     i += 1
             self.number += 1
             return True
-        except IndexError:
+        except (IndexError, AttributeError):
             return False
 
     def _parse_gro(self, filename):
@@ -245,24 +346,29 @@ class Frame:
             self.natoms = int(gro.readline())
             i = 0
             resnum_last = -1
+
             for line in gro:
                 resnum = int(line[0:5])
                 resname = line[5:10].strip()
                 atomname = line[10:15].strip()
                 coords = np.array([float(line[20:28]), float(line[28:36]), float(line[36:44])])
+
                 if resnum != resnum_last:
                     self.residues.append(Residue(name=resname,
                                                  num=resnum))
                     resnum_last = resnum
                     atnum = 0
+
                 atom = Atom(name=atomname, num=atnum, coords=coords)
                 self.residues[-1].add_atom(atom)
                 if i >= self.natoms - 1:
                     break
                 i += 1
                 atnum += 1
+
             line = gro.readline()
             self.box = np.array([float(x) for x in line.split()])
+            self.number += 1
 
     def output_gro(self, filename):
         with open(filename, "w") as gro:
