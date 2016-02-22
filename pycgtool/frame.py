@@ -82,7 +82,7 @@ class Mapping:
                         bead.coords += aares[atom].coords
                         n += 1
                     except KeyError:
-                        print(atom)
+                        # Atom does not exist in residue
                         pass
                 # bead.coords = functools.reduce(lambda a,b: a + aares[b].coords, bmap, 0)
                 try:
@@ -337,6 +337,8 @@ class Frame:
                     i += 1
             self.number += 1
             return True
+        # IndexError - run out of xtc frames
+        # AttributeError - we didn't provide an xtc
         except (IndexError, AttributeError):
             return False
 

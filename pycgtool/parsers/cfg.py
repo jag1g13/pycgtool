@@ -67,6 +67,10 @@ class CFG:
         sec = self._section_names[self._iter_section]
         return self._sections[sec]
 
+    # For Python 2
+    def next(self):
+        return self.__next__()
+
     def __contains__(self, item):
         return item in self._section_names
 

@@ -27,6 +27,9 @@ def main(args):
         if not frame.next_frame():
             break
 
+    if args.map is not None:
+        cgframe.output_gro("out.gro")
+
     if args.bnd is not None:
         bonds.boltzmann_invert()
         for mol in bonds:
