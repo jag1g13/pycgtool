@@ -11,8 +11,6 @@ class ForceFieldTest(unittest.TestCase):
         self.assertTrue(os.path.exists(name))
         self.assertTrue(os.path.isdir(name))
         ff = ForceField(name)
-        with self.assertRaises(FileExistsError):
-            ff = ForceField("README.md")
 
 if __name__ == '__main__':
     unittest.main()
