@@ -2,11 +2,11 @@ import os
 
 try:
     raise FileExistsError
-except FileExistsError:
-    pass
 except NameError:
     class FileExistsError(Exception):
         pass
+except FileExistsError:
+    pass
 
 
 class ForceField:
