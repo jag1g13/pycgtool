@@ -2,14 +2,16 @@
 
 import argparse
 
-from pycgtool.frame import Frame, Mapping, Measure
+from pycgtool.frame import Frame
+from pycgtool.mapping import Mapping
+from pycgtool.bondset import BondSet
 
 
 def main(args):
     frame = Frame(gro=args.gro, xtc=args.xtc)
 
     if args.bnd is not None:
-        bonds = Measure(args.bnd)
+        bonds = BondSet(args.bnd)
 
     if args.map is not None:
         mapping = Mapping(args.map)
