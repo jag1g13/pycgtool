@@ -25,6 +25,12 @@ def stat_moments(vals):
 
 
 def sliding(vals):
+    """
+    Yield three values in a sliding window along an iterable.
+
+    :param vals: Iterable to iterate over
+    :return: Iterable of tuples
+    """
     it = iter(vals)
     prev = None
     current = next(it)
@@ -33,5 +39,3 @@ def sliding(vals):
         prev = current
         current = nxt
     yield (prev, current, None)
-
-

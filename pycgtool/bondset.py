@@ -13,7 +13,6 @@ class Bond:
         self.values = []
 
     def boltzmann_invert(self, temp=310):
-        # TODO needs tests
         mean, var = stat_moments(self.values)
 
         rt = 8.314 * temp / 1000.
@@ -60,9 +59,9 @@ class BondSet:
     def _populate_atom_numbers(self, mapping):
         for mol in self._molecules:
             molmap = mapping[mol]
+            index = [bead.name for bead in molmap]
             for bond in self._molecules[mol]:
-                ind = lambda name: [bead.name for bead in molmap].index(name)
-                bond.atom_numbers = [ind(atom) for atom in bond.atoms]
+                bond.atom_numbers = [index.index(atom) for atom in bond.atoms]
 
     def write_itp(self, filename, mapping):
         self._populate_atom_numbers(mapping)
@@ -173,4 +172,3 @@ class BondSet:
 
     def __iter__(self):
         return iter(self._molecules)
-

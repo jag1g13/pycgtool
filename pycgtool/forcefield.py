@@ -1,5 +1,6 @@
 import os
 
+# Python 3.2 doesn't have FileExistsError
 try:
     raise FileExistsError
 except NameError:
@@ -22,4 +23,3 @@ class ForceField:
 
     def write_rtp(self, mapping, bonds):
         pass
-

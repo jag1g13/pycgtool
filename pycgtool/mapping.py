@@ -90,4 +90,3 @@ class Mapping:
 
             cgframe.residues.append(res)
         return cgframe
-

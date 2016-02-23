@@ -1,5 +1,6 @@
 import os
 
+
 class Section:
     __slots__ = ["name", "_lines"]
 
@@ -33,18 +34,18 @@ class CFG:
         with open(self.filename) as f:
             curr_section = None
             for line in f:
-                line = line.strip("\n")
-                if line == "":
+                line = line.strip(" \t\n")
+                if not line or line.startswith(";"):
                     continue
-                elif line[0] == ";":
-                    continue
+
                 elif line.startswith("#include"):
                     cfg2 = CFG(os.path.join(os.path.dirname(self.filename),
                                             line.split()[1]))
                     self._sections.update(cfg2._sections)
                     self._section_names += cfg2._section_names
                     continue
-                elif line[0] == "[":
+
+                elif line.startswith("["):
                     curr_section = line.strip("[ ]")
                     if curr_section in self._sections:
                         raise DuplicateSectionError(curr_section, self.filename)
@@ -84,4 +85,3 @@ class CFG:
 
     def __getitem__(self, item):
         return self._sections[item]
-
