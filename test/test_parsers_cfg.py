@@ -1,5 +1,4 @@
 import unittest
-import pytest
 
 from pycgtool.parsers.cfg import CFG, DuplicateSectionError
 
@@ -32,6 +31,11 @@ class TestParsersCFG(unittest.TestCase):
     def test_cfg_duplicate_error(self):
         with self.assertRaises(DuplicateSectionError):
             CFG("test/data/twice.cfg")
+
+    def test_include_file(self):
+        with CFG("test/data/martini.map") as cfg:
+            self.assertTrue("DOPC" in cfg)
+            self.assertTrue("GLY" in cfg)
 
 
 if __name__ == '__main__':
