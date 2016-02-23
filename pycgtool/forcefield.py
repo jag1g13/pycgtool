@@ -1,5 +1,13 @@
 import os
 
+try:
+    raise FileExistsError
+except FileExistsError:
+    pass
+except NameError:
+    class FileExistsError(Exception):
+        pass
+
 
 class ForceField:
     def __init__(self, name):
