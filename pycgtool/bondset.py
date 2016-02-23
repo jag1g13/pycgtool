@@ -1,6 +1,6 @@
 import numpy as np
 
-from .util import stat_moments
+from .util import stat_moments, sliding
 from .parsers.cfg import CFG
 
 
@@ -116,23 +116,20 @@ class BondSet:
                     ), file=itp)
 
     def apply(self, frame):
-        def calc_length(res, atoms):
-            vec = res[atoms[1]].coords - res[atoms[0]].coords
+        def calc_length(atoms):
+            vec = atoms[1].coords - atoms[0].coords
             return np.sqrt(np.sum(vec*vec))
 
-        def calc_angle(res, atoms):
-            # for atom in atoms:
-            # print(res[atom].coords)
-            veca = res[atoms[1]].coords - res[atoms[0]].coords
-            vecb = res[atoms[2]].coords - res[atoms[1]].coords
+        def calc_angle(atoms):
+            veca = atoms[1].coords - atoms[0].coords
+            vecb = atoms[2].coords - atoms[1].coords
             ret = np.degrees(np.pi - angle(veca, vecb))
-            # print(ret)
             return ret
 
-        def calc_dihedral(res, atoms):
-            vec1 = res[atoms[1]].coords - res[atoms[0]].coords
-            vec2 = res[atoms[2]].coords - res[atoms[1]].coords
-            vec3 = res[atoms[3]].coords - res[atoms[2]].coords
+        def calc_dihedral(atoms):
+            vec1 = atoms[1].coords - atoms[0].coords
+            vec2 = atoms[2].coords - atoms[1].coords
+            vec3 = atoms[3].coords - atoms[2].coords
 
             c1 = np.cross(vec1, vec2)
             c2 = np.cross(vec2, vec3)
@@ -142,16 +139,22 @@ class BondSet:
             direction = np.dot(vec2, c3)
             return ang if direction > 0 else -ang
 
-        for res in frame:
+        for prev_res, res, next_res in sliding(frame):
             mol_meas = self._molecules[res.name]
             for bond in mol_meas:
                 try:
+                    # TODO tidy this
                     calc = {2: calc_length,
                             3: calc_angle,
                             4: calc_dihedral}
-                    val = calc[len(bond.atoms)](res, bond.atoms)
+                    adj_res = {"-": prev_res,
+                               "+": next_res}
+                    atoms = [adj_res.get(name[0], res)[name.lstrip("-+")] for name in bond.atoms]
+                    val = calc[len(atoms)](atoms)
                     bond.values.append(val)
-                except NotImplementedError:
+                except (NotImplementedError, TypeError):
+                    # NotImplementedError is raised if form is not implemented
+                    # TypeError is raised when residues on end of chain calc bond to next
                     pass
 
     def boltzmann_invert(self):

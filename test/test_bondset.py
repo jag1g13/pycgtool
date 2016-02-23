@@ -60,3 +60,15 @@ class BondSetTest(unittest.TestCase):
         for i, bond in enumerate(measure["ALLA"]):
             self.assertAlmostEqual(ref[i][0], bond.eqm, delta=abs(ref[i][0] / 1000000))
             self.assertAlmostEqual(ref[i][1], bond.fconst, delta=abs(ref[i][1] / 1000000))
+
+    def test_bondset_polymer(self):
+        bondset = BondSet("test/data/polyethene.bnd")
+        frame = Frame("test/data/polyethene.gro")
+        bondset.apply(frame)
+        self.assertEqual(5, len(bondset["ETH"][0].values))
+        self.assertEqual(4, len(bondset["ETH"][1].values))
+        self.assertEqual(4, len(bondset["ETH"][2].values))
+        self.assertEqual(4, len(bondset["ETH"][3].values))
+        bondset.boltzmann_invert()
+        self.assertAlmostEqual(0.107, bondset["ETH"][0].eqm, places=3)
+        self.assertAlmostEqual(0.107, bondset["ETH"][1].eqm, places=3)

@@ -22,3 +22,16 @@ def stat_moments(vals):
         return res
     except FloatingPointError:
         return np.zeros(2)
+
+
+def sliding(vals):
+    it = iter(vals)
+    prev = None
+    current = next(it)
+    for nxt in it:
+        yield (prev, current, nxt)
+        prev = current
+        current = nxt
+    yield (prev, current, None)
+
+

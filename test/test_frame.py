@@ -6,7 +6,6 @@ import numpy as np
 from pycgtool.frame import Atom, Residue, Frame
 
 
-
 class AtomTest(unittest.TestCase):
     def test_atom_create(self):
         atom = Atom(name="Name", num=0, type="Type")
