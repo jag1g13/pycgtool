@@ -5,13 +5,14 @@ from .parsers.cfg import CFG
 
 
 class BeadMap:
-    __slots__ = ["name", "typ", "type", "atoms", "charge"]
+    __slots__ = ["name", "typ", "type", "atoms", "charge", "mass"]
 
-    def __init__(self, name=None, type=None, atoms=None, charge=0):
+    def __init__(self, name=None, type=None, atoms=None, charge=0, mass=0):
         self.name = name
         self.type = type
         self.atoms = atoms
         self.charge = charge
+        self.mass = mass
 
     def __iter__(self):
         return iter(self.atoms)

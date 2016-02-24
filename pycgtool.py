@@ -5,6 +5,7 @@ import argparse
 from pycgtool.frame import Frame
 from pycgtool.mapping import Mapping
 from pycgtool.bondset import BondSet
+from pycgtool.forcefield import ForceField
 
 
 def main(args):
@@ -40,6 +41,9 @@ def main(args):
                 print(bond.eqm, bond.fconst)
 
         bonds.write_itp("out.itp", mapping=mapping)
+        ff = ForceField("fftest.ff")
+        ff.write_rtp("test.rtp", mapping, bonds)
+        ff.write_atp(mapping)
 
 
 if __name__ == "__main__":
