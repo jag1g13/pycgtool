@@ -6,6 +6,9 @@ np.seterr(all="raise")
 
 
 class Atom:
+    """
+    Hold data for a single atom
+    """
     __slots__ = ["name", "num", "type", "mass", "coords"]
 
     def __init__(self, name=None, num=None, type=None, mass=None, coords=None):
@@ -17,6 +20,9 @@ class Atom:
 
 
 class Residue:
+    """
+    Hold data for a residue - list of atoms
+    """
     __slots__ = ["name", "num", "atoms", "name_to_num"]
 
     def __init__(self, name=None, num=None):
@@ -35,12 +41,29 @@ class Residue:
             return self.atoms[self.name_to_num[item]]
 
     def add_atom(self, atom):
+        """
+        Add an Atom to this Residue and store location in index
+
+        :param atom: Atom to add to Residue
+        :return: None
+        """
         self.atoms.append(atom)
         self.name_to_num[atom.name] = len(self.atoms) - 1
 
 
 class Frame:
+    """
+    Hold Atom data separated into Residues
+    """
+
     def __init__(self, gro=None, xtc=None):
+        """
+        Return Frame instance having read Residues and Atoms from GRO if provided
+
+        :param gro: GROMACS GRO file to read initial frame and extract residues
+        :param xtc: GROMACS XTC file to read subsequent frames
+        :return: Frame instance
+        """
         self.residues = []
         self.number = -1
         if gro is not None:
@@ -64,6 +87,11 @@ class Frame:
         return rep
 
     def next_frame(self):
+        """
+        Read next frame from XTC
+
+        :return: True if successful else False
+        """
         try:
             self.xtc.get_frame(self.number)
             i = 0
@@ -82,6 +110,12 @@ class Frame:
             return False
 
     def _parse_gro(self, filename):
+        """
+        Parse a GROMACS GRO file and create Residues/Atoms
+        Required before reading coordinates from XTC file
+
+        :param filename: Filename of GROMACS GRO to read
+        """
         with open(filename) as gro:
             self.name = gro.readline().strip()
             self.natoms = int(gro.readline())
@@ -112,6 +146,11 @@ class Frame:
             self.number += 1
 
     def output_gro(self, filename):
+        """
+        Create a GROMACS GRO file from the data in this Frame
+
+        :param filename: Name of GRO file to create
+        """
         with open(filename, "w") as gro:
             print(self.name, file=gro)
             print("{0:5d}".format(self.natoms), file=gro)
@@ -126,4 +165,9 @@ class Frame:
             print("{0:10.5f}{1:10.5f}{2:10.5f}".format(*self.box), file=gro)
 
     def add_residue(self, residue):
+        """
+        Add a Residue to this Frame
+
+        :param residue: Residue to add
+        """
         self.residues.append(residue)
