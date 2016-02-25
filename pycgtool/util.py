@@ -1,3 +1,7 @@
+"""
+This module contains some general purpose utility functions used in PyCGTOOL.
+"""
+
 import numpy as np
 np.seterr(all="raise")
 
@@ -11,7 +15,7 @@ def stat_moments(vals, ignore_nan=True):
     :return: Numpy array of moments - population mean and variance
     """
     if ignore_nan:
-        vals_tmp = [val for val in vals if not np.isnan(val)]
+        vals_tmp = [val for val in vals if np.isfinite(val)]
     else:
         vals_tmp = vals
 

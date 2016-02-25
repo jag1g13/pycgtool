@@ -9,6 +9,13 @@ from pycgtool.forcefield import ForceField
 
 
 def main(args):
+    """
+    Main function of the program PyCGTOOL.
+
+    Performs the complete AA->CG mapping and outputs a GROMACS forcefield directory.
+
+    :param args: Arguments from argparse
+    """
     frame = Frame(gro=args.gro, xtc=args.xtc)
 
     if args.bnd is not None:

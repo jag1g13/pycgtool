@@ -1,3 +1,9 @@
+"""
+Module containing classes to calculate bonded properties from a Frame.
+
+BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a single molecule.
+"""
+
 import numpy as np
 
 from .util import stat_moments, sliding
@@ -7,9 +13,21 @@ np.seterr(all="raise")
 
 
 class Bond:
+    """
+    Class holding the properties of a single bonded term.
+
+    Bond lengths, angles and dihedrals are all equivalent, distinguised by the number of atoms present.
+    """
     __slots__ = ["atoms", "atom_numbers", "values", "eqm", "fconst"]
 
     def __init__(self, atoms=None, atom_numbers=None):
+        """
+        Create a single bond definition.
+
+        :param atoms: List of atom names defining the bond
+        :param atom_numbers: List of atom numbers defining the bond
+        :return: Instance of Bond
+        """
         self.atoms = atoms
         self.atom_numbers = atom_numbers
         self.values = []
@@ -18,6 +36,11 @@ class Bond:
         return len(self.atoms)
 
     def boltzmann_invert(self, temp=310):
+        """
+        Perform Boltzmann Inversion using measured values of this bond to calculate equilibrium value and force constant.
+
+        :param temp: Temperature at which the simulation was performed
+        """
         mean, var = stat_moments(self.values)
 
         rt = 8.314 * temp / 1000.
@@ -42,6 +65,14 @@ class Bond:
 
 
 def angle(a, b, c=None):
+    """
+    Calculate the signed angle between two/three vectors.
+
+    :param a: First vector
+    :param b: Second vector
+    :param c: Optional third orientation vector
+    :return: Signed angle in radians
+    """
     if c is None:
         c = np.cross(a, b)
     dot = np.dot(a, b)
@@ -50,7 +81,18 @@ def angle(a, b, c=None):
 
 
 class BondSet:
+    """
+    Class used to perform bond measurements in a Frame.
+
+    BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a single molecule.
+    """
     def __init__(self, filename=None):
+        """
+        Read in bonds from a file.
+
+        :param filename: File to read
+        :return: Instance of BondSet
+        """
         self._molecules = {}
 
         if filename is not None:
@@ -62,6 +104,13 @@ class BondSet:
                         molbnds.append(Bond(atoms=atomlist))
 
     def _populate_atom_numbers(self, mapping):
+        """
+        Add atom numbers to all bonds.
+
+        Uses previously defined atom names.
+
+        :param mapping: AA->CG mapping used to collect atom/bead numbers
+        """
         for mol in self._molecules:
             molmap = mapping[mol]
             index = [bead.name for bead in molmap]
@@ -69,6 +118,12 @@ class BondSet:
                 bond.atom_numbers = [index.index(atom.lstrip("+-")) for atom in bond.atoms]
 
     def write_itp(self, filename, mapping):
+        """
+        Output a GROMACS .itp file containing atoms/beads and bonded terms.
+
+        :param filename: Name of output file
+        :param mapping: AA->CG Mapping from which to collect bead properties
+        """
         self._populate_atom_numbers(mapping)
 
         with open(filename, "w") as itp:
@@ -120,6 +175,11 @@ class BondSet:
                     ), file=itp)
 
     def apply(self, frame):
+        """
+        Calculate bond lengths/angles for a given Frame and store into Bonds.
+
+        :param frame: Frame from which to calculate values
+        """
         def calc_length(atoms):
             vec = atoms[1].coords - atoms[0].coords
             return np.sqrt(np.sum(vec*vec))
@@ -162,6 +222,9 @@ class BondSet:
                     pass
 
     def boltzmann_invert(self):
+        """
+        Perform Boltzmann Inversion of all bonds to calculate equilibrium value and force constant.
+        """
         for mol in self._molecules:
             for bond in self._molecules[mol]:
                 bond.boltzmann_invert()

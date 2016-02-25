@@ -1,3 +1,10 @@
+"""
+This module contains classes for storing atomic data.
+
+The Frame class may contain multiple Residues which may each contain multiple Atoms.
+Both Frame and Residue are iterable. Residue is indexable with either atom numbers or names.
+"""
+
 import numpy as np
 
 from simpletraj import trajectory

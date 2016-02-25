@@ -1,10 +1,23 @@
+"""
+Module containing classes used to parse custom CFG file format.
+
+Format is based upon GROMACS .itp files but does not support nesting of sections.
+"""
 import os
 
 
 class Section:
+    """
+    Class representing a single section of the config file.
+    """
     __slots__ = ["name", "_lines"]
 
     def __init__(self, name=None):
+        """
+        Create a section and storage for the lines it contains.
+
+        :param name: Name of section
+        """
         self.name = name
         self._lines = []
 
@@ -19,14 +32,28 @@ class Section:
 
 
 class DuplicateSectionError(Exception):
+    """
+    Exception used to indicate that a section has appeared twice in a file.
+    """
     def __repr__(self):
         return "Section {0} appears twice in file {1}.".format(*self.args)
 
 
 class CFG:
+    """
+    Class representing a CFG file.
+
+    Contains a dictionary of Sections.
+    """
     __slots__ = ["filename", "_sections", "_section_names", "_iter_section"]
 
     def __init__(self, filename=None):
+        """
+        Parse a config file and extract Sections.
+
+        :param filename: Name of file to read
+        :return: Instance of CFG
+        """
         self.filename = filename
         self._sections = {}
         self._section_names = []
@@ -75,10 +102,6 @@ class CFG:
             raise StopIteration
         sec = self._section_names[self._iter_section]
         return self._sections[sec]
-
-    # For Python 2
-    def next(self):
-        return self.__next__()
 
     def __contains__(self, item):
         return item in self._section_names

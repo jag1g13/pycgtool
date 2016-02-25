@@ -1,3 +1,7 @@
+"""
+This module contains a single class ForceField used to output a GROMACS .ff forcefield.
+"""
+
 import os
 
 # Python 3.2 doesn't have FileExistsError
@@ -11,7 +15,15 @@ except FileExistsError:
 
 
 class ForceField:
+    """
+    Class used to output a GROMACS .ff forcefield
+    """
     def __init__(self, name):
+        """
+        Open a forcefield directory at name.  If it does not exist it is created.
+
+        :param name: Directory name to open/create
+        """
         try:
             os.makedirs(name)
         except FileExistsError as e:
@@ -33,6 +45,13 @@ class ForceField:
             print("PyCGTOOL produced force field", file=doc)
 
     def write_atp(self, mapping):
+        """
+        Write a GROMACS forcefield .atp file.
+
+        This file lists the atomtypes used in the forcefield.
+
+        :param mapping: AA->CG mapping from which to collect atomtypes
+        """
         with open(os.path.join(self.dirname, "atomtypes.atp"), "w") as atp:
             types = set()
             for mol in mapping:
@@ -42,6 +61,15 @@ class ForceField:
                         types.add(bead.type)
 
     def write_rtp(self, name, mapping, bonds):
+        """
+        Write a GROMACS .rtp file.
+
+        This file defines the residues present in the forcefield and allows pdb2gmx to be used.
+
+        :param name: Name of the .rtp file to create
+        :param mapping: AA->CG mapping from which to collect molecules
+        :param bonds: BondSet from which to collect bonds
+        """
         # TODO print everything to file
         with open(os.path.join(self.dirname, name), "w") as rtp:
             print("[ bondedtypes ]", file=rtp)
@@ -82,4 +110,3 @@ class ForceField:
                         bond.atoms[0], bond.atoms[1], bond.atoms[2], bond.atoms[3],
                         bond.eqm, bond.fconst, 1
                     ), file=rtp)
-
