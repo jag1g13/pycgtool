@@ -38,7 +38,7 @@ def main(args):
         for mol in bonds:
             print("Bonds in {0}:".format(mol))
             for bond in bonds[mol]:
-                print(bond.eqm, bond.fconst)
+                print(len(bond.values), bond.eqm, bond.fconst)
 
         bonds.write_itp("out.itp", mapping=mapping)
         ff = ForceField("fftest.ff")

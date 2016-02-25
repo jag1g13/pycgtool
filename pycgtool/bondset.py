@@ -3,6 +3,8 @@ import numpy as np
 from .util import stat_moments, sliding
 from .parsers.cfg import CFG
 
+np.seterr(all="raise")
+
 
 class Bond:
     __slots__ = ["atoms", "atom_numbers", "values", "eqm", "fconst"]

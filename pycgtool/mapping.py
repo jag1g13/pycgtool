@@ -3,6 +3,8 @@ import numpy as np
 from .frame import Atom, Residue, Frame
 from .parsers.cfg import CFG
 
+np.seterr(all="raise")
+
 
 class BeadMap:
     __slots__ = ["name", "typ", "type", "atoms", "charge", "mass"]
@@ -84,9 +86,10 @@ class Mapping:
                 try:
                     bead.coords /= n
                 except FloatingPointError:
-                    raise EmptyBeadError("Bead {0} in molecule {1} contains no atoms.".format(
-                        bead.name, aares.name
-                    ))
+                    # raise EmptyBeadError("Bead {0} in molecule {1} contains no atoms.".format(
+                    #     bead.name, aares.name
+                    # ))
+                    pass
                 cgframe.natoms += 1
 
             cgframe.residues.append(res)
