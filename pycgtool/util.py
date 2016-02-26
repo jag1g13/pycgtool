@@ -49,3 +49,24 @@ def sliding(vals):
         prev = current
         current = nxt
     yield (prev, current, None)
+
+
+def r_squared(ref, fit):
+    """
+    Calculate residual R squared of fitted data points against reference data points.
+    :param ref: Reference points as list of pairs
+    :param fit: Fitted points as list of pairs
+    :return: R squared
+    """
+    y_mean = sum((y for x, y in ref)) / len(ref)
+    ss_res, ss_reg, ss_tot = 0, 0, 0
+    for (refpx, refpy), (fitpx, fitpy) in zip(ref, fit):
+        ss_reg += (refpy - y_mean)**2
+        ss_res += (refpy - fitpy)**2
+        ss_tot += (fitpy - y_mean)**2
+    print(ss_reg, ss_res, ss_tot)
+    # TODO get correct equation
+    try:
+        return ss_tot / ss_res
+    except ZeroDivisionError:
+        return 1

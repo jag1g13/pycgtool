@@ -79,9 +79,10 @@ class ForceField:
                 print("[ {0} ]".format(mol), file=rtp)
 
                 print(" [ atoms ]", file=rtp)
-                for bead in mapping[mol]:
+                for i, bead in enumerate(mapping[mol]):
+                    #        name  type  charge  c-group
                     print("  {:4s} {:4s} {:3.6f} {:4d}".format(
-                        bead.name, bead.type, bead.charge, 0
+                        bead.name, bead.type, bead.charge, i+1
                     ), file=rtp)
 
                 bond_tmp = [bond for bond in bonds[mol] if len(bond) == 2]

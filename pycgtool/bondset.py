@@ -142,8 +142,9 @@ class BondSet:
 
                 print("\n[ atoms ]", file=itp)
                 for i, bead in enumerate(mapping[mol]):
+                    #      atnum  type  resnum resname atname c-group  charge (mass)
                     print("{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f}".format(
-                        i+1, bead.type, 1, mol, bead.name, 1, bead.charge
+                            i+1, bead.type, 1,  mol, bead.name, i+1, bead.charge
                     ), file=itp)
 
                 bonds = [bond for bond in self._molecules[mol] if len(bond.atoms) == 2]

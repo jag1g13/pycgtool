@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from pycgtool.util import stat_moments, sliding
+from pycgtool.util import stat_moments, sliding, r_squared
 
 
 class UtilTest(unittest.TestCase):
@@ -17,6 +17,17 @@ class UtilTest(unittest.TestCase):
         res = [(None, 0, 1), (0, 1, 2), (1, 2, 3), (2, 3, 4), (3, 4, None)]
         for res, pair in zip(res, sliding(l)):
             self.assertEqual(res, pair)
+
+    # TODO check this is correct
+    @unittest.expectedFailure
+    def test_r_squared(self):
+        ref = [(i, i) for i in range(4)]
+        fit = ref
+        self.assertEqual(1, r_squared(ref, fit))
+        fit = [(1.5, 1.5) for _ in range(4)]
+        self.assertEqual(0, r_squared(ref, fit))
+        fit = [(i, i) for i in range(3, -1, -1)]
+        self.assertEqual(-1, r_squared(ref, fit))
 
 
 if __name__ == '__main__':
