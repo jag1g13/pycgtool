@@ -18,29 +18,29 @@ def main(args):
     """
     frame = Frame(gro=args.gro, xtc=args.xtc)
 
-    if args.bnd is not None:
+    if args.bnd:
         bonds = BondSet(args.bnd)
 
-    if args.map is not None:
+    if args.map:
         mapping = Mapping(args.map)
 
     # Main loop - perform mapping and measurement on every frame in XTC
     while True:
-        if args.map is None:
-            cgframe = frame
-        else:
+        if args.map:
             cgframe = mapping.apply(frame, exclude={"SOL"})
+        else:
+            cgframe = frame
 
-        if args.bnd is not None:
+        if args.bnd:
             bonds.apply(cgframe)
 
         if not frame.next_frame():
             break
 
-    if args.map is not None:
+    if args.map:
         cgframe.output_gro("out.gro")
 
-    if args.bnd is not None:
+    if args.bnd:
         bonds.boltzmann_invert()
         for mol in bonds:
             print("Bonds in {0}:".format(mol))
@@ -48,9 +48,9 @@ def main(args):
                 print(len(bond.values), bond.eqm, bond.fconst)
 
         bonds.write_itp("out.itp", mapping=mapping)
-        ff = ForceField("fftest.ff")
-        ff.write_rtp("test.rtp", mapping, bonds)
-        ff.write_atp(mapping)
+        # ff = ForceField("fftest.ff")
+        # ff.write_rtp("test.rtp", mapping, bonds)
+        # ff.write_atp(mapping)
 
 
 if __name__ == "__main__":

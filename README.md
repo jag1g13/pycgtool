@@ -9,9 +9,9 @@ PyCGTOOL makes it easy to test multiple variations in mapping and bond topology 
 
 This version has several advantages over the original C++ implementation CGTOOL:
 * PyCGTOOL is able to run anywhere the necessary library dependencies are available (all available from pip)
-* Support for polymers such as DNA or proteins making use of GROMACS' pdb2gmx
 * Does not require that residues are present in contiguous sorted blocks
 * Much more automated testing ensures that regressions will be identified quickly
+* Work-in-progress support for polymers such as DNA or proteins making use of GROMACS' pdb2gmx
 
 If you experience problems or wish to see a new feature added please [file an issue](https://github.com/jag1g13/pycgtool/issues).
 
@@ -29,5 +29,5 @@ PyCGTOOL requires:
 * [NumPy](http://www.numpy.org/)
 * [simpletraj](https://github.com/arose/simpletraj)
 
-The bundled test code may be run using your prefered Python testing frontend although nose is recommended.
+The bundled test code may be run using your preferred Python testing frontend although nose is recommended.
 All library dependencies may be installed from pip using the command `pip install -r requirements.txt`
