@@ -8,13 +8,14 @@ from pycgtool.bondset import BondSet
 from pycgtool.forcefield import ForceField
 
 
-def main(args):
+def main(args, config):
     """
     Main function of the program PyCGTOOL.
 
     Performs the complete AA->CG mapping and outputs a GROMACS forcefield directory.
 
     :param args: Arguments from argparse
+    :param config: Configuration dictionary
     """
     frame = Frame(gro=args.gro, xtc=args.xtc)
 
@@ -38,7 +39,7 @@ def main(args):
             break
 
     if args.map:
-        cgframe.output_gro("out.gro")
+        cgframe.output("out.gro", format="gro")
 
     if args.bnd:
         bonds.boltzmann_invert()
@@ -53,6 +54,42 @@ def main(args):
         # ff.write_atp(mapping)
 
 
+def map_only(args):
+    """
+    Perform AA->CG mapping and output coordinate file.
+
+    :param args: Program arguments
+    """
+    frame = Frame(gro=args.gro)
+    mapping = Mapping(args.map)
+    cgframe = mapping.apply(frame, exclude={"SOL"})
+    cgframe.output("out.gro", format="gro")
+
+
+def interactive(default_config={}):
+    """
+    Read in options in interactive terminal mode.  Take defaults as options argument.
+
+    :param default_config: Optional default configuration
+    :return: Dictionary of configuration options
+    """
+    # TODO add interactive terminal mode to select options eg output format instead of CGTOOL config file
+    config = {key: value for key, value in default_config.items()}
+    while True:
+        line = input(">>")
+        if not line:
+            break
+        try:
+            key, value = map(lambda x: x.lower(), line.split())
+            if key in config:
+                config[key] = value
+            else:
+                print("Invalid option")
+        except ValueError:
+            print("Must provide key value pair")
+    return config
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Perform coarse-grain mapping of atomistic trajectory")
     required = parser.add_argument_group("Required arguments")
@@ -61,8 +98,21 @@ if __name__ == "__main__":
     required.add_argument('-m', '--map', type=str, help="Mapping file")
     required.add_argument('-b', '--bnd', type=str, help="Bonds file")
 
+    parser.add_argument('-i', '--interactive', default=False, action='store_true')
+
     args = parser.parse_args()
     print("Using GRO: {0}".format(args.gro))
     print("Using XTC: {0}".format(args.xtc))
 
-    main(args)
+    default_config = {"output": "gro",
+                      "map-only": "no",
+                      "map-center": "geom"}
+    if args.interactive:
+        config = interactive(default_config)
+    else:
+        config = default_config
+
+    if config["map-only"] == "yes":
+        map_only(args)
+    else:
+        main(args, config)

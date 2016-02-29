@@ -19,5 +19,5 @@ class MappingTest(unittest.TestCase):
         frame = Frame("test/data/water.gro")
         cgframe = mapping.apply(frame)
         self.assertEqual(len(frame), len(cgframe))
-        cgframe.output_gro("water-cg.gro")
+        cgframe.output("water-cg.gro", format="gro")
         self.assertTrue(filecmp.cmp("test/data/water-cg.gro", "water-cg.gro"))

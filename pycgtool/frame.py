@@ -152,7 +152,11 @@ class Frame:
             self.box = np.array([float(x) for x in line.split()])
             self.number += 1
 
-    def output_gro(self, filename):
+    def output(self, filename, format="gro"):
+        outputs = {"gro": self._output_gro}
+        outputs[format](filename)
+
+    def _output_gro(self, filename):
         """
         Create a GROMACS GRO file from the data in this Frame
 
