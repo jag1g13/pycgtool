@@ -53,20 +53,30 @@ def sliding(vals):
 
 def r_squared(ref, fit):
     """
-    Calculate residual R squared of fitted data points against reference data points.
-    :param ref: Reference points as list of pairs
-    :param fit: Fitted points as list of pairs
+    Calculate residual R squared of fitted data against reference data by y values.
+    :param ref: Reference y values
+    :param fit: Fitted y values
     :return: R squared
     """
-    y_mean = sum((y for x, y in ref)) / len(ref)
-    ss_res, ss_reg, ss_tot = 0, 0, 0
-    for (refpx, refpy), (fitpx, fitpy) in zip(ref, fit):
-        ss_reg += (refpy - y_mean)**2
-        ss_res += (refpy - fitpy)**2
-        ss_tot += (fitpy - y_mean)**2
-    print(ss_reg, ss_res, ss_tot)
-    # TODO get correct equation
+    y_mean = sum(ref) / len(ref)
+    ss_res, ss_tot = 0, 0
+    for refpy, fitpy in zip(ref, fit):
+        ss_res += (fitpy - refpy)**2
+        ss_tot += (refpy - y_mean)**2
     try:
-        return ss_tot / ss_res
+        return 1 - (ss_res / ss_tot)
     except ZeroDivisionError:
-        return 1
+        return 0
+
+
+def gaussian(x, mean=0, sdev=1, amplitude=1):
+    """
+    Return y values from a Gaussian/normal distribution with provided mean, standard deviation and amplitude at x coordinates in vector x.
+
+    :param x: X values at which to calculate y values
+    :param mean: Mean of Gaussian distribution
+    :param sdev: Standard devaition of Gaussian distribution
+    :param amplitude: Amplitude of Gaussian distribuion
+    :return: Y values of Gaussian distribution at X values in x
+    """
+    pass

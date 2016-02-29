@@ -6,7 +6,7 @@ BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a sin
 
 import numpy as np
 
-from .util import stat_moments, sliding
+from .util import stat_moments, sliding, r_squared, gaussian
 from .parsers.cfg import CFG
 
 np.seterr(all="raise")
@@ -31,6 +31,8 @@ class Bond:
         self.atoms = atoms
         self.atom_numbers = atom_numbers
         self.values = []
+        self.eqm = None
+        self.fconst = None
 
     def __len__(self):
         return len(self.atoms)

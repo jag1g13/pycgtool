@@ -18,16 +18,14 @@ class UtilTest(unittest.TestCase):
         for res, pair in zip(res, sliding(l)):
             self.assertEqual(res, pair)
 
-    # TODO check this is correct
-    @unittest.expectedFailure
     def test_r_squared(self):
-        ref = [(i, i) for i in range(4)]
+        ref = [i for i in range(5)]
         fit = ref
         self.assertEqual(1, r_squared(ref, fit))
-        fit = [(1.5, 1.5) for _ in range(4)]
+        fit = [2 for _ in range(5)]
         self.assertEqual(0, r_squared(ref, fit))
-        fit = [(i, i) for i in range(3, -1, -1)]
-        self.assertEqual(-1, r_squared(ref, fit))
+        fit = [i for i in range(1, 6)]
+        self.assertEqual(0.5, r_squared(ref, fit))
 
 
 if __name__ == '__main__':
