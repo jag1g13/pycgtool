@@ -153,8 +153,26 @@ class Frame:
             self.number += 1
 
     def output(self, filename, format="gro"):
-        outputs = {"gro": self._output_gro}
-        outputs[format](filename)
+        """
+        Write coordinates from Frame to file.
+
+        :param filename: Name of file to write to
+        :param format: Format to write e.g. 'gro', 'lammps'
+        """
+        outputs = {"gro": self._output_gro,
+                   "lammps": self._output_lammps_data}
+        try:
+            outputs[format](filename)
+        except KeyError:
+            print("ERROR: Invalid output format {0}, coordinates will not be output.".format(format))
+
+    def _output_lammps_data(self, filename):
+        """
+        Output Frame coordinates in LAMMPS data format.
+
+        :param filename: Name of DATA file to create
+        """
+        raise NotImplementedError("LAMMPS Data output has not yet been implemented.")
 
     def _output_gro(self, filename):
         """

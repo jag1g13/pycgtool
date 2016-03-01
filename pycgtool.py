@@ -39,7 +39,7 @@ def main(args, config):
             break
 
     if args.map:
-        cgframe.output("out.gro", format="gro")
+        cgframe.output("out.gro", format=config["output"])
 
     if args.bnd:
         bonds.boltzmann_invert()
@@ -54,7 +54,7 @@ def main(args, config):
         # ff.write_atp(mapping)
 
 
-def map_only(args):
+def map_only(args, config):
     """
     Perform AA->CG mapping and output coordinate file.
 
@@ -63,7 +63,7 @@ def map_only(args):
     frame = Frame(gro=args.gro)
     mapping = Mapping(args.map)
     cgframe = mapping.apply(frame, exclude={"SOL"})
-    cgframe.output("out.gro", format="gro")
+    cgframe.output("out.gro", format=config["output"])
 
 
 def interactive(default_config={}):
@@ -113,6 +113,6 @@ if __name__ == "__main__":
         config = default_config
 
     if config["map-only"] == "yes":
-        map_only(args)
+        map_only(args, config)
     else:
         main(args, config)

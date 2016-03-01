@@ -180,7 +180,7 @@ class BondSet:
                             i+1, bead.type, 1,  mol, bead.name, i+1, bead.charge
                     ), file=itp)
 
-                bonds = [bond for bond in self._molecules[mol] if len(bond.atoms) == 2]
+                bonds = [bond for bond in self._molecules[mol] if len(bond.atoms) == 2 and bond.fconst < 100000]
                 if len(bonds):
                     print("\n[ bonds ]", file=itp)
                 for bond in bonds:
@@ -206,6 +206,15 @@ class BondSet:
                         bond.atom_numbers[0]+1, bond.atom_numbers[1]+1,
                         bond.atom_numbers[2]+1, bond.atom_numbers[3]+1,
                         1, bond.eqm, bond.fconst, 1
+                    ), file=itp)
+
+                bonds = [bond for bond in self._molecules[mol] if len(bond.atoms) == 2 and bond.fconst >= 100000]
+                if len(bonds):
+                    print("\n[ constraints ]", file=itp)
+                for bond in bonds:
+                    print("{0:4d} {1:4d} {2:4d} {3:12.5f}".format(
+                        bond.atom_numbers[0]+1, bond.atom_numbers[1]+1,
+                        1, bond.eqm
                     ), file=itp)
 
     def apply(self, frame):
