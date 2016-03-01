@@ -7,6 +7,7 @@ BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a sin
 import numpy as np
 
 from .util import stat_moments, sliding, r_squared, gaussian
+from .util import triplets_from_pairs, quadruplets_from_pairs
 from .parsers.cfg import CFG
 
 np.seterr(all="raise")
@@ -57,6 +58,9 @@ class Bond:
         except FloatingPointError:
             self.fconst = 0
 
+    def r_squared(self):
+        raise NotImplementedError("Bond r-squared is not yet implemented")
+
     def __repr__(self):
         try:
             return "<Bond containing atoms {0} with r_0 {1:.3f} and force constant {2:.3e}>".format(
@@ -102,8 +106,35 @@ class BondSet:
                 for mol in cfg:
                     self._molecules[mol.name] = []
                     molbnds = self._molecules[mol.name]
+
+                    angles_defined = False
                     for atomlist in mol:
                         molbnds.append(Bond(atoms=atomlist))
+                        if len(atomlist) > 2:
+                            angles_defined = True
+
+                    if not angles_defined:
+                        self._create_angles(mol.name)
+
+    def _create_angles(self, mol):
+        """
+        Create angles and dihedrals from bonded topology.
+        """
+        bonds = [bond.atoms for bond in self._molecules[mol] if len(bond.atoms) == 2]
+        beads = set()
+        for bead1, bead2 in bonds:
+            if bead1 not in beads:
+                beads.add(bead1)
+            if bead2 not in beads:
+                beads.add(bead2)
+
+        angles = triplets_from_pairs(beads, bonds)
+        for atomlist in angles:
+            self._molecules[mol].append(Bond(atoms=atomlist))
+
+        dihedrals = quadruplets_from_pairs(beads, bonds)
+        for atomlist in dihedrals:
+            self._molecules[mol].append(Bond(atoms=atomlist))
 
     def _populate_atom_numbers(self, mapping):
         """

@@ -80,7 +80,7 @@ class CFG:
                     self._sections[curr_section] = Section(name=curr_section)
                     continue
 
-                toks = line.split()
+                toks = tuple(line.split())
                 self._sections[curr_section].add_line(toks)
 
     def __enter__(self):
