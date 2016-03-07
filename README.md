@@ -5,6 +5,8 @@ Python reimplementation of [CGTOOL](https://bitbucket.org/jag1g13/cgtool) perfor
 
 The aim of this project is to provide a tool to aid in parametrising coarse-grained (CG) molecular mechanics models.  PyCGTOOL generates coarse-grained models from atomistic trajectories using a user-provided mapping.  Equilibrium values and force constants of bonded terms are calculated by Boltzmann Inversion of histograms collected from the input trajectory allowing good replication of target properties.
 
+Alternatively it may be used in map-only mode (behaving similarly to MARTINIZE) to generate initial coordinates to use with existing CG topologies such as the MARTINI lipid models.
+
 PyCGTOOL makes it easy to test multiple variations in mapping and bond topology by making simple changes to the config file.
 
 This version has several advantages over the original C++ implementation CGTOOL:
@@ -20,6 +22,10 @@ Input to PyCGTOOL is GROMACS GRO and XTC files, along with two custom files: MAP
 
 To run PyCGTOOL:
 `pycgtool.py -g <GRO file> -x <XTC file> -m <MAP file> -b <BND file>`
+
+To run PyCGTOOL in map-only mode:
+`pycgtool.py -g <GRO file> -m <MAP file>`
+
 To see the help text:
 `pycgtool.py -h`
 
