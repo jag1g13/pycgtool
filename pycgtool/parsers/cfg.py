@@ -47,11 +47,12 @@ class CFG:
     """
     __slots__ = ["filename", "_sections", "_section_names", "_iter_section"]
 
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, allow_duplicate=False):
         """
         Parse a config file and extract Sections.
 
         :param filename: Name of file to read
+        :param allow_duplicate: Allow sections to appear more than once in a file
         :return: Instance of CFG
         """
         self.filename = filename
@@ -74,7 +75,7 @@ class CFG:
 
                 elif line.startswith("["):
                     curr_section = line.strip("[ ]")
-                    if curr_section in self._sections:
+                    if curr_section in self._sections and not allow_duplicate:
                         raise DuplicateSectionError(curr_section, self.filename)
                     self._section_names.append(curr_section)
                     self._sections[curr_section] = Section(name=curr_section)

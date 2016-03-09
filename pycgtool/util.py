@@ -2,6 +2,8 @@
 This module contains some general purpose utility functions used in PyCGTOOL.
 """
 
+import os
+
 import numpy as np
 np.seterr(all="raise")
 
@@ -117,6 +119,19 @@ def stat_moments(vals, ignore_nan=True):
         return res
     except FloatingPointError:
         return np.zeros(2)
+
+
+def dir_up(name, N=1):
+    """
+    Return the directory path N levels above a specified file/directory.
+
+    :param name: Name of file/directory to start from
+    :param N: Number of directory levels to go up
+    :return: Directory N directories above name
+    """
+    for _ in range(N):
+        name = os.path.dirname(name)
+    return name
 
 
 def sliding(vals):

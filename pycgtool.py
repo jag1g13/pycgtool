@@ -49,9 +49,8 @@ def main(args, config):
                 print(len(bond.values), bond.eqm, bond.fconst)
 
         bonds.write_itp("out.itp", mapping=mapping)
-        # ff = ForceField("fftest.ff")
-        # ff.write_rtp("test.rtp", mapping, bonds)
-        # ff.write_atp(mapping)
+        ff = ForceField("fftest.ff")
+        ff.write_rtp("test.rtp", mapping, bonds)
 
 
 def map_only(args, config):

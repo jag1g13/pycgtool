@@ -5,3 +5,5 @@
 /env
 .coverage
 /cover
+/tmp
+/doc/build

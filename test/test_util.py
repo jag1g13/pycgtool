@@ -1,11 +1,12 @@
 import unittest
+import os
 
 import numpy as np
 
 from pycgtool.util import stat_moments, sliding
 from pycgtool.util import r_squared, gaussian
 from pycgtool.util import triplets_from_pairs, tuple_equivalent
-from pycgtool.util import quadruplets_from_pairs
+from pycgtool.util import quadruplets_from_pairs, dir_up
 
 
 class UtilTest(unittest.TestCase):
@@ -39,6 +40,12 @@ class UtilTest(unittest.TestCase):
         t2 = [1, 2, 3, 4, 5]
         np.testing.assert_allclose(np.array([3, 0]), stat_moments(t1))
         np.testing.assert_allclose(np.array([3, 2]), stat_moments(t2))
+
+    def test_dir_up(self):
+        path = os.path.realpath(__file__)
+        self.assertEqual(path, dir_up(path, 0))
+        self.assertEqual(os.path.dirname(path), dir_up(path))
+        self.assertEqual(os.path.dirname(os.path.dirname(path)), dir_up(path, 2))
 
     def test_sliding(self):
         l = [0, 1, 2, 3, 4]

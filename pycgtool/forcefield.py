@@ -3,15 +3,10 @@ This module contains a single class ForceField used to output a GROMACS .ff forc
 """
 
 import os
+import shutil
 
-# Python 3.2 doesn't have FileExistsError
-try:
-    raise FileExistsError
-except NameError:
-    class FileExistsError(Exception):
-        pass
-except FileExistsError:
-    pass
+from .util import dir_up
+from .parsers.cfg import CFG
 
 
 class ForceField:
@@ -24,41 +19,25 @@ class ForceField:
 
         :param name: Directory name to open/create
         """
-        try:
-            os.makedirs(name)
-        except FileExistsError as e:
-            if not os.path.isdir(name):
-                raise e
-        except OSError as e:
-            if e.errno != 17 or not os.path.isdir(name):
-                raise e
+        os.makedirs(name, exist_ok=True)
 
         self.dirname = name
         with open(os.path.join(self.dirname, "forcefield.itp"), "w") as itp:
             print("#define _FF_PYCGTOOL", file=itp)
-            print("\n[ defaults ]", file=itp)
-            print("{:4d} {:4d} {:4s} {:2.4f} {:2.4f}".format(
-                1, 1, "no", 1.0, 1.0
-            ), file=itp)
+            print('#include "martini_v2.2.itp"', file=itp)
+
+        # Copy main MARTINI itp
+        shutil.copyfile(os.path.join(dir_up(os.path.realpath(__file__), 2), "data", "martini_v2.2.itp"),
+                        os.path.join(self.dirname, "martini_v2.2.itp"))
+
+        # Create atomtypes.atp required for correct masses with pdb2gmx
+        with CFG(os.path.join(dir_up(os.path.realpath(__file__), 2), "data", "martini_v2.2.itp"), allow_duplicate=True) as cfg,\
+                open(os.path.join(self.dirname, "atomtypes.atp"), 'w') as atomtypes:
+            for toks in cfg["atomtypes"]:
+                print(" ".join(toks), file=atomtypes)
 
         with open(os.path.join(self.dirname, "forcefield.doc"), "w") as doc:
-            print("PyCGTOOL produced force field", file=doc)
-
-    def write_atp(self, mapping):
-        """
-        Write a GROMACS forcefield .atp file.
-
-        This file lists the atomtypes used in the forcefield.
-
-        :param mapping: AA->CG mapping from which to collect atomtypes
-        """
-        with open(os.path.join(self.dirname, "atomtypes.atp"), "w") as atp:
-            types = set()
-            for mol in mapping:
-                for bead in mapping[mol]:
-                    if bead.type not in types:
-                        print("{:4s} {:8.3f}".format(bead.type, bead.mass), file=atp)
-                        types.add(bead.type)
+            print("PyCGTOOL produced MARTINI force field", file=doc)
 
     def write_rtp(self, name, mapping, bonds):
         """
@@ -79,10 +58,10 @@ class ForceField:
                 print("[ {0} ]".format(mol), file=rtp)
 
                 print(" [ atoms ]", file=rtp)
-                for i, bead in enumerate(mapping[mol]):
+                for bead in mapping[mol]:
                     #        name  type  charge  c-group
                     print("  {:4s} {:4s} {:3.6f} {:4d}".format(
-                        bead.name, bead.type, bead.charge, i+1
+                        bead.name, bead.type, bead.charge, 0
                     ), file=rtp)
 
                 bond_tmp = [bond for bond in bonds[mol] if len(bond) == 2]
