@@ -6,6 +6,7 @@ from pycgtool.frame import Frame
 from pycgtool.mapping import Mapping
 from pycgtool.bondset import BondSet
 from pycgtool.forcefield import ForceField
+from pycgtool.util import Progress
 
 
 def main(args, config):
@@ -26,6 +27,7 @@ def main(args, config):
         mapping = Mapping(args.map)
 
     # Main loop - perform mapping and measurement on every frame in XTC
+    prog = Progress(frame.xtc.numframes)
     while True:
         if args.map:
             cgframe = mapping.apply(frame, exclude={"SOL"})
@@ -34,6 +36,8 @@ def main(args, config):
 
         if args.bnd:
             bonds.apply(cgframe)
+
+        prog.iteration()
 
         if not frame.next_frame():
             break

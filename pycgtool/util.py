@@ -8,6 +8,30 @@ import numpy as np
 np.seterr(all="raise")
 
 
+class Progress:
+    def __init__(self, maxits, length=20):
+        """
+        Class to handle printing of a progress bar within loops.
+
+        :param maxits: Expected number of iterations
+        """
+        self._maxits = maxits
+        self._length = length
+        self._its = 0
+
+    def iteration(self):
+        self._its += 1
+        if self._its % 10 == 0 or self._its == self._maxits:
+            self._display()
+            if self._its == self._maxits:
+                print()
+
+    def _display(self):
+        done = int(self._length * (self._its / self._maxits))
+        left = self._length - done
+        print("\r {0} [".format(self._its) + done*"#" + left*"-" + "] {0}".format(self._maxits), end="")
+
+
 def tuple_equivalent(tuple1, tuple2):
     """
     Check if two node tuples are equivalent. Assumes undirected edges.
