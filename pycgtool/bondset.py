@@ -7,7 +7,7 @@ BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a sin
 import numpy as np
 
 from .util import stat_moments, sliding, r_squared, gaussian
-from .util import triplets_from_pairs, quadruplets_from_pairs
+from .util import triplets_from_pairs, quadruplets_from_pairs, cross
 from .parsers.cfg import CFG
 
 np.seterr(all="raise")
@@ -80,7 +80,8 @@ def angle(a, b, c=None):
     :return: Signed angle in radians
     """
     if c is None:
-        c = np.cross(a, b)
+        c = cross(a, b)
+        # c = np.cross(a, b)
     dot = np.dot(a, b)
     abscross = np.sqrt(np.dot(c, c))
     return np.arctan2(abscross, dot)
@@ -238,9 +239,9 @@ class BondSet:
             vec2 = atoms[2].coords - atoms[1].coords
             vec3 = atoms[3].coords - atoms[2].coords
 
-            c1 = np.cross(vec1, vec2)
-            c2 = np.cross(vec2, vec3)
-            c3 = np.cross(c1, c2)
+            c1 = cross(vec1, vec2)
+            c2 = cross(vec2, vec3)
+            c3 = cross(c1, c2)
 
             ang = np.degrees(angle(c1, c2))
             direction = np.dot(vec2, c3)

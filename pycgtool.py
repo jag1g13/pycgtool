@@ -27,8 +27,7 @@ def main(args, config):
         mapping = Mapping(args.map)
 
     # Main loop - perform mapping and measurement on every frame in XTC
-    prog = Progress(frame.xtc.numframes)
-    while True:
+    for _ in Progress(frame.numframes):
         if args.map:
             cgframe = mapping.apply(frame, exclude={"SOL"})
         else:
@@ -36,8 +35,6 @@ def main(args, config):
 
         if args.bnd:
             bonds.apply(cgframe)
-
-        prog.iteration()
 
         if not frame.next_frame():
             break
@@ -47,10 +44,6 @@ def main(args, config):
 
     if args.bnd:
         bonds.boltzmann_invert()
-        for mol in bonds:
-            print("Bonds in {0}:".format(mol))
-            for bond in bonds[mol]:
-                print(len(bond.values), bond.eqm, bond.fconst)
 
         bonds.write_itp("out.itp", mapping=mapping)
         ff = ForceField("fftest.ff")

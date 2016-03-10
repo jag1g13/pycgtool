@@ -111,7 +111,7 @@ class Mapping:
             try:
                 molmap = self._mappings[aares.name]
             except KeyError:
-                print("Residue {0} not found in mapping - will be ignored.".format(aares.name))
+                # Residue not in mapping, assume user doesn't want to map it (e.g. solvent)
                 continue
             res = Residue(name=aares.name, num=aares.num)
             res.atoms = [Atom(name=atom.name, type=atom.type) for atom in molmap]
@@ -126,15 +126,13 @@ class Mapping:
                         bead.coords += aares[atom].coords
                         n += 1
                     except KeyError:
-                        # Atom does not exist in residue
+                        # Atom not in residue, happens in terminal residues of polymer
                         pass
-                # bead.coords = functools.reduce(lambda a,b: a + aares[b].coords, bmap, 0)
+
                 try:
                     bead.coords /= n
                 except FloatingPointError:
-                    # raise EmptyBeadError("Bead {0} in molecule {1} contains no atoms.".format(
-                    #     bead.name, aares.name
-                    # ))
+                    # Bead contains no atoms, happens in terminal residue of polymer
                     pass
                 cgframe.natoms += 1
 

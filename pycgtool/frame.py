@@ -73,10 +73,15 @@ class Frame:
         """
         self.residues = []
         self.number = -1
+        self.numframes = 0
+
         if gro is not None:
             self._parse_gro(gro)
-        if xtc is not None:
-            self.xtc = trajectory.XtcTrajectory(xtc)
+            self.numframes += 1
+
+            if xtc is not None:
+                self.xtc = trajectory.XtcTrajectory(xtc)
+                self.numframes += self.xtc.numframes
 
     def __len__(self):
         return len(self.residues)

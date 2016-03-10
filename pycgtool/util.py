@@ -14,10 +14,32 @@ class Progress:
         Class to handle printing of a progress bar within loops.
 
         :param maxits: Expected number of iterations
+        :param length: Length of progress bar in characters
         """
         self._maxits = maxits
         self._length = length
         self._its = 0
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        pass
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self._its += 1
+        if self._its % 10 == 0:
+            self._display()
+
+        if self._its >= self._maxits:
+            self._display()
+            print()
+            raise StopIteration
+
+        return self._its
 
     def iteration(self):
         self._its += 1
@@ -30,6 +52,21 @@ class Progress:
         done = int(self._length * (self._its / self._maxits))
         left = self._length - done
         print("\r {0} [".format(self._its) + done*"#" + left*"-" + "] {0}".format(self._maxits), end="")
+
+
+def cross(u, v):
+    """
+    Return vector cross product of two 3d vectors as numpy array.
+
+    :param u: First 3d vector
+    :param v: Second 3d vector
+    :return: Cross product of two vectors as numpy.array
+    """
+    res = np.zeros(3)
+    res[0] = u[1]*v[2] - u[2]*v[1]
+    res[1] = u[2]*v[0] - u[0]*v[2]
+    res[2] = u[0]*v[1] - u[1]*v[0]
+    return res
 
 
 def tuple_equivalent(tuple1, tuple2):
