@@ -105,17 +105,17 @@ def extend_graph_chain(extend, pairs):
             spare = chain[:-2]
 
             for pair2 in pairs:
-                if node2 == pair2[0] and pair2[1] != node1:
+                if node2 == pair2[0] and pair2[1] not in chain:
                     append_if_not_in(ret, spare + (node1, node2, pair2[1]))
-                elif node2 == pair2[1] and pair2[0] != node1:
+                elif node2 == pair2[1] and pair2[0] not in chain:
                     append_if_not_in(ret, spare + (node1, node2, pair2[0]))
 
             try:
                 if node2.startswith("+"):
                     for pair2 in pairs:
-                        if node2.strip("+") == pair2[0] and "+"+pair2[1] != node1:
+                        if node2.strip("+") == pair2[0] and "+"+pair2[1] not in chain:
                             append_if_not_in(ret, spare + (node1, node2, "+"+pair2[1]))
-                        elif node2.strip("+") == pair2[1] and "+"+pair2[0] != node1:
+                        elif node2.strip("+") == pair2[1] and "+"+pair2[0] not in chain:
                             append_if_not_in(ret, spare + (node1, node2, "+"+pair2[0]))
             except AttributeError:
                 pass

@@ -27,7 +27,8 @@ def main(args, config):
         mapping = Mapping(args.map)
 
     # Main loop - perform mapping and measurement on every frame in XTC
-    for _ in Progress(frame.numframes):
+    numframes = frame.numframes if args.frames == -1 else args.frames
+    for _ in Progress(numframes):
         if args.map:
             cgframe = mapping.apply(frame, exclude={"SOL"})
         else:
@@ -95,6 +96,7 @@ if __name__ == "__main__":
     required.add_argument('-b', '--bnd', type=str, help="Bonds file")
 
     parser.add_argument('-i', '--interactive', default=False, action='store_true')
+    parser.add_argument('-f', '--frames', type=int, default=-1, help="Number of frames to read")
 
     args = parser.parse_args()
     print("Using GRO: {0}".format(args.gro))
