@@ -85,73 +85,45 @@ def tuple_equivalent(tuple1, tuple2):
         return False
 
 
-def triplets_from_pairs(nodes, pairs):
+def extend_graph_chain(extend, pairs):
     """
-    Find all connected triplets from a list of connected pairs.
-    Currently uses a naive algorithm, will be optimised if it turns out to be a performance bottleneck.
+    Take list of tuples representing chained links in an undirected graph and extend the chain length.
 
-    :param nodes: List of node names
-    :param pairs: List of node connectivity pairs
-    :return: List of node connectivity triplets
+    :param extend: List of link tuples to extend
+    :param pairs: Graph edges as list of tuples
+    :return: List of link tuples for chain length one greater than input
     """
-    triplets = []
+    ret = []
 
-    for node1 in nodes:
-        for node2 in nodes:
-            pair1 = (node1, node2)
-            if pair1 not in pairs and pair1[::-1] not in pairs:
-                continue
+    def append_if_not_in(lst, item):
+        if item not in lst and item[::-1] not in lst:
+            lst.append(item)
 
-            for node3 in nodes:
-                if node3 == node1:
-                    continue
-                pair2 = (node2, node3)
-                if pair2 not in pairs and pair2[::-1] not in pairs:
-                    continue
+    for chain in extend:
+        for _ in range(2):
+            node1, node2 = chain[-2:]
+            spare = chain[:-2]
 
-                triplet = (node1, node2, node3)
-                if triplet not in triplets and triplet[::-1] not in triplets:
-                    triplets.append(triplet)
+            for pair2 in pairs:
+                if node2 == pair2[0] and pair2[1] != node1:
+                    append_if_not_in(ret, spare + (node1, node2, pair2[1]))
+                elif node2 == pair2[1] and pair2[0] != node1:
+                    append_if_not_in(ret, spare + (node1, node2, pair2[0]))
 
-    return triplets
+            try:
+                if node2.startswith("+"):
+                    for pair2 in pairs:
+                        if node2.strip("+") == pair2[0] and "+"+pair2[1] != node1:
+                            append_if_not_in(ret, spare + (node1, node2, "+"+pair2[1]))
+                        elif node2.strip("+") == pair2[1] and "+"+pair2[0] != node1:
+                            append_if_not_in(ret, spare + (node1, node2, "+"+pair2[0]))
+            except AttributeError:
+                pass
 
+            # Reverse and look for links at the start of the chain
+            chain = chain[::-1]
 
-def quadruplets_from_pairs(nodes, pairs):
-    """
-    Find all connected quadruplets from a list of connected pairs.
-    Currently uses a naive algorithm, will be optimised if it turns out to be a performance bottleneck.
-
-    :param nodes: List of node names
-    :param pairs: List of node connectivity pairs
-    :return: List of node connectivity quadruplets
-    """
-    quadruplets = []
-
-    for node1 in nodes:
-        for node2 in nodes:
-            pair1 = (node1, node2)
-            if pair1 not in pairs and pair1[::-1] not in pairs:
-                continue
-
-            for node3 in nodes:
-                if node3 == node1:
-                    continue
-                pair2 = (node2, node3)
-                if pair2 not in pairs and pair2[::-1] not in pairs:
-                    continue
-
-                for node4 in nodes:
-                    if node4 == node2 or node4 == node1:
-                        continue
-                    pair3 = (node3, node4)
-                    if pair3 not in pairs and pair3[::-1] not in pairs:
-                        continue
-
-                    quadruplet = (node1, node2, node3, node4)
-                    if quadruplet not in quadruplets and quadruplet[::-1] not in quadruplets:
-                        quadruplets.append(quadruplet)
-
-    return quadruplets
+    return ret
 
 
 def stat_moments(vals, ignore_nan=True):

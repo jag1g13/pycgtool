@@ -5,8 +5,8 @@ import numpy as np
 
 from pycgtool.util import stat_moments, sliding
 from pycgtool.util import r_squared, gaussian
-from pycgtool.util import triplets_from_pairs, tuple_equivalent
-from pycgtool.util import quadruplets_from_pairs, dir_up
+from pycgtool.util import extend_graph_chain, tuple_equivalent
+from pycgtool.util import dir_up
 
 
 class UtilTest(unittest.TestCase):
@@ -18,22 +18,27 @@ class UtilTest(unittest.TestCase):
         self.assertFalse(tuple_equivalent(t1, t2))
 
     def test_triplets_from_pairs(self):
-        nodes = [0, 1, 2, 3]
         pairs = [(0, 1), (1, 2), (2, 3)]
         result = [(0, 1, 2), (1, 2, 3)]
-        self.assertEqual(result, triplets_from_pairs(nodes, pairs))
+        self.assertEqual(result, sorted(extend_graph_chain(pairs, pairs)))
         pairs = [(0, 1), (1, 2), (2, 3), (3, 0)]
-        result = [(0, 1, 2), (0, 3, 2), (1, 0, 3), (1, 2, 3)]
-        self.assertEqual(result, triplets_from_pairs(nodes, pairs))
+        result = [(0, 1, 2), (1, 0, 3), (1, 2, 3), (2, 3, 0)]
+        self.assertEqual(result, sorted(extend_graph_chain(pairs, pairs)))
+
+    def test_triplets_from_pairs_multires(self):
+        pairs = [("a", "b"), ("b", "c"), ("c", "d"), ("d", "+a")]
+        result = [("a", "b", "c"), ("b", "c", "d"), ("c", "d", "+a"), ("d", "+a", "+b")]
+        self.assertEqual(result, sorted(extend_graph_chain(pairs, pairs)))
 
     def test_quadruplets_from_pairs(self):
-        nodes = [0, 1, 2, 3]
         pairs = [(0, 1), (1, 2), (2, 3)]
         result = [(0, 1, 2, 3)]
-        self.assertEqual(result, quadruplets_from_pairs(nodes, pairs))
+        triplets = extend_graph_chain(pairs, pairs)
+        self.assertEqual(result, sorted(extend_graph_chain(triplets, pairs)))
         pairs = [(0, 1), (1, 2), (2, 3), (3, 0)]
-        result = [(0, 1, 2, 3), (0, 3, 2, 1), (1, 0, 3, 2), (2, 1, 0, 3)]
-        self.assertEqual(result, quadruplets_from_pairs(nodes, pairs))
+        triplets = extend_graph_chain(pairs, pairs)
+        result = [(0, 1, 2, 3), (1, 0, 3, 2), (1, 2, 3, 0), (2, 1, 0, 3)]
+        self.assertEqual(result, sorted(extend_graph_chain(triplets, pairs)))
 
     def test_stat_moments(self):
         t1 = [3, 3, 3, 3, 3]

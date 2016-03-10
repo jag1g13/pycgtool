@@ -7,7 +7,7 @@ BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a sin
 import numpy as np
 
 from .util import stat_moments, sliding, r_squared, gaussian
-from .util import triplets_from_pairs, quadruplets_from_pairs, cross
+from .util import extend_graph_chain, cross
 from .parsers.cfg import CFG
 
 np.seterr(all="raise")
@@ -129,11 +129,11 @@ class BondSet:
             if bead2 not in beads:
                 beads.add(bead2)
 
-        angles = triplets_from_pairs(beads, bonds)
+        angles = extend_graph_chain(bonds, bonds)
         for atomlist in angles:
             self._molecules[mol].append(Bond(atoms=atomlist))
 
-        dihedrals = quadruplets_from_pairs(beads, bonds)
+        dihedrals = extend_graph_chain(angles, bonds)
         for atomlist in dihedrals:
             self._molecules[mol].append(Bond(atoms=atomlist))
 
