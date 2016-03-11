@@ -9,7 +9,7 @@ np.seterr(all="raise")
 
 
 class Progress:
-    def __init__(self, maxits, length=20):
+    def __init__(self, maxits, length=20, prewhile=None, postwhile=None):
         """
         Class to handle printing of a progress bar within loops.
 
@@ -18,6 +18,8 @@ class Progress:
         """
         self._maxits = maxits
         self._length = length
+        self._prewhile = prewhile
+        self._postwhile = postwhile
         self._its = 0
 
     def __enter__(self):
@@ -30,23 +32,25 @@ class Progress:
         return self
 
     def __next__(self):
+        if self._postwhile is not None and self._its > 0 and not self._postwhile():
+            self._stop()
+
+        if self._prewhile is not None and not self._prewhile():
+            self._stop()
+
         self._its += 1
         if self._its % 10 == 0:
             self._display()
 
-        if self._its >= self._maxits:
-            self._display()
-            print()
-            raise StopIteration
+        if self._its > self._maxits:
+            self._stop()
 
         return self._its
 
-    def iteration(self):
-        self._its += 1
-        if self._its % 10 == 0 or self._its == self._maxits:
-            self._display()
-            if self._its == self._maxits:
-                print()
+    def _stop(self):
+        self._display()
+        print()
+        raise StopIteration
 
     def _display(self):
         done = int(self._length * (self._its / self._maxits))

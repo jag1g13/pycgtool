@@ -248,22 +248,26 @@ class BondSet:
             return ang if direction > 0 else -ang
 
         for prev_res, res, next_res in sliding(frame):
-            mol_meas = self._molecules[res.name]
-            for bond in mol_meas:
-                try:
-                    # TODO tidy this
-                    calc = {2: calc_length,
-                            3: calc_angle,
-                            4: calc_dihedral}
-                    adj_res = {"-": prev_res,
-                               "+": next_res}
-                    atoms = [adj_res.get(name[0], res)[name.lstrip("-+")] for name in bond.atoms]
-                    val = calc[len(atoms)](atoms)
-                    bond.values.append(val)
-                except (NotImplementedError, TypeError):
-                    # NotImplementedError is raised if form is not implemented
-                    # TypeError is raised when residues on end of chain calc bond to next
-                    pass
+            try:
+                mol_meas = self._molecules[res.name]
+                for bond in mol_meas:
+                    try:
+                        # TODO tidy this
+                        calc = {2: calc_length,
+                                3: calc_angle,
+                                4: calc_dihedral}
+                        adj_res = {"-": prev_res,
+                                   "+": next_res}
+                        atoms = [adj_res.get(name[0], res)[name.lstrip("-+")] for name in bond.atoms]
+                        val = calc[len(atoms)](atoms)
+                        bond.values.append(val)
+                    except (NotImplementedError, TypeError):
+                        # NotImplementedError is raised if form is not implemented
+                        # TypeError is raised when residues on end of chain calc bond to next
+                        pass
+            except KeyError:
+                # Bonds have not been specified for molecule - probably water
+                pass
 
     def boltzmann_invert(self):
         """

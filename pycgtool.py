@@ -28,17 +28,14 @@ def main(args, config):
 
     # Main loop - perform mapping and measurement on every frame in XTC
     numframes = frame.numframes if args.frames == -1 else args.frames
-    for _ in Progress(numframes):
+    for _ in Progress(numframes, postwhile=frame.next_frame):
         if args.map:
-            cgframe = mapping.apply(frame, exclude={"SOL"})
+            cgframe = mapping.apply(frame)
         else:
             cgframe = frame
 
         if args.bnd:
             bonds.apply(cgframe)
-
-        if not frame.next_frame():
-            break
 
     if args.map:
         cgframe.output("out.gro", format=config["output"])

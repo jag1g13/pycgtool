@@ -29,6 +29,11 @@ class ForceField:
         # Copy main MARTINI itp
         shutil.copyfile(os.path.join(dir_up(os.path.realpath(__file__), 2), "data", "martini_v2.2.itp"),
                         os.path.join(self.dirname, "martini_v2.2.itp"))
+        # Copy water models
+        shutil.copyfile(os.path.join(dir_up(os.path.realpath(__file__), 2), "data", "watermodels.dat"),
+                        os.path.join(self.dirname, "watermodels.dat"))
+        shutil.copyfile(os.path.join(dir_up(os.path.realpath(__file__), 2), "data", "w.itp"),
+                        os.path.join(self.dirname, "w.itp"))
 
         # Create atomtypes.atp required for correct masses with pdb2gmx
         with CFG(os.path.join(dir_up(os.path.realpath(__file__), 2), "data", "martini_v2.2.itp"), allow_duplicate=True) as cfg,\
@@ -52,9 +57,15 @@ class ForceField:
         # TODO print everything to file
         with open(os.path.join(self.dirname, name), "w") as rtp:
             print("[ bondedtypes ]", file=rtp)
-            print(("{:4d}"*4).format(1, 1, 1, 1), file=rtp)
+            print(("{:4d}"*8).format(1, 1, 1, 1, 1, 1, 0, 0), file=rtp)
 
             for mol in mapping:
+                try:
+                    bonds[mol]
+                except KeyError:
+                    # Skip molecules without bonds
+                    continue
+
                 print("[ {0} ]".format(mol), file=rtp)
 
                 print(" [ atoms ]", file=rtp)
