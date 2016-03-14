@@ -81,7 +81,6 @@ def angle(a, b, c=None):
     """
     if c is None:
         c = cross(a, b)
-        # c = np.cross(a, b)
     dot = np.dot(a, b)
     abscross = np.sqrt(np.dot(c, c))
     return np.arctan2(abscross, dot)
@@ -93,7 +92,7 @@ class BondSet:
 
     BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a single molecule.
     """
-    def __init__(self, filename=None, options={}):
+    def __init__(self, filename=None, options={"constr-threshold": "100000"}):
         """
         Read in bonds from a file.
 
@@ -102,7 +101,7 @@ class BondSet:
         """
         self._molecules = {}
 
-        self._fconst_constr_threshold = int(options.get("constr-threshold", "100000"))
+        self._fconst_constr_threshold = int(options["constr-threshold"])
 
         if filename is not None:
             with CFG(filename) as cfg:

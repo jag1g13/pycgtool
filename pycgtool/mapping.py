@@ -55,13 +55,22 @@ class EmptyBeadError(Exception):
     pass
 
 
+def coordinate_weight(center, atom):
+    centers = {"geom": lambda at: at.coords,
+               "mass": lambda at: at.coords * at.mass}
+    try:
+        return centers[center](atom)
+    except KeyError:
+        raise ValueError("Invalid map-center type '{0}'".format(center))
+
+
 class Mapping:
     """
     Class used to perform the AA->CG mapping.
 
     Contains a dictionary of lists of BeadMaps.  Each list corresponds to a single molecule.
     """
-    def __init__(self, filename=None):
+    def __init__(self, filename, options={"map-center": "geom"}):
         """
         Read in the AA->CG mapping from a file.
 
@@ -70,14 +79,15 @@ class Mapping:
         """
         self._mappings = {}
 
-        if filename is not None:
-            with CFG(filename) as cfg:
-                for mol in cfg:
-                    self._mappings[mol.name] = []
-                    molmap = self._mappings[mol.name]
-                    for name, typ, *atoms in mol:
-                        newbead = BeadMap(name=name, type=typ, atoms=atoms)
-                        molmap.append(newbead)
+        self._map_center = options["map-center"]
+
+        with CFG(filename) as cfg:
+            for mol in cfg:
+                self._mappings[mol.name] = []
+                molmap = self._mappings[mol.name]
+                for name, typ, *atoms in mol:
+                    newbead = BeadMap(name=name, type=typ, atoms=atoms)
+                    molmap.append(newbead)
 
     def __len__(self):
         return len(self._mappings)
@@ -123,7 +133,7 @@ class Mapping:
                 n = 0
                 for atom in bmap:
                     try:
-                        bead.coords += aares[atom].coords
+                        bead.coords += coordinate_weight(self._map_center, aares[atom])
                         n += 1
                     except KeyError:
                         # Atom not in residue, happens in terminal residues of polymer

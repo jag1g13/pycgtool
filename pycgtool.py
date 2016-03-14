@@ -24,7 +24,7 @@ def main(args, config):
         bonds = BondSet(args.bnd, config)
 
     if args.map:
-        mapping = Mapping(args.map)
+        mapping = Mapping(args.map, config)
 
     # Main loop - perform mapping and measurement on every frame in XTC
     numframes = frame.numframes if args.frames == -1 else args.frames
