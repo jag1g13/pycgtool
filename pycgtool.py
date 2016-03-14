@@ -21,7 +21,7 @@ def main(args, config):
     frame = Frame(gro=args.gro, xtc=args.xtc)
 
     if args.bnd:
-        bonds = BondSet(args.bnd)
+        bonds = BondSet(args.bnd, config)
 
     if args.map:
         mapping = Mapping(args.map)
@@ -101,7 +101,8 @@ if __name__ == "__main__":
 
     default_config = {"output": "gro",
                       "map-only": "no",
-                      "map-center": "geom"}
+                      "map-center": "geom",
+                      "constr-threshold": "100000"}
     if args.interactive:
         config = interactive(default_config)
     else:

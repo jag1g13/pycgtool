@@ -2,8 +2,12 @@
 .idea/
 .cache/
 /*.gro
+/*.itp
+/fftest.ff
 /env
 .coverage
 /cover
 /tmp
 /doc/build
+/nose2-junit.xml
+*.offsets

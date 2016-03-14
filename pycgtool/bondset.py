@@ -93,7 +93,7 @@ class BondSet:
 
     BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a single molecule.
     """
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, options={}):
         """
         Read in bonds from a file.
 
@@ -101,6 +101,8 @@ class BondSet:
         :return: Instance of BondSet
         """
         self._molecules = {}
+
+        self._fconst_constr_threshold = int(options.get("constr-threshold", "100000"))
 
         if filename is not None:
             with CFG(filename) as cfg:
@@ -117,17 +119,23 @@ class BondSet:
                     if not angles_defined:
                         self._create_angles(mol.name)
 
+    def get_bond_lengths(self, mol):
+        return [bond for bond in self._molecules[mol] if len(bond.atoms) == 2 and bond.fconst < self._fconst_constr_threshold]
+
+    def get_bond_length_constraints(self, mol):
+        return [bond for bond in self._molecules[mol] if len(bond.atoms) == 2 and bond.fconst >= self._fconst_constr_threshold]
+
+    def get_bond_angles(self, mol):
+        return [bond for bond in self._molecules[mol] if len(bond.atoms) == 3]
+
+    def get_bond_dihedrals(self, mol):
+        return [bond for bond in self._molecules[mol] if len(bond.atoms) == 4]
+
     def _create_angles(self, mol):
         """
         Create angles and dihedrals from bonded topology.
         """
         bonds = [bond.atoms for bond in self._molecules[mol] if len(bond.atoms) == 2]
-        beads = set()
-        for bead1, bead2 in bonds:
-            if bead1 not in beads:
-                beads.add(bead1)
-            if bead2 not in beads:
-                beads.add(bead2)
 
         angles = extend_graph_chain(bonds, bonds)
         for atomlist in angles:
@@ -181,7 +189,7 @@ class BondSet:
                             i+1, bead.type, 1,  mol, bead.name, i+1, bead.charge
                     ), file=itp)
 
-                bonds = [bond for bond in self._molecules[mol] if len(bond.atoms) == 2 and bond.fconst < 100000]
+                bonds = self.get_bond_lengths(mol)
                 if len(bonds):
                     print("\n[ bonds ]", file=itp)
                 for bond in bonds:
@@ -190,7 +198,7 @@ class BondSet:
                         1, bond.eqm, bond.fconst
                     ), file=itp)
 
-                bonds = [bond for bond in self._molecules[mol] if len(bond.atoms) == 3]
+                bonds = self.get_bond_angles(mol)
                 if len(bonds):
                     print("\n[ angles ]", file=itp)
                 for bond in bonds:
@@ -199,7 +207,7 @@ class BondSet:
                         1, bond.eqm, bond.fconst
                     ), file=itp)
 
-                bonds = [bond for bond in self._molecules[mol] if len(bond.atoms) == 4]
+                bonds = self.get_bond_dihedrals(mol)
                 if len(bonds):
                     print("\n[ dihedrals ]", file=itp)
                 for bond in bonds:
@@ -209,7 +217,7 @@ class BondSet:
                         1, bond.eqm, bond.fconst, 1
                     ), file=itp)
 
-                bonds = [bond for bond in self._molecules[mol] if len(bond.atoms) == 2 and bond.fconst >= 100000]
+                bonds = self.get_bond_length_constraints(mol)
                 if len(bonds):
                     print("\n[ constraints ]", file=itp)
                 for bond in bonds:
