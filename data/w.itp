@@ -1,0 +1,19 @@
+;;;;;; WATER (representing 4 H2O molecules)
+
+[ moleculetype ]
+; molname  	nrexcl
+  W 	    	1
+
+[ atoms ]
+;id 	type 	resnr 	residu 	atom 	cgnr 	charge
+ 1 	P4 	1 	W 	W 	1 	0 
+
+;;;;;; ANTIFREEZE (prevents freezing of water)
+
+[ moleculetype ]
+; molname 	 nrexcl
+  WF	   	 1
+
+[ atoms ]
+;id 	type 	resnr 	residu 	atom 	cgnr 	charge
+ 1 	BP4 	1 	WF	WF	1 	0
