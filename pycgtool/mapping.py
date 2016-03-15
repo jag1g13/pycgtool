@@ -70,7 +70,7 @@ class Mapping:
 
     Contains a dictionary of lists of BeadMaps.  Each list corresponds to a single molecule.
     """
-    def __init__(self, filename, options={"map-center": "geom"}):
+    def __init__(self, filename, options):
         """
         Read in the AA->CG mapping from a file.
 
@@ -79,7 +79,7 @@ class Mapping:
         """
         self._mappings = {}
 
-        self._map_center = options["map-center"]
+        self._map_center = options.map_center
 
         with CFG(filename) as cfg:
             for mol in cfg:

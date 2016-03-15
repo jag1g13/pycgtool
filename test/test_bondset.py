@@ -5,9 +5,14 @@ from pycgtool.frame import Frame
 from pycgtool.mapping import Mapping
 
 
+class DummyOptions:
+    constr_threshold = 100000
+    map_center = "geom"
+
+
 class BondSetTest(unittest.TestCase):
     def test_bondset_create(self):
-        measure = BondSet("test/data/sugar.bnds")
+        measure = BondSet("test/data/sugar.bnds", DummyOptions)
         self.assertEqual(2, len(measure))
         self.assertTrue("SOL" in measure)
         self.assertTrue("ALLA" in measure)
@@ -15,7 +20,7 @@ class BondSetTest(unittest.TestCase):
         self.assertEqual(18, len(measure["ALLA"]))
 
     def test_bondset_apply(self):
-        measure = BondSet("test/data/sugar.bnds")
+        measure = BondSet("test/data/sugar.bnds", DummyOptions)
         frame = Frame("test/data/sugar-cg.gro")
         measure.apply(frame)
         # First six are bond lengths
@@ -48,9 +53,9 @@ class BondSetTest(unittest.TestCase):
                (-85.9231539259, 124785.032295),
                (70.3195444564, 1555761.24713)]
 
-        measure = BondSet("test/data/sugar.bnds")
+        measure = BondSet("test/data/sugar.bnds", DummyOptions)
         frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
-        mapping = Mapping("test/data/sugar.map")
+        mapping = Mapping("test/data/sugar.map", DummyOptions)
         cgframe = mapping.apply(frame)
         measure.apply(cgframe)
         frame.next_frame()
@@ -62,7 +67,7 @@ class BondSetTest(unittest.TestCase):
             self.assertAlmostEqual(ref[i][1], bond.fconst, delta=abs(ref[i][1] / 1000000))
 
     def test_bondset_polymer(self):
-        bondset = BondSet("test/data/polyethene.bnd")
+        bondset = BondSet("test/data/polyethene.bnd", DummyOptions)
         frame = Frame("test/data/polyethene.gro")
         bondset.apply(frame)
         self.assertEqual(5, len(bondset["ETH"][0].values))

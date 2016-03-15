@@ -9,6 +9,8 @@ import numpy as np
 
 from simpletraj import trajectory
 
+from .util import backup_file
+
 np.seterr(all="raise")
 
 
@@ -185,6 +187,8 @@ class Frame:
 
         :param filename: Name of GRO file to create
         """
+        backup_file(filename, verbose=True)
+
         with open(filename, "w") as gro:
             print(self.name, file=gro)
             print("{0:5d}".format(self.natoms), file=gro)

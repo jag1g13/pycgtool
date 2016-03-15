@@ -7,7 +7,7 @@ BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a sin
 import numpy as np
 
 from .util import stat_moments, sliding, r_squared, gaussian
-from .util import extend_graph_chain, cross
+from .util import extend_graph_chain, cross, backup_file
 from .parsers.cfg import CFG
 
 np.seterr(all="raise")
@@ -92,7 +92,7 @@ class BondSet:
 
     BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a single molecule.
     """
-    def __init__(self, filename=None, options={"constr-threshold": "100000"}):
+    def __init__(self, filename, options):
         """
         Read in bonds from a file.
 
@@ -101,25 +101,27 @@ class BondSet:
         """
         self._molecules = {}
 
-        self._fconst_constr_threshold = int(options["constr-threshold"])
+        self._fconst_constr_threshold = options.constr_threshold
 
-        if filename is not None:
-            with CFG(filename) as cfg:
-                for mol in cfg:
-                    self._molecules[mol.name] = []
-                    molbnds = self._molecules[mol.name]
+        with CFG(filename) as cfg:
+            for mol in cfg:
+                self._molecules[mol.name] = []
+                molbnds = self._molecules[mol.name]
 
-                    angles_defined = False
-                    for atomlist in mol:
-                        molbnds.append(Bond(atoms=atomlist))
-                        if len(atomlist) > 2:
-                            angles_defined = True
+                angles_defined = False
+                for atomlist in mol:
+                    molbnds.append(Bond(atoms=atomlist))
+                    if len(atomlist) > 2:
+                        angles_defined = True
 
-                    if not angles_defined:
-                        self._create_angles(mol.name)
+                if not angles_defined:
+                    self._create_angles(mol.name)
 
-    def get_bond_lengths(self, mol):
-        return [bond for bond in self._molecules[mol] if len(bond.atoms) == 2 and bond.fconst < self._fconst_constr_threshold]
+    def get_bond_lengths(self, mol, with_constr=False):
+        if with_constr:
+            return [bond for bond in self._molecules[mol] if len(bond.atoms) == 2]
+        else:
+            return [bond for bond in self._molecules[mol] if len(bond.atoms) == 2 and bond.fconst < self._fconst_constr_threshold]
 
     def get_bond_length_constraints(self, mol):
         return [bond for bond in self._molecules[mol] if len(bond.atoms) == 2 and bond.fconst >= self._fconst_constr_threshold]
@@ -166,6 +168,7 @@ class BondSet:
         :param mapping: AA->CG Mapping from which to collect bead properties
         """
         self._populate_atom_numbers(mapping)
+        backup_file(filename, verbose=True)
 
         with open(filename, "w") as itp:
             header = ("; \n"
@@ -283,6 +286,15 @@ class BondSet:
         for mol in self._molecules:
             for bond in self._molecules[mol]:
                 bond.boltzmann_invert()
+
+    def dump_values(self):
+        for mol in self._molecules:
+            if mol == "SOL":
+                continue
+            with open("{0}_length.dat".format(mol), "w") as f:
+                bonds = self.get_bond_lengths(mol, with_constr=True)
+                for vals in zip(*(bond.values for bond in bonds)):
+                    print((len(vals)*"{:12.5f}").format(*vals), file=f)
 
     def __len__(self):
         return len(self._molecules)

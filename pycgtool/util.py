@@ -3,9 +3,47 @@ This module contains some general purpose utility functions used in PyCGTOOL.
 """
 
 import os
+import itertools
+import collections
 
 import numpy as np
 np.seterr(all="raise")
+
+
+class Options:
+    __slots__ = ['_dict']
+
+    def __init__(self, default):
+        self._dict = collections.OrderedDict()
+        for key, val in default:
+            try:
+                val = val.lower()
+            except AttributeError:
+                pass
+
+            self._dict[key.lower()] = (val, type(val))
+
+    def __getattr__(self, attr):
+        return self._dict[attr.lower()][0]
+
+    def __repr__(self):
+        res = "[" + ", ".join((str((key, val[0])) for key, val in self._dict.items())) + "]"
+        return res
+
+    def __iter__(self):
+        return iter(((key, val[0]) for key, val in self._dict.items()))
+
+    def set(self, opt, val):
+        opt = opt.lower()
+        try:
+            val = val.lower()
+        except AttributeError:
+            pass
+        _type = self._dict[opt][1]
+        if _type is bool:
+            self._dict[opt] = (truthy(val), bool)
+        else:
+            self._dict[opt] = (_type(val), _type)
 
 
 class Progress:
@@ -56,6 +94,19 @@ class Progress:
         done = int(self._length * (self._its / self._maxits))
         left = self._length - done
         print("\r {0} [".format(self._its) + done*"#" + left*"-" + "] {0}".format(self._maxits), end="")
+
+
+def truthy(string):
+    truthy_strings = ("yes", "y", "on", "true", "t", "1")
+    falsey_strings = ("no", "n", "off", "false", "f", "0")
+
+    string = string.lower()
+    if string in truthy_strings:
+        return True
+    elif string in falsey_strings:
+        return False
+    else:
+        raise ValueError("Value '{0}' could not be converted to boolean".format(string))
 
 
 def cross(u, v):
@@ -158,17 +209,42 @@ def stat_moments(vals, ignore_nan=True):
         return np.zeros(2)
 
 
-def dir_up(name, N=1):
+def dir_up(name, n=1):
     """
-    Return the directory path N levels above a specified file/directory.
+    Return the directory path n levels above a specified file/directory.
 
     :param name: Name of file/directory to start from
-    :param N: Number of directory levels to go up
-    :return: Directory N directories above name
+    :param n: Number of directory levels to go up
+    :return: Directory n directories above name
     """
-    for _ in range(N):
+    for _ in range(n):
         name = os.path.dirname(name)
     return name
+
+
+def backup_file(name, verbose=False):
+    """
+    Backup a file using the GROMACS backup naming scheme.
+    name -> #name.x#
+
+    :param name: File to backup
+    :param verbose: Print a message if file is backed up
+    :return: New name of file after backup
+    """
+    if not os.path.exists(name):
+        return None
+
+    directory, basename = os.path.split(name)
+    for i in itertools.count(1):
+        new_base = "#{0}.{1}#".format(basename, i)
+        new_name = os.path.join(directory, new_base)
+        if not os.path.exists(new_name):
+            break
+
+    os.rename(name, new_name)
+    if verbose:
+        print("Existing file {0} backed up as {1}".format(name, new_name))
+    return new_name
 
 
 def sliding(vals):

@@ -3,10 +3,7 @@ import os
 
 import numpy as np
 
-from pycgtool.util import stat_moments, sliding
-from pycgtool.util import r_squared, gaussian
-from pycgtool.util import extend_graph_chain, tuple_equivalent
-from pycgtool.util import dir_up
+from pycgtool.util import *
 
 
 class UtilTest(unittest.TestCase):
@@ -51,6 +48,24 @@ class UtilTest(unittest.TestCase):
         self.assertEqual(path, dir_up(path, 0))
         self.assertEqual(os.path.dirname(path), dir_up(path))
         self.assertEqual(os.path.dirname(os.path.dirname(path)), dir_up(path, 2))
+
+    def test_backup_file(self):
+        open("testfile", "a").close()
+        self.assertEqual("#testfile.1#", backup_file("testfile"))
+        open("testfile", "a").close()
+        self.assertTrue(os.path.exists("#testfile.1#"))
+        self.assertEqual("#testfile.2#", backup_file("testfile"))
+        open("testfile", "a").close()
+        self.assertTrue(os.path.exists("#testfile.2#"))
+        os.remove("testfile")
+        os.remove("#testfile.1#")
+        os.remove("#testfile.2#")
+
+    def test_truthy(self):
+        self.assertTrue(truthy("YES"))
+        self.assertFalse(truthy("faLSE"))
+        with self.assertRaises(ValueError):
+            truthy("potato")
 
     def test_sliding(self):
         l = [0, 1, 2, 3, 4]

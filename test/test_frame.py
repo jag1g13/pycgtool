@@ -1,5 +1,6 @@
 import unittest
 import filecmp
+import os
 
 import numpy as np
 
@@ -51,6 +52,7 @@ class FrameTest(unittest.TestCase):
         frame = Frame("test/data/water.gro")
         frame.output("water-out.gro", format="gro")
         self.assertTrue(filecmp.cmp("test/data/water.gro", "water-out.gro"))
+        os.remove("water-out.gro")
 
     def test_frame_read_xtc(self):
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc")
