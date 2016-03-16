@@ -33,6 +33,19 @@ class Options:
     def __iter__(self):
         return iter(((key, val[0]) for key, val in self._dict.items()))
 
+    def __len__(self):
+        return len(self._dict)
+
+    def __getitem__(self, item):
+        try:
+            return self._dict[item]
+        except KeyError:
+            try:
+                opt = list(self._dict.keys())[item]
+                return self._dict[opt][0]
+            except TypeError:
+                raise TypeError("Must access Options using either a string or an integer")
+
     def set(self, opt, val):
         opt = opt.lower()
         try:
@@ -40,10 +53,29 @@ class Options:
         except AttributeError:
             pass
         _type = self._dict[opt][1]
-        if _type is bool:
-            self._dict[opt] = (truthy(val), bool)
+
+        if _type is not type(val):
+            if _type is bool:
+                self._dict[opt] = (truthy(val), bool)
+            else:
+                self._dict[opt] = (_type(val), _type)
         else:
-            self._dict[opt] = (_type(val), _type)
+            self._dict[opt] = (val, _type)
+
+    def set_by_num(self, opt_num, val):
+        opt = list(self._dict.keys())[opt_num]
+        self.set(opt, val)
+
+    def toggle_boolean(self, opt):
+        entry = self._dict[opt]
+        if entry[1] is bool:
+            self._dict[opt] = (not entry[0], entry[1])
+        else:
+            raise TypeError("Only boolean options can be toggled")
+
+    def toggle_boolean_by_num(self, opt_num):
+        opt = list(self._dict.keys())[opt_num]
+        self.toggle_boolean(opt)
 
 
 class Progress:
@@ -93,14 +125,14 @@ class Progress:
     def _display(self):
         done = int(self._length * (self._its / self._maxits))
         left = self._length - done
-        print("\r {0} [".format(self._its) + done*"#" + left*"-" + "] {0}".format(self._maxits), end="")
+        print("\r {0} [".format(self._its) + done * "#" + left * "-" + "] {0}".format(self._maxits), end="")
 
 
 def truthy(string):
     truthy_strings = ("yes", "y", "on", "true", "t", "1")
     falsey_strings = ("no", "n", "off", "false", "f", "0")
 
-    string = string.lower()
+    string = string.lower().strip()
     if string in truthy_strings:
         return True
     elif string in falsey_strings:
@@ -118,9 +150,9 @@ def cross(u, v):
     :return: Cross product of two vectors as numpy.array
     """
     res = np.zeros(3)
-    res[0] = u[1]*v[2] - u[2]*v[1]
-    res[1] = u[2]*v[0] - u[0]*v[2]
-    res[2] = u[0]*v[1] - u[1]*v[0]
+    res[0] = u[1] * v[2] - u[2] * v[1]
+    res[1] = u[2] * v[0] - u[0] * v[2]
+    res[2] = u[0] * v[1] - u[1] * v[0]
     return res
 
 
@@ -168,10 +200,10 @@ def extend_graph_chain(extend, pairs):
             try:
                 if node2.startswith("+"):
                     for pair2 in pairs:
-                        if node2.strip("+") == pair2[0] and "+"+pair2[1] not in chain:
-                            append_if_not_in(ret, spare + (node1, node2, "+"+pair2[1]))
-                        elif node2.strip("+") == pair2[1] and "+"+pair2[0] not in chain:
-                            append_if_not_in(ret, spare + (node1, node2, "+"+pair2[0]))
+                        if node2.strip("+") == pair2[0] and "+" + pair2[1] not in chain:
+                            append_if_not_in(ret, spare + (node1, node2, "+" + pair2[1]))
+                        elif node2.strip("+") == pair2[1] and "+" + pair2[0] not in chain:
+                            append_if_not_in(ret, spare + (node1, node2, "+" + pair2[0]))
             except AttributeError:
                 pass
 
@@ -292,5 +324,8 @@ def gaussian(xs, mean=0, sdev=1, amplitude=1):
     :param amplitude: Amplitude of Gaussian distribuion
     :return: Y values of Gaussian distribution at X values in x
     """
-    gaussian_single = lambda x: (amplitude / (sdev * np.sqrt(2*np.pi))) * np.exp((-(x-mean)**2) / (2*sdev*sdev))
+    def gaussian_single(x):
+        prefactor = amplitude / (sdev * np.sqrt(2 * np.pi))
+        top_bit = (x - mean) * (x - mean) / (2 * sdev * sdev)
+        return prefactor * np.exp(-top_bit)
     return map(gaussian_single, xs)
