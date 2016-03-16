@@ -7,10 +7,10 @@ from pycgtool.forcefield import ForceField
 class ForceFieldTest(unittest.TestCase):
     def test_create(self):
         name = "fftest.ff"
-        ff = ForceField(name)
+        ForceField(name)
         self.assertTrue(os.path.exists(name))
         self.assertTrue(os.path.isdir(name))
-        ff = ForceField(name)
+        ForceField(name)
 
 if __name__ == '__main__':
     unittest.main()

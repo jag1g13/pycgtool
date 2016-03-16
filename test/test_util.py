@@ -3,7 +3,8 @@ import os
 
 import numpy as np
 
-from pycgtool.util import *
+from pycgtool.util import tuple_equivalent, extend_graph_chain, stat_moments
+from pycgtool.util import dir_up, backup_file, truthy, sliding, r_squared
 
 
 class UtilTest(unittest.TestCase):

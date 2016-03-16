@@ -7,7 +7,7 @@ class TestParsersCFG(unittest.TestCase):
     watline = ("W", "P4", "OW", "HW1", "HW2")
 
     def test_cfg_with(self):
-        with CFG("test/data/water.map") as cfg:
+        with CFG("test/data/water.map"):
             pass
 
     def test_cfg_iterate_sections(self):

@@ -30,7 +30,7 @@ class ResidueTest(unittest.TestCase):
 
 class FrameTest(unittest.TestCase):
     def test_frame_create(self):
-        frame = Frame()
+        Frame()
 
     def test_frame_add_residue(self):
         residue = Residue()
