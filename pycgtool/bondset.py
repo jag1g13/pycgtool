@@ -6,7 +6,7 @@ BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a sin
 
 import numpy as np
 
-from .util import stat_moments, sliding, r_squared, gaussian
+from .util import stat_moments, sliding
 from .util import extend_graph_chain, cross, backup_file
 from .parsers.cfg import CFG
 
@@ -188,15 +188,15 @@ class BondSet:
                 for i, bead in enumerate(mapping[mol]):
                     #      atnum  type  resnum resname atname c-group  charge (mass)
                     print("{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f}".format(
-                            i+1, bead.type, 1,  mol, bead.name, i+1, bead.charge
-                    ), file=itp)
+                          i + 1, bead.type, 1, mol, bead.name, i + 1, bead.charge
+                          ), file=itp)
 
                 bonds = self.get_bond_lengths(mol)
                 if len(bonds):
                     print("\n[ bonds ]", file=itp)
                 for bond in bonds:
                     print("{0:4d} {1:4d} {2:4d} {3:12.5f} {4:12.5f}".format(
-                        bond.atom_numbers[0]+1, bond.atom_numbers[1]+1,
+                        bond.atom_numbers[0] + 1, bond.atom_numbers[1] + 1,
                         1, bond.eqm, bond.fconst
                     ), file=itp)
 
@@ -205,7 +205,7 @@ class BondSet:
                     print("\n[ angles ]", file=itp)
                 for bond in bonds:
                     print("{0:4d} {1:4d} {2:4d} {3:4d} {4:12.5f} {5:12.5f}".format(
-                        bond.atom_numbers[0]+1, bond.atom_numbers[1]+1, bond.atom_numbers[2]+1,
+                        bond.atom_numbers[0] + 1, bond.atom_numbers[1] + 1, bond.atom_numbers[2] + 1,
                         1, bond.eqm, bond.fconst
                     ), file=itp)
 
@@ -214,8 +214,8 @@ class BondSet:
                     print("\n[ dihedrals ]", file=itp)
                 for bond in bonds:
                     print("{0:4d} {1:4d} {2:4d} {3:4d} {4:4d} {5:12.5f} {6:12.5f} {7:4d}".format(
-                        bond.atom_numbers[0]+1, bond.atom_numbers[1]+1,
-                        bond.atom_numbers[2]+1, bond.atom_numbers[3]+1,
+                        bond.atom_numbers[0] + 1, bond.atom_numbers[1] + 1,
+                        bond.atom_numbers[2] + 1, bond.atom_numbers[3] + 1,
                         1, bond.eqm, bond.fconst, 1
                     ), file=itp)
 
@@ -224,7 +224,7 @@ class BondSet:
                     print("\n[ constraints ]", file=itp)
                 for bond in bonds:
                     print("{0:4d} {1:4d} {2:4d} {3:12.5f}".format(
-                        bond.atom_numbers[0]+1, bond.atom_numbers[1]+1,
+                        bond.atom_numbers[0] + 1, bond.atom_numbers[1] + 1,
                         1, bond.eqm
                     ), file=itp)
 
@@ -236,7 +236,7 @@ class BondSet:
         """
         def calc_length(atoms):
             vec = atoms[1].coords - atoms[0].coords
-            return np.sqrt(np.sum(vec*vec))
+            return np.sqrt(np.sum(vec * vec))
 
         def calc_angle(atoms):
             veca = atoms[1].coords - atoms[0].coords
@@ -294,7 +294,17 @@ class BondSet:
             with open("{0}_length.dat".format(mol), "w") as f:
                 bonds = self.get_bond_lengths(mol, with_constr=True)
                 for vals in zip(*(bond.values for bond in bonds)):
-                    print((len(vals)*"{:12.5f}").format(*vals), file=f)
+                    print((len(vals) * "{:12.5f}").format(*vals), file=f)
+
+            with open("{0}_angle.dat".format(mol), "w") as f:
+                bonds = self.get_bond_angles(mol)
+                for vals in zip(*(bond.values for bond in bonds)):
+                    print((len(vals) * "{:12.5f}").format(*vals), file=f)
+
+            with open("{0}_dihedral.dat".format(mol), "w") as f:
+                bonds = self.get_bond_dihedrals(mol)
+                for vals in zip(*(bond.values for bond in bonds)):
+                    print((len(vals) * "{:12.5f}").format(*vals), file=f)
 
     def __len__(self):
         return len(self._molecules)

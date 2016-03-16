@@ -57,7 +57,7 @@ class ForceField:
         # TODO print everything to file
         with open(os.path.join(self.dirname, name), "w") as rtp:
             print("[ bondedtypes ]", file=rtp)
-            print(("{:4d}"*8).format(1, 1, 1, 1, 1, 1, 0, 0), file=rtp)
+            print(("{:4d}" * 8).format(1, 1, 1, 1, 1, 1, 0, 0), file=rtp)
 
             for mol in mapping:
                 try:
