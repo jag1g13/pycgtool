@@ -13,7 +13,7 @@ from .parsers.cfg import CFG
 np.seterr(all="raise")
 
 
-class BeadMap:
+class BeadMap(Atom):
     """
     POD class holding values relating to the AA->CG transformation for a single bead.
     """
@@ -30,11 +30,8 @@ class BeadMap:
         :param mass: The total bead mass
         :return: Instance of BeadMap
         """
-        self.name = name
-        self.type = type
+        Atom.__init__(self, name=name, type=type, charge=charge, mass=mass)
         self.atoms = atoms
-        self.charge = charge
-        self.mass = mass
 
     def __iter__(self):
         """
@@ -70,7 +67,7 @@ class Mapping:
 
     Contains a dictionary of lists of BeadMaps.  Each list corresponds to a single molecule.
     """
-    def __init__(self, filename, options):
+    def __init__(self, filename, options, itp=None):
         """
         Read in the AA->CG mapping from a file.
 
@@ -88,6 +85,19 @@ class Mapping:
                 for name, typ, *atoms in mol:
                     newbead = BeadMap(name=name, type=typ, atoms=atoms)
                     molmap.append(newbead)
+
+        if itp is not None:
+            with CFG(itp) as itp:
+                atoms = {}
+                for toks in itp["atoms"]:
+                    # Store charge and mass
+                    atoms[toks[4]] = (float(toks[6]), float(toks[7]))
+
+                for bead in self._mappings[itp["moleculetype"][0][0]]:
+                    for atom in bead:
+                        bead.charge += atoms[atom][0]
+                        bead.mass += atoms[atom][1]
+                    print(bead.name, bead.charge, bead.mass)
 
     def __len__(self):
         return len(self._mappings)
@@ -124,7 +134,7 @@ class Mapping:
                 # Residue not in mapping, assume user doesn't want to map it (e.g. solvent)
                 continue
             res = Residue(name=aares.name, num=aares.num)
-            res.atoms = [Atom(name=atom.name, type=atom.type) for atom in molmap]
+            res.atoms = [Atom(name=bead.name, type=bead.type, charge=bead.charge, mass=bead.mass) for bead in molmap]
 
             # Perform mapping
             for i, (bead, bmap) in enumerate(zip(res, molmap)):
@@ -134,13 +144,17 @@ class Mapping:
                 for atom in bmap:
                     try:
                         bead.coords += coordinate_weight(self._map_center, aares[atom])
+                        bead.charge = bmap.charge
+                        bead.mass = bmap.mass
                         n += 1
                     except KeyError:
                         # Atom not in residue, happens in terminal residues of polymer
                         pass
 
                 try:
-                    bead.coords /= n
+                    center_scale = {"geom": n,
+                                    "mass": bmap.mass}
+                    bead.coords /= center_scale[self._map_center]
                 except FloatingPointError:
                     # Bead contains no atoms, happens in terminal residue of polymer
                     pass

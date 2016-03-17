@@ -20,13 +20,13 @@ def main(args, config):
     :param args: Arguments from argparse
     :param config: Configuration dictionary
     """
-    frame = Frame(gro=args.gro, xtc=args.xtc)
+    frame = Frame(gro=args.gro, xtc=args.xtc, itp=args.itp)
 
     if args.bnd:
         bonds = BondSet(args.bnd, config)
 
     if args.map:
-        mapping = Mapping(args.map, config)
+        mapping = Mapping(args.map, config, itp=args.itp)
 
     # Main loop - perform mapping and measurement on every frame in XTC
     numframes = frame.numframes if args.frames == -1 else args.frames
@@ -137,13 +137,14 @@ def interactive(config, stdscr):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Perform coarse-grain mapping of atomistic trajectory")
-    required = parser.add_argument_group("Required arguments")
-    required.add_argument('-g', '--gro', type=str, required=True, help="GROMACS GRO file")
-    required.add_argument('-m', '--map', type=str, required=True, help="Mapping file")
-    required.add_argument('-x', '--xtc', type=str, help="GROMACS XTC file")
-    required.add_argument('-b', '--bnd', type=str, help="Bonds file")
+    input_files = parser.add_argument_group("Input files")
+    input_files.add_argument('-g', '--gro', type=str, required=True, help="GROMACS GRO file")
+    input_files.add_argument('-m', '--map', type=str, required=True, help="Mapping file")
+    input_files.add_argument('-x', '--xtc', type=str, help="GROMACS XTC file")
+    input_files.add_argument('-b', '--bnd', type=str, help="Bonds file")
+    input_files.add_argument('-i', '--itp', type=str, help="GROMACS ITP file")
 
-    parser.add_argument('-i', '--interactive', default=False, action='store_true')
+    parser.add_argument('--interactive', default=False, action='store_true')
     parser.add_argument('-f', '--frames', type=int, default=-1, help="Number of frames to read")
 
     args = parser.parse_args()

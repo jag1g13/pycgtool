@@ -10,6 +10,7 @@ import numpy as np
 from simpletraj import trajectory
 
 from .util import backup_file
+from .parsers.cfg import CFG
 
 np.seterr(all="raise")
 
@@ -18,14 +19,32 @@ class Atom:
     """
     Hold data for a single atom
     """
-    __slots__ = ["name", "num", "type", "mass", "coords"]
+    __slots__ = ["name", "num", "type", "mass", "charge", "coords"]
 
-    def __init__(self, name=None, num=None, type=None, mass=None, coords=None):
+    def __init__(self, name=None, num=None, type=None, mass=None, charge=None, coords=None):
         self.name = name
         self.num = num
         self.type = type
         self.mass = mass
+        self.charge = charge
         self.coords = coords
+
+    def __repr__(self):
+        return "Atom #{0} {1} type: {2} mass: {3} charge: {4}".format(
+            self.num, self.name, self.type, self.mass, self.charge
+        )
+
+    def add_missing(self, other):
+        assert self.name == other.name
+        assert self.num == other.num
+        if self.type is None:
+            self.type = other.type
+        if self.mass is None:
+            self.mass = other.mass
+        if self.charge is None:
+            self.charge = other.charge
+        if self.coords is None:
+            self.coords = other.coords
 
 
 class Residue:
@@ -65,12 +84,13 @@ class Frame:
     Hold Atom data separated into Residues
     """
 
-    def __init__(self, gro=None, xtc=None):
+    def __init__(self, gro=None, xtc=None, itp=None):
         """
         Return Frame instance having read Residues and Atoms from GRO if provided
 
         :param gro: GROMACS GRO file to read initial frame and extract residues
         :param xtc: GROMACS XTC file to read subsequent frames
+        :param itp: GROMACS ITP file to read masses and charges
         :return: Frame instance
         """
         self.residues = []
@@ -84,6 +104,9 @@ class Frame:
             if xtc is not None:
                 self.xtc = trajectory.XtcTrajectory(xtc)
                 self.numframes += self.xtc.numframes
+
+            if itp is not None:
+                self._parse_itp(itp)
 
     def __len__(self):
         return len(self.residues)
@@ -158,6 +181,25 @@ class Frame:
             line = gro.readline()
             self.box = np.array([float(x) for x in line.split()])
             self.number += 1
+
+    def _parse_itp(self, filename):
+        """
+        Parse a GROMACS ITP file to extract atom charges/masses.
+
+        Optional but requires that ITP contains only a single residue.
+
+        :param filename: Filename of GROMACS ITP to read
+        """
+        with CFG(filename) as itp:
+            itpres = Residue(itp["moleculetype"][0][0])
+            for line in itp["atoms"]:
+                atom = Atom(num=int(line[0]) - 1, type=line[1], name=line[4], charge=float(line[6]), mass=float(line[7]))
+                itpres.add_atom(atom)
+
+            for res in self.residues:
+                if res.name == itpres.name:
+                    for atom, itpatom in zip(res, itpres):
+                        atom.add_missing(itpatom)
 
     def output(self, filename, format="gro"):
         """

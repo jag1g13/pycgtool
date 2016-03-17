@@ -27,6 +27,9 @@ class Section:
     def __iter__(self):
         return iter(self._lines)
 
+    def __getitem__(self, item):
+        return self._lines[item]
+
     def add_line(self, line):
         self._lines.append(line)
 
