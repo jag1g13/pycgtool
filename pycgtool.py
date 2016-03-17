@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
-import curses
-import curses.textpad
 
 from pycgtool.frame import Frame
 from pycgtool.mapping import Mapping
 from pycgtool.bondset import BondSet
 from pycgtool.forcefield import ForceField
-from pycgtool.util import Progress, Options
+from pycgtool.interface import Progress, Options
 
 
 def main(args, config):
@@ -65,76 +63,6 @@ def map_only(args, config):
     cgframe.output("out.gro", format=config.output)
 
 
-def interactive(config, stdscr):
-    """
-    Read in options in interactive terminal mode using curses.  Take defaults as options argument.
-
-    :param config: Default configuration, will be mutated
-    :param stdscr: Curses window to use as interface
-    """
-    stdscr.clear()
-    stdscr.addstr(1, 1, "Using GRO: {0}".format(args.gro))
-    stdscr.addstr(2, 1, "Using XTC: {0}".format(args.xtc))
-    stdscr.box()
-    stdscr.refresh()
-
-    nrows = len(config)
-
-    errscr = stdscr.derwin(2, curses.COLS - 3, nrows + 8, 1)
-    errscr.border()
-
-    window_config = stdscr.derwin(nrows + 2, curses.COLS - 3, 5, 1)
-    window_config.box()
-    window_config.refresh()
-    window_keys = window_config.derwin(nrows, 20, 1, 0)
-    window_config.vline(1, 18, curses.ACS_VLINE, nrows)
-    window_vals = window_config.derwin(nrows, curses.COLS - 24, 1, 20)
-    text_edit_wins = []
-    text_inputs = []
-
-    for i, (key, value) in enumerate(config):
-        window_keys.addstr(i, 0, key)
-        text_edit_wins.append(window_vals.derwin(1, 30, i, 0))
-        text_edit_wins[-1].addstr(0, 0, str(value))
-        text_inputs.append(curses.textpad.Textbox(text_edit_wins[-1]))
-
-    stdscr.refresh()
-    window_keys.refresh()
-    for window in text_edit_wins:
-        window.refresh()
-
-    pos = 0
-    nrows = len(config)
-    move = {"KEY_UP": lambda x: max(x - 1, 0),
-            "KEY_DOWN": lambda x: min(x + 1, nrows - 1),
-            "KEY_LEFT": lambda x: x,
-            "KEY_RIGHT": lambda x: x}
-
-    while True:
-        key = text_edit_wins[pos].getkey(0, 0)
-        errscr.erase()
-        if key in move:
-            pos = move[key](pos)
-        if key == "\n":
-            if type(config[pos]) is bool:
-                config.toggle_boolean_by_num(pos)
-            else:
-                val = text_inputs[pos].edit().strip()
-                try:
-                    config.set_by_num(pos, val)
-                except ValueError:
-                    errscr.addstr(0, 0, "Invalid value '{0}' for option".format(val))
-                    errscr.addstr(1, 0, "Value has been reset".format(val))
-
-            text_edit_wins[pos].erase()
-            text_edit_wins[pos].addstr(0, 0, str(config[pos]))
-            text_edit_wins[pos].refresh()
-
-        errscr.refresh()
-        if key == "q":
-            break
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Perform coarse-grain mapping of atomistic trajectory")
     input_files = parser.add_argument_group("Input files")
@@ -153,14 +81,13 @@ if __name__ == "__main__":
                       ("map_center", "geom"),
                       ("constr_threshold", 100000),
                       ("dump_measurements", False),
-                      ("output_forcefield", False)])
+                      ("output_forcefield", False)],
+                     args)
     if args.bnd is None:
         config.set("map_only", True)
 
     if args.interactive:
-        def inter(stdscr):
-            interactive(config, stdscr)
-        curses.wrapper(inter)
+        config.interactive()
     else:
         print("Using GRO: {0}".format(args.gro))
         print("Using XTC: {0}".format(args.xtc))

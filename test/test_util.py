@@ -4,12 +4,14 @@ import os
 import numpy as np
 
 from pycgtool.util import tuple_equivalent, extend_graph_chain, stat_moments
-from pycgtool.util import dir_up, backup_file, truthy, sliding, r_squared
+from pycgtool.util import dir_up, backup_file, sliding, r_squared
 
 
 class UtilTest(unittest.TestCase):
     def test_tuple_equivalent(self):
         t1 = (0, 1, 2)
+        t2 = (0, 1, 2)
+        self.assertTrue(tuple_equivalent(t1, t2))
         t2 = (2, 1, 0)
         self.assertTrue(tuple_equivalent(t1, t2))
         t2 = (2, 1, 3)
@@ -61,12 +63,6 @@ class UtilTest(unittest.TestCase):
         os.remove("testfile")
         os.remove("#testfile.1#")
         os.remove("#testfile.2#")
-
-    def test_truthy(self):
-        self.assertTrue(truthy("YES"))
-        self.assertFalse(truthy("faLSE"))
-        with self.assertRaises(ValueError):
-            truthy("potato")
 
     def test_sliding(self):
         l = [0, 1, 2, 3, 4]
