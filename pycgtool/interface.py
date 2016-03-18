@@ -4,6 +4,9 @@ import curses.textpad
 
 
 class Options:
+    """
+    Class to hold program options not specified at the initial command line.
+    """
     def __init__(self, default, args=None):
         self._dict = collections.OrderedDict()
         for key, val in default:
@@ -14,6 +17,7 @@ class Options:
 
             self._dict[key.lower()] = (val, type(val))
 
+        # Allow to carry options from argparse
         self.args = args
 
     def __getattr__(self, attr):
@@ -40,6 +44,12 @@ class Options:
                 raise TypeError("Must access Options using either a string or an integer")
 
     def set(self, opt, val):
+        """
+        Set an argument by name.
+
+        :param opt: Option to set
+        :param val: Value to set option to
+        """
         opt = opt.lower()
         try:
             val = val.lower()
@@ -55,29 +65,49 @@ class Options:
         else:
             self._dict[opt] = (val, _type)
 
-    def set_by_num(self, opt_num, val):
+    def _set_by_num(self, opt_num, val):
+        """
+        Set an argument if only its position in sequence is known.
+        For use in Options._inter.
+
+        :param opt_num: Sequence number of option to set
+        :param val: Value to set option to
+        """
         opt = list(self._dict.keys())[opt_num]
         self.set(opt, val)
 
     def toggle_boolean(self, opt):
+        """
+        Toggle a boolean argument by name.
+
+        :param opt: Option to toggle
+        """
         entry = self._dict[opt]
         if entry[1] is bool:
             self._dict[opt] = (not entry[0], entry[1])
         else:
             raise TypeError("Only boolean options can be toggled")
 
-    def toggle_boolean_by_num(self, opt_num):
+    def _toggle_boolean_by_num(self, opt_num):
+        """
+        Toggle a boolean argument if only its position in sequence is known.
+        For use in Options._inter.
+
+        :param opt_num: Sequence number of option to toggle
+        """
         opt = list(self._dict.keys())[opt_num]
         self.toggle_boolean(opt)
 
     def interactive(self):
+        """
+        Read options in interactive terminal mode using curses.
+        """
         curses.wrapper(self._inter)
 
     def _inter(self, stdscr):
         """
-        Read in options in interactive terminal mode using curses.  Take defaults as options argument.
+        Read options in interactive terminal mode using curses.
 
-        :param config: Default configuration, will be mutated
         :param stdscr: Curses window to use as interface
         """
         stdscr.clear()
@@ -126,11 +156,11 @@ class Options:
                 pos = move[key](pos)
             if key == "\n":
                 if type(self[pos]) is bool:
-                    self.toggle_boolean_by_num(pos)
+                    self._toggle_boolean_by_num(pos)
                 else:
                     val = text_inputs[pos].edit().strip()
                     try:
-                        self.set_by_num(pos, val)
+                        self._set_by_num(pos, val)
                     except ValueError:
                         errscr.addstr(0, 0, "Invalid value '{0}' for option".format(val))
                         errscr.addstr(1, 0, "Value has been reset".format(val))
@@ -145,6 +175,12 @@ class Options:
 
 
 def _truthy(string):
+    """
+    Evaluate a string as True or False in the natural way.
+
+    :param string: String to evaluate
+    :return: True or False
+    """
     truthy_strings = ("yes", "y", "on", "true", "t", "1")
     falsey_strings = ("no", "n", "off", "false", "f", "0")
 
@@ -158,12 +194,19 @@ def _truthy(string):
 
 
 class Progress:
+    """
+    Display a progress bar during the main loop of a program.
+    """
+
     def __init__(self, maxits, length=20, prewhile=None, postwhile=None, quiet=False):
         """
-        Class to handle printing of a progress bar within loops.
+        Return progress bar instance to handle printing of a progress bar within loops.
 
         :param maxits: Expected number of iterations
         :param length: Length of progress bar in characters
+        :param prewhile: Function to check before each iteration, stops if False
+        :param postwhile: Function to check after each iteration, stops if False
+        :param quiet: Skip printing of progress bar - for testing
         """
         self._maxits = maxits
         self._length = length

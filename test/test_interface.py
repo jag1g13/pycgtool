@@ -47,27 +47,7 @@ class UtilTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             opt.set("b", "hello")
 
-    def test_options_set_by_num(self):
-        opt = Options([("a", True), ("b", 10), ("c", "hello")])
-        opt.set_by_num(0, False)
-        opt.set_by_num(1, 11)
-        self.assertEqual(False, opt.a)
-        self.assertEqual(11, opt.b)
-        self.assertEqual("hello", opt.c)
-        opt.set_by_num(0, "yEs")
-        opt.set_by_num(1, "12")
-        self.assertEqual(True, opt.a)
-        self.assertEqual(12, opt.b)
-        opt.set_by_num(0, "f")
-        self.assertEqual(False, opt.a)
-        with self.assertRaises(ValueError):
-            opt.set_by_num(0, "hello")
-        with self.assertRaises(ValueError):
-            opt.set_by_num(1, "hello")
-
     def test_options_toggle(self):
         opt = Options([("a", True), ("b", 10), ("c", "hello")])
         opt.toggle_boolean("a")
         self.assertEqual(False, opt.a)
-        opt.toggle_boolean_by_num(0)
-        self.assertEqual(True, opt.a)

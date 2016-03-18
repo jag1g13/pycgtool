@@ -41,11 +41,12 @@ def main(args, config):
         cgframe.output("out.gro", format=config.output)
 
     if args.bnd:
-        bonds.boltzmann_invert()
-        bonds.write_itp("out.itp", mapping=mapping)
-        if config.output_forcefield:
-            ff = ForceField("fftest.ff")
-            ff.write_rtp("test.rtp", mapping, bonds)
+        if args.map:
+            bonds.boltzmann_invert()
+            bonds.write_itp("out.itp", mapping=mapping)
+            if config.output_forcefield:
+                ff = ForceField("fftest.ff")
+                ff.write_rtp("test.rtp", mapping, bonds)
 
         if config.dump_measurements:
             bonds.dump_values()
@@ -56,6 +57,7 @@ def map_only(args, config):
     Perform AA->CG mapping and output coordinate file.
 
     :param args: Program arguments
+    :param config: Object containing run options
     """
     frame = Frame(gro=args.gro)
     mapping = Mapping(args.map, config)
@@ -67,7 +69,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Perform coarse-grain mapping of atomistic trajectory")
     input_files = parser.add_argument_group("Input files")
     input_files.add_argument('-g', '--gro', type=str, required=True, help="GROMACS GRO file")
-    input_files.add_argument('-m', '--map', type=str, required=True, help="Mapping file")
+    input_files.add_argument('-m', '--map', type=str, help="Mapping file")
     input_files.add_argument('-x', '--xtc', type=str, help="GROMACS XTC file")
     input_files.add_argument('-b', '--bnd', type=str, help="Bonds file")
     input_files.add_argument('-i', '--itp', type=str, help="GROMACS ITP file")
