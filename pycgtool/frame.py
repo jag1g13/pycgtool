@@ -68,6 +68,9 @@ class Residue:
         except TypeError:
             return self.atoms[self.name_to_num[item]]
 
+    def __len__(self):
+        return len(self.atoms)
+
     def add_atom(self, atom):
         """
         Add an Atom to this Residue and store location in index
@@ -123,7 +126,7 @@ class Frame:
         rep += "\n".join(atoms)
         return rep
 
-    def next_frame(self):
+    def next_frame(self, exclude=None):
         """
         Read next frame from XTC
 
@@ -134,10 +137,11 @@ class Frame:
             i = 0
             # Do this first outside the loop - numpy is fast
             self.xtc.x /= 10.
-            x = self.xtc.x
             for res in self.residues:
+                if exclude is not None and res.name in exclude:
+                    continue
                 for atom in res:
-                    atom.coords = x[i]
+                    atom.coords = self.xtc.x[i]
                     i += 1
             self.number += 1
             return True

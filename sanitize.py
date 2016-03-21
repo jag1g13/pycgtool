@@ -14,12 +14,11 @@ def main(args):
             line = line.strip("\n")
             if line.startswith("["):
                 section = line.strip("[ ]")
-            elif line.startswith("#") or line.startswith(";"):
+            elif line.startswith("#") or line.startswith(";") or line == "":
                 pass
             elif len(line.split()) < expected_toks.get(section, 0):
                 continue
-
-            if expected_toks.get(section, 0) < 0:
+            elif expected_toks.get(section, 0) < 0:
                 continue
 
             print(line, file=outfile)

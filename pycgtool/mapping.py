@@ -133,32 +133,45 @@ class Mapping:
             except KeyError:
                 # Residue not in mapping, assume user doesn't want to map it (e.g. solvent)
                 continue
-            res = Residue(name=aares.name, num=aares.num)
-            res.atoms = [Atom(name=bead.name, type=bead.type, charge=bead.charge, mass=bead.mass) for bead in molmap]
 
-            # Perform mapping
-            for i, (bead, bmap) in enumerate(zip(res, molmap)):
-                res.name_to_num[bead.name] = i
-                bead.coords = np.zeros(3)
-                n = 0
-                for atom in bmap:
-                    try:
-                        bead.coords += coordinate_weight(self._map_center, aares[atom])
-                        bead.charge = bmap.charge
-                        bead.mass = bmap.mass
-                        n += 1
-                    except KeyError:
-                        # Atom not in residue, happens in terminal residues of polymer
-                        pass
+            res = self._apply_res(aares)
 
-                try:
-                    center_scale = {"geom": n,
-                                    "mass": bmap.mass}
-                    bead.coords /= center_scale[self._map_center]
-                except FloatingPointError:
-                    # Bead contains no atoms, happens in terminal residue of polymer
-                    pass
-                cgframe.natoms += 1
-
+            cgframe.natoms += len(res)
             cgframe.residues.append(res)
         return cgframe
+
+    def _apply_res(self, aares):
+        """
+        Apply mapping transformation to a single residue to allow multithreading.
+
+        :param aares: Atomistic residue to apply mapping
+        :return: A single coarse grained residue
+        """
+        molmap = self._mappings[aares.name]
+        res = Residue(name=aares.name, num=aares.num)
+        res.atoms = [Atom(name=bead.name, type=bead.type, charge=bead.charge, mass=bead.mass) for bead in molmap]
+
+        # Perform mapping
+        for i, (bead, bmap) in enumerate(zip(res, molmap)):
+            res.name_to_num[bead.name] = i
+            bead.coords = np.zeros(3)
+            n = 0
+            for atom in bmap:
+                try:
+                    bead.coords += coordinate_weight(self._map_center, aares[atom])
+                    bead.charge = bmap.charge
+                    bead.mass = bmap.mass
+                    n += 1
+                except KeyError:
+                    # Atom not in residue, happens in terminal residues of polymer
+                    pass
+
+            try:
+                center_scale = {"geom": n,
+                                "mass": bmap.mass}
+                bead.coords /= center_scale[self._map_center]
+            except FloatingPointError:
+                # Bead contains no atoms, happens in terminal residue of polymer
+                pass
+
+        return res
