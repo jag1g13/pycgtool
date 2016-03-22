@@ -6,7 +6,7 @@ BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a sin
 
 import numpy as np
 
-from .util import stat_moments, sliding
+from .util import stat_moments, sliding, dist_with_pbc
 from .util import extend_graph_chain, cross, backup_file
 from .parsers.cfg import CFG
 
@@ -49,7 +49,7 @@ class Bond:
         rt = 8.314 * temp / 1000.
         rad2 = np.pi * np.pi / (180. * 180.)
         conv = {2: lambda: rt / var,
-                3: lambda: rt / (np.sin(np.radians(mean))**2 * var * rad2),
+                3: lambda: rt * np.sin(np.radians(mean))**2 / (var * rad2),
                 4: lambda: rt / (var * rad2)}
 
         self.eqm = mean
@@ -235,19 +235,19 @@ class BondSet:
         :param frame: Frame from which to calculate values
         """
         def calc_length(atoms):
-            vec = atoms[1].coords - atoms[0].coords
+            vec = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
             return np.sqrt(np.sum(vec * vec))
 
         def calc_angle(atoms):
-            veca = atoms[1].coords - atoms[0].coords
-            vecb = atoms[2].coords - atoms[1].coords
+            veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
+            vecb = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.box)
             ret = np.degrees(np.pi - angle(veca, vecb))
             return ret
 
         def calc_dihedral(atoms):
-            vec1 = atoms[1].coords - atoms[0].coords
-            vec2 = atoms[2].coords - atoms[1].coords
-            vec3 = atoms[3].coords - atoms[2].coords
+            vec1 = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
+            vec2 = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.box)
+            vec3 = dist_with_pbc(atoms[2].coords, atoms[3].coords, frame.box)
 
             c1 = cross(vec1, vec2)
             c2 = cross(vec2, vec3)

@@ -99,6 +99,7 @@ class Frame:
         self.residues = []
         self.number = -1
         self.numframes = 0
+        self.box = np.zeros(3)
 
         if gro is not None:
             self._parse_gro(gro)
@@ -144,6 +145,9 @@ class Frame:
                     atom.coords = self.xtc.x[i]
                     i += 1
             self.number += 1
+
+            self.box = np.diag(self.xtc.box) / 10
+
             return True
         # IndexError - run out of xtc frames
         # AttributeError - we didn't provide an xtc

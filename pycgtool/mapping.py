@@ -9,6 +9,7 @@ import numpy as np
 
 from .frame import Atom, Residue, Frame
 from .parsers.cfg import CFG
+from .util import dist_with_pbc
 
 np.seterr(all="raise")
 
@@ -43,6 +44,9 @@ class BeadMap(Atom):
 
     def __len__(self):
         return len(self.atoms)
+
+    def __getitem__(self, item):
+        return self.atoms[item]
 
 
 class EmptyBeadError(Exception):
@@ -134,17 +138,18 @@ class Mapping:
                 # Residue not in mapping, assume user doesn't want to map it (e.g. solvent)
                 continue
 
-            res = self._apply_res(aares)
+            res = self._apply_res_pbc(aares, frame.box)
 
             cgframe.natoms += len(res)
             cgframe.residues.append(res)
         return cgframe
 
-    def _apply_res(self, aares):
+    def _apply_res_pbc(self, aares, box):
         """
         Apply mapping transformation to a single residue to allow multithreading.
 
         :param aares: Atomistic residue to apply mapping
+        :param box: Cubic periodic box vectors
         :return: A single coarse grained residue
         """
         molmap = self._mappings[aares.name]
@@ -154,13 +159,21 @@ class Mapping:
         # Perform mapping
         for i, (bead, bmap) in enumerate(zip(res, molmap)):
             res.name_to_num[bead.name] = i
-            bead.coords = np.zeros(3)
             n = 0
+            bead_origin = aares[bmap[0]].coords
+            bead.charge = bmap.charge
+            bead.mass = bmap.mass
+            bead.coords = np.zeros(3)
             for atom in bmap:
                 try:
-                    bead.coords += coordinate_weight(self._map_center, aares[atom])
-                    bead.charge = bmap.charge
-                    bead.mass = bmap.mass
+                    atom_rel_vec = aares[atom].coords - bead_origin
+                    atom_rel_vec -= box * np.around(atom_rel_vec / box)
+                    centers = {"geom": lambda: atom_rel_vec,
+                               "mass": lambda: atom_rel_vec * aares[atom].mass}
+                    try:
+                        bead.coords += centers[self._map_center]()
+                    except KeyError:
+                        raise ValueError("Invalid map-center type '{0}'".format(self._map_center))
                     n += 1
                 except KeyError:
                     # Atom not in residue, happens in terminal residues of polymer
@@ -169,6 +182,7 @@ class Mapping:
             try:
                 center_scale = {"geom": n,
                                 "mass": bmap.mass}
+                bead.coords += center_scale[self._map_center] * bead_origin
                 bead.coords /= center_scale[self._map_center]
             except FloatingPointError:
                 # Bead contains no atoms, happens in terminal residue of polymer

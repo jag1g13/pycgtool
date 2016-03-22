@@ -25,6 +25,8 @@ def main(args, config):
 
     if args.map:
         mapping = Mapping(args.map, config, itp=args.itp)
+        cgframe = mapping.apply(frame, exclude={"SOL"})
+        cgframe.output("out.gro", format=config.output)
 
     # Main loop - perform mapping and measurement on every frame in XTC
     numframes = frame.numframes if args.frames == -1 else args.frames
@@ -36,9 +38,6 @@ def main(args, config):
 
         if args.bnd:
             bonds.apply(cgframe)
-
-    if args.map:
-        cgframe.output("out.gro", format=config.output)
 
     if args.bnd:
         if args.map:

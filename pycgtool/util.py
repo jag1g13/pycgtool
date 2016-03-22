@@ -40,6 +40,24 @@ def tuple_equivalent(tuple1, tuple2):
         return False
 
 
+def dist_with_pbc(pos1, pos2, box):
+    """
+    Calculate the distance between two points accounting for periodicity.
+
+    :param pos1: 3d vector position 1
+    :param pos2: 3d vector position 2
+    :param box: Cubic box vectors
+    :return: Vector between two points
+    """
+    d = pos2 - pos1
+    try:
+        d -= box * np.around(d / box)
+        return d
+    except FloatingPointError:
+        # Box vectors were zero, return distance without pbc
+        return d
+
+
 def extend_graph_chain(extend, pairs):
     """
     Take list of tuples representing chained links in an undirected graph and extend the chain length.

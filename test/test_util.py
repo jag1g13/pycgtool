@@ -2,9 +2,10 @@ import unittest
 import os
 
 import numpy as np
+import numpy.testing
 
 from pycgtool.util import tuple_equivalent, extend_graph_chain, stat_moments
-from pycgtool.util import dir_up, backup_file, sliding, r_squared
+from pycgtool.util import dir_up, backup_file, sliding, r_squared, dist_with_pbc
 
 
 class UtilTest(unittest.TestCase):
@@ -16,6 +17,16 @@ class UtilTest(unittest.TestCase):
         self.assertTrue(tuple_equivalent(t1, t2))
         t2 = (2, 1, 3)
         self.assertFalse(tuple_equivalent(t1, t2))
+
+    def test_dist_with_pbc(self):
+        pos_a = np.array([1., 1., 1.])
+        pos_b = np.array([9., 9., 9.])
+        numpy.testing.assert_equal(np.array([8., 8., 8.]),
+                                   dist_with_pbc(pos_a, pos_b, np.array([0., 0., 0.])))
+        numpy.testing.assert_equal(np.array([8., 8., 8.]),
+                                   dist_with_pbc(pos_a, pos_b, np.array([20., 20., 20.])))
+        numpy.testing.assert_equal(np.array([-2., -2., -2.]),
+                                   dist_with_pbc(pos_a, pos_b, np.array([10., 10., 10.])))
 
     def test_triplets_from_pairs(self):
         pairs = [(0, 1), (1, 2), (2, 3)]
