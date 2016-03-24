@@ -1,6 +1,7 @@
 import collections
 import curses
 import curses.textpad
+import time
 
 
 class Options:
@@ -214,6 +215,7 @@ class Progress:
         self._postwhile = postwhile
         self._quiet = quiet
         self._its = 0
+        self._start_time = time.clock()
 
     def __iter__(self):
         return self
@@ -237,7 +239,7 @@ class Progress:
     def _stop(self):
         if not self._quiet:
             self._display()
-            print()
+            print(" in {0:d}s".format(int(time.clock() - self._start_time)))
         raise StopIteration
 
     def _display(self):

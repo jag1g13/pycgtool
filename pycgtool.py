@@ -18,7 +18,7 @@ def main(args, config):
     :param args: Arguments from argparse
     :param config: Configuration dictionary
     """
-    frame = Frame(gro=args.gro, xtc=args.xtc, itp=args.itp)
+    frame = Frame(gro=args.gro, xtc=args.xtc, itp=args.itp, frame_start=args.begin)
 
     if args.bnd:
         bonds = BondSet(args.bnd, config)
@@ -29,7 +29,7 @@ def main(args, config):
         cgframe.output("out.gro", format=config.output)
 
     # Main loop - perform mapping and measurement on every frame in XTC
-    numframes = frame.numframes if args.frames == -1 else args.frames
+    numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
     for _ in Progress(numframes, postwhile=frame.next_frame):
         if args.map:
             cgframe = mapping.apply(frame, exclude={"SOL"})
@@ -48,7 +48,7 @@ def main(args, config):
                 ff.write_rtp("test.rtp", mapping, bonds)
 
         if config.dump_measurements:
-            bonds.dump_values()
+            bonds.dump_values(config.dump_n_values)
 
 
 def map_only(args, config):
@@ -74,7 +74,9 @@ if __name__ == "__main__":
     input_files.add_argument('-i', '--itp', type=str, help="GROMACS ITP file")
 
     parser.add_argument('--interactive', default=False, action='store_true')
-    parser.add_argument('-f', '--frames', type=int, default=-1, help="Number of frames to read")
+    # parser.add_argument('-f', '--frames', type=int, default=-1, help="Number of frames to read")
+    input_files.add_argument('--begin', type=int, default=0, help="Frame number to begin")
+    input_files.add_argument('--end', type=int, default=-1, help="Frame number to end")
 
     args = parser.parse_args()
     config = Options([("output", "gro"),
@@ -82,10 +84,14 @@ if __name__ == "__main__":
                       ("map_center", "geom"),
                       ("constr_threshold", 100000),
                       ("dump_measurements", False),
+                      ("dump_n_values", 10000),
                       ("output_forcefield", False)],
                      args)
     if args.bnd is None:
         config.set("map_only", True)
+
+    if args.map is None and args.bnd is None:
+        parser.error("One of both of -m and -b is required.")
 
     if args.interactive:
         config.interactive()

@@ -87,7 +87,7 @@ class Frame:
     Hold Atom data separated into Residues
     """
 
-    def __init__(self, gro=None, xtc=None, itp=None):
+    def __init__(self, gro=None, xtc=None, itp=None, frame_start=0):
         """
         Return Frame instance having read Residues and Atoms from GRO if provided
 
@@ -97,9 +97,9 @@ class Frame:
         :return: Frame instance
         """
         self.residues = []
-        self.number = -1
+        self.number = frame_start - 1
         self.numframes = 0
-        self.box = np.zeros(3)
+        self.box = np.zeros(3, dtype=np.float32)
 
         if gro is not None:
             self._parse_gro(gro)
@@ -171,7 +171,8 @@ class Frame:
                 resnum = int(line[0:5])
                 resname = line[5:10].strip()
                 atomname = line[10:15].strip()
-                coords = np.array([float(line[20:28]), float(line[28:36]), float(line[36:44])])
+                coords = np.array([float(line[20:28]), float(line[28:36]), float(line[36:44])],
+                                  dtype=np.float32)
 
                 if resnum != resnum_last:
                     self.residues.append(Residue(name=resname,
@@ -187,7 +188,7 @@ class Frame:
                 atnum += 1
 
             line = gro.readline()
-            self.box = np.array([float(x) for x in line.split()])
+            self.box = np.array([float(x) for x in line.split()], dtype=np.float32)
             self.number += 1
 
     def _parse_itp(self, filename):

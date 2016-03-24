@@ -18,7 +18,7 @@ class BeadMap(Atom):
     """
     POD class holding values relating to the AA->CG transformation for a single bead.
     """
-    __slots__ = ["name", "typ", "type", "atoms", "charge", "mass"]
+    __slots__ = ["name", "type", "atoms", "charge", "mass"]
 
     def __init__(self, name=None, type=None, atoms=None, charge=0, mass=0):
         """
@@ -159,33 +159,17 @@ class Mapping:
         # Perform mapping
         for i, (bead, bmap) in enumerate(zip(res, molmap)):
             res.name_to_num[bead.name] = i
-            n = 0
-            bead_origin = aares[bmap[0]].coords
+            ref_coords = aares[bmap[0]].coords
             bead.charge = bmap.charge
             bead.mass = bmap.mass
-            bead.coords = np.zeros(3)
-            for atom in bmap:
-                try:
-                    atom_rel_vec = aares[atom].coords - bead_origin
-                    atom_rel_vec -= box * np.around(atom_rel_vec / box)
-                    centers = {"geom": lambda: atom_rel_vec,
-                               "mass": lambda: atom_rel_vec * aares[atom].mass}
-                    try:
-                        bead.coords += centers[self._map_center]()
-                    except KeyError:
-                        raise ValueError("Invalid map-center type '{0}'".format(self._map_center))
-                    n += 1
-                except KeyError:
-                    # Atom not in residue, happens in terminal residues of polymer
-                    pass
 
-            try:
-                center_scale = {"geom": n,
-                                "mass": bmap.mass}
-                bead.coords += center_scale[self._map_center] * bead_origin
-                bead.coords /= center_scale[self._map_center]
-            except FloatingPointError:
-                # Bead contains no atoms, happens in terminal residue of polymer
-                pass
+            bead.coords = np.zeros(3, dtype=np.float32)
+            for atom in bmap:
+                bead.coords += dist_with_pbc(ref_coords, aares[atom].coords, box)
+
+            center_scale = {"geom": len(bmap),
+                            "mass": bmap.mass}
+            bead.coords /= center_scale[self._map_center]
+            bead.coords += ref_coords
 
         return res
