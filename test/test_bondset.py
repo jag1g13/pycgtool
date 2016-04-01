@@ -25,13 +25,16 @@ class BondSetTest(unittest.TestCase):
         measure.apply(frame)
         # First six are bond lengths
         self.assertEqual(1, len(measure["ALLA"][0].values))
-        self.assertAlmostEqual(0.2225376, measure["ALLA"][0].values[0])
+        self.assertAlmostEqual(0.2225376, measure["ALLA"][0].values[0],
+                               delta=0.2225376 / 500)
         # Second six are angles
         self.assertEqual(1, len(measure["ALLA"][6].values))
-        self.assertAlmostEqual(77.22779289, measure["ALLA"][6].values[0])
+        self.assertAlmostEqual(77.22779289, measure["ALLA"][6].values[0],
+                               delta=77.22779289 / 500)
         # Final six are dihedrals
         self.assertEqual(1, len(measure["ALLA"][12].values))
-        self.assertAlmostEqual(-89.5552903, measure["ALLA"][12].values[0])
+        self.assertAlmostEqual(-89.5552903, measure["ALLA"][12].values[0],
+                               delta=89.552903 / 500)
 
     def test_bondset_boltzmann_invert(self):
         ref = [(0.222817161647, 19116816.3363),
@@ -63,8 +66,10 @@ class BondSetTest(unittest.TestCase):
         measure.apply(cgframe)
         measure.boltzmann_invert()
         for i, bond in enumerate(measure["ALLA"]):
-            self.assertAlmostEqual(ref[i][0], bond.eqm, delta=abs(ref[i][0] / 1000000))
-            self.assertAlmostEqual(ref[i][1], bond.fconst, delta=abs(ref[i][1] / 1000000))
+            # Require accuracy to 0.5%
+            # Allows for slight modifications to algorithm
+            self.assertAlmostEqual(ref[i][0], bond.eqm, delta=abs(ref[i][0] / 200))
+            self.assertAlmostEqual(ref[i][1], bond.fconst, delta=abs(ref[i][1] / 200))
 
     def test_bondset_polymer(self):
         bondset = BondSet("test/data/polyethene.bnd", DummyOptions)
@@ -75,5 +80,7 @@ class BondSetTest(unittest.TestCase):
         self.assertEqual(4, len(bondset["ETH"][2].values))
         self.assertEqual(4, len(bondset["ETH"][3].values))
         bondset.boltzmann_invert()
-        self.assertAlmostEqual(0.107, bondset["ETH"][0].eqm, places=3)
-        self.assertAlmostEqual(0.107, bondset["ETH"][1].eqm, places=3)
+        self.assertAlmostEqual(0.107, bondset["ETH"][0].eqm,
+                               delta=0.107 / 500)
+        self.assertAlmostEqual(0.107, bondset["ETH"][1].eqm,
+                               delta=0.107 / 500)
