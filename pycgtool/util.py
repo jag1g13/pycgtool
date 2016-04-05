@@ -5,10 +5,18 @@ This module contains some general purpose utility functions used in PyCGTOOL.
 import os
 import itertools
 
+try:
+    from numba import jit
+except ImportError:
+    def jit(func):
+        # Dummy version of numba.jit
+        return func
+
 import numpy as np
 np.seterr(all="raise")
 
 
+@jit
 def cross(u, v):
     """
     Return vector cross product of two 3d vectors as numpy array.
@@ -17,7 +25,7 @@ def cross(u, v):
     :param v: Second 3d vector
     :return: Cross product of two vectors as numpy.array
     """
-    res = np.zeros(3)
+    res = np.empty_like(u)
     res[0] = u[1] * v[2] - u[2] * v[1]
     res[1] = u[2] * v[0] - u[0] * v[2]
     res[2] = u[0] * v[1] - u[1] * v[0]
@@ -40,6 +48,7 @@ def tuple_equivalent(tuple1, tuple2):
         return False
 
 
+@jit
 def dist_with_pbc(pos1, pos2, box):
     """
     Calculate the distance between two points accounting for periodicity.
@@ -50,12 +59,9 @@ def dist_with_pbc(pos1, pos2, box):
     :return: Vector between two points
     """
     d = pos2 - pos1
-    try:
-        d -= box * np.around(d / box)
-        return d
-    except FloatingPointError:
-        # Box vectors were zero, return distance without pbc
-        return d
+    if box[0] * box[1] * box[2] != 0:
+        d -= box * np.rint(d / box)
+    return d
 
 
 def extend_graph_chain(extend, pairs):
