@@ -118,8 +118,11 @@ class Frame:
     def __iter__(self):
         return iter(self.residues)
 
+    def __getitem__(self, item):
+        return self.residues[item]
+
     def __repr__(self):
-        rep = self.name
+        rep = self.name + "\n"
         atoms = []
         for res in self.residues:
             for atom in res:

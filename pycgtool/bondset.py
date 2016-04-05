@@ -68,7 +68,7 @@ class Bond:
             return "<Bond containing atoms {0} with r_0 {1:.3f} and force constant {2:.3e}>".format(
                 ", ".join(self.atoms), self.eqm, self.fconst
             )
-        except AttributeError:
+        except (AttributeError, TypeError):
             return "<Bond containing atoms {0}>".format(", ".join(self.atoms))
 
 

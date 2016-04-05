@@ -2,6 +2,8 @@ import unittest
 import filecmp
 import os
 
+import numpy as np
+
 from pycgtool.mapping import Mapping
 from pycgtool.frame import Frame
 
@@ -27,3 +29,10 @@ class MappingTest(unittest.TestCase):
         cgframe.output("water-cg.gro", format="gro")
         self.assertTrue(filecmp.cmp("test/data/water-cg.gro", "water-cg.gro"))
         os.remove("water-cg.gro")
+
+    def test_mapping_pbc(self):
+        mapping = Mapping("test/data/water.map", DummyOptions)
+        frame = Frame("test/data/pbcwater.gro")
+        cgframe = mapping.apply(frame)
+        np.testing.assert_allclose(frame[0][0].coords, cgframe[0][0].coords)
+

@@ -84,3 +84,12 @@ class BondSetTest(unittest.TestCase):
                                delta=0.107 / 500)
         self.assertAlmostEqual(0.107, bondset["ETH"][1].eqm,
                                delta=0.107 / 500)
+
+    def test_bondset_pbc(self):
+        bondset = BondSet("test/data/polyethene.bnd", DummyOptions)
+        frame = Frame("test/data/pbcpolyethene.gro")
+        bondset.apply(frame)
+        bondset.boltzmann_invert()
+        for bond in bondset.get_bond_lengths("ETH", True):
+            self.assertAlmostEqual(1., bond.eqm)
+            self.assertEqual(0., bond.fconst)
