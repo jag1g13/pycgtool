@@ -84,7 +84,7 @@ if __name__ == "__main__":
                       ("map_center", "geom"),
                       ("constr_threshold", 100000),
                       ("dump_measurements", False),
-                      ("dump_n_values", 10000),
+                      ("dump_n_values", 100000),
                       ("output_forcefield", False)],
                      args)
     if args.bnd is None:

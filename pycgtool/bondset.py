@@ -4,6 +4,8 @@ Module containing classes to calculate bonded properties from a Frame.
 BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a single molecule.
 """
 
+import itertools
+
 import numpy as np
 
 from .util import stat_moments, sliding, dist_with_pbc
@@ -287,24 +289,36 @@ class BondSet:
             for bond in self._molecules[mol]:
                 bond.boltzmann_invert()
 
-    def dump_values(self):
+    def dump_values(self, target_number=100000):
         for mol in self._molecules:
             if mol == "SOL":
                 continue
             with open("{0}_length.dat".format(mol), "w") as f:
                 bonds = self.get_bond_lengths(mol, with_constr=True)
-                for vals in zip(*(bond.values for bond in bonds)):
-                    print((len(vals) * "{:12.5f}").format(*vals), file=f)
+                rows = zip(*(bond.values for bond in bonds))
+                if target_number is not None:
+                    skip = 1 + min(0, len(rows) // target_number)
+                    rows = itertools.islice(rows, 0, None, skip)
+                for row in rows:
+                    print((len(row) * "{:12.5f}").format(*row), file=f)
 
             with open("{0}_angle.dat".format(mol), "w") as f:
                 bonds = self.get_bond_angles(mol)
-                for vals in zip(*(bond.values for bond in bonds)):
-                    print((len(vals) * "{:12.5f}").format(*vals), file=f)
+                rows = zip(*(bond.values for bond in bonds))
+                if target_number is not None:
+                    skip = 1 + min(0, len(rows) // target_number)
+                    rows = itertools.islice(rows, 0, None, skip)
+                for row in rows:
+                    print((len(row) * "{:12.5f}").format(*row), file=f)
 
             with open("{0}_dihedral.dat".format(mol), "w") as f:
                 bonds = self.get_bond_dihedrals(mol)
-                for vals in zip(*(bond.values for bond in bonds)):
-                    print((len(vals) * "{:12.5f}").format(*vals), file=f)
+                rows = zip(*(bond.values for bond in bonds))
+                if target_number is not None:
+                    skip = 1 + min(0, len(rows) // target_number)
+                    rows = itertools.islice(rows, 0, None, skip)
+                for row in rows:
+                    print((len(row) * "{:12.5f}").format(*row), file=f)
 
     def __len__(self):
         return len(self._molecules)
