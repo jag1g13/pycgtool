@@ -36,6 +36,13 @@ class BondSetTest(unittest.TestCase):
         self.assertAlmostEqual(-89.5552903, measure["ALLA"][12].values[0],
                                delta=89.552903 / 500)
 
+    def test_bondset_remove_triangles(self):
+        bondset = BondSet("test/data/triangle.bnd", DummyOptions)
+        angles = bondset.get_bond_angles("TRI", exclude_triangle=False)
+        self.assertEqual(3, len(angles))
+        angles = bondset.get_bond_angles("TRI", exclude_triangle=True)
+        self.assertEqual(0, len(angles))
+
     def test_bondset_boltzmann_invert(self):
         ref = [(0.222817161647, 19116816.3363),
                (0.216766804211, 55835643.1619),

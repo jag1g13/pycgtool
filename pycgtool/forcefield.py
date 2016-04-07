@@ -75,7 +75,7 @@ class ForceField:
                         bead.name, bead.type, bead.charge, 0
                     ), file=rtp)
 
-                bond_tmp = [bond for bond in bonds[mol] if len(bond) == 2]
+                bond_tmp = bonds.get_bond_lengths(mol, with_constr=True)
                 if bond_tmp:
                     print(" [ bonds ]", file=rtp)
                 for bond in bond_tmp:
@@ -84,7 +84,7 @@ class ForceField:
                         bond.eqm, bond.fconst
                     ), file=rtp)
 
-                bond_tmp = [bond for bond in bonds[mol] if len(bond) == 3]
+                bond_tmp = bonds.get_bond_angles(mol)
                 if bond_tmp:
                     print(" [ angles ]", file=rtp)
                 for bond in bond_tmp:
@@ -93,7 +93,7 @@ class ForceField:
                         bond.eqm, bond.fconst
                     ), file=rtp)
 
-                bond_tmp = [bond for bond in bonds[mol] if len(bond) == 4]
+                bond_tmp = bonds.get_bond_dihedrals(mol)
                 if bond_tmp:
                     print(" [ dihedrals ]", file=rtp)
                 for bond in bond_tmp:

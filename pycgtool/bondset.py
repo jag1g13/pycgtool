@@ -128,8 +128,22 @@ class BondSet:
     def get_bond_length_constraints(self, mol):
         return [bond for bond in self._molecules[mol] if len(bond.atoms) == 2 and bond.fconst >= self._fconst_constr_threshold]
 
-    def get_bond_angles(self, mol):
-        return [bond for bond in self._molecules[mol] if len(bond.atoms) == 3]
+    def get_bond_angles(self, mol, exclude_triangle=True):
+        angles = [bond for bond in self._molecules[mol] if len(bond.atoms) == 3]
+
+        if exclude_triangle:
+            edges = [tuple(bond.atoms) for bond in self.get_bond_lengths(mol, with_constr=True)]
+
+            def is_triangle(atoms):
+                triangle_edges = 0
+                for j in range(3):
+                    if (atoms[j-1], atoms[j]) in edges or (atoms[j], atoms[j-1]) in edges:
+                        triangle_edges += 1
+                return triangle_edges >= 3
+
+            angles = [angle for angle in angles if not is_triangle(angle.atoms)]
+
+        return angles
 
     def get_bond_dihedrals(self, mol):
         return [bond for bond in self._molecules[mol] if len(bond.atoms) == 4]
