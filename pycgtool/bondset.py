@@ -137,7 +137,7 @@ class BondSet:
             def is_triangle(atoms):
                 triangle_edges = 0
                 for j in range(3):
-                    if (atoms[j-1], atoms[j]) in edges or (atoms[j], atoms[j-1]) in edges:
+                    if (atoms[j - 1], atoms[j]) in edges or (atoms[j], atoms[j - 1]) in edges:
                         triangle_edges += 1
                 return triangle_edges >= 3
 
@@ -304,34 +304,36 @@ class BondSet:
                 bond.boltzmann_invert()
 
     def dump_values(self, target_number=100000):
+        def transpose(bond_list):
+            """
+            Transpose a list of bonds containing values and slice to provide target number of rows.
+            """
+            if not bond_list:
+                return []
+
+            lenmin = min([len(bond.values) for bond in bond_list])
+            rows = zip(*(bond.values for bond in bond_list))
+            if target_number is not None:
+                skip = 1 + max(0, lenmin // target_number)
+                rows = itertools.islice(rows, 0, None, skip)
+            return rows
+
         for mol in self._molecules:
             if mol == "SOL":
                 continue
             with open("{0}_length.dat".format(mol), "w") as f:
                 bonds = self.get_bond_lengths(mol, with_constr=True)
-                rows = zip(*(bond.values for bond in bonds))
-                if target_number is not None:
-                    skip = 1 + min(0, len(rows) // target_number)
-                    rows = itertools.islice(rows, 0, None, skip)
-                for row in rows:
+                for row in transpose(bonds):
                     print((len(row) * "{:12.5f}").format(*row), file=f)
 
             with open("{0}_angle.dat".format(mol), "w") as f:
                 bonds = self.get_bond_angles(mol)
-                rows = zip(*(bond.values for bond in bonds))
-                if target_number is not None:
-                    skip = 1 + min(0, len(rows) // target_number)
-                    rows = itertools.islice(rows, 0, None, skip)
-                for row in rows:
+                for row in transpose(bonds):
                     print((len(row) * "{:12.5f}").format(*row), file=f)
 
             with open("{0}_dihedral.dat".format(mol), "w") as f:
                 bonds = self.get_bond_dihedrals(mol)
-                rows = zip(*(bond.values for bond in bonds))
-                if target_number is not None:
-                    skip = 1 + min(0, len(rows) // target_number)
-                    rows = itertools.islice(rows, 0, None, skip)
-                for row in rows:
+                for row in transpose(bonds):
                     print((len(row) * "{:12.5f}").format(*row), file=f)
 
     def __len__(self):

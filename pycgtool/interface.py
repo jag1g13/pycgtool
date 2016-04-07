@@ -246,4 +246,3 @@ class Progress:
         done = int(self._length * (self._its / self._maxits))
         left = self._length - done
         print("\r {0} [".format(self._its) + done * "#" + left * "-" + "] {0}".format(self._maxits), end="")
-
