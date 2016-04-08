@@ -5,11 +5,15 @@ import os
 import numpy as np
 
 from pycgtool.mapping import Mapping
-from pycgtool.frame import Frame
+from pycgtool.frame import Frame, Atom
 
 
 class DummyOptions:
     map_center = "geom"
+
+
+class DummyOptionsMass:
+    map_center = "mass"
 
 
 class MappingTest(unittest.TestCase):
@@ -35,4 +39,17 @@ class MappingTest(unittest.TestCase):
         frame = Frame("test/data/pbcwater.gro")
         cgframe = mapping.apply(frame)
         np.testing.assert_allclose(frame[0][0].coords, cgframe[0][0].coords)
+
+    def test_mapping_weights(self):
+        frame = Frame("test/data/two.gro")
+
+        mapping = Mapping("test/data/two.map", DummyOptions, itp="test/data/two.itp")
+        cg = mapping.apply(frame)
+        np.testing.assert_allclose(np.array([1.5, 1.5, 1.5]), cg[0][0].coords)
+
+        mapping = Mapping("test/data/two.map", DummyOptionsMass, itp="test/data/two.itp")
+        cg = mapping.apply(frame)
+        np.testing.assert_allclose(np.array([2., 2., 2.]), cg[0][0].coords)
+
+
 

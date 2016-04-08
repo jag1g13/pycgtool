@@ -34,7 +34,7 @@ class Atom:
             self.num, self.name, self.type, self.mass, self.charge
         )
 
-    def add_missing(self, other):
+    def add_missing_data(self, other):
         assert self.name == other.name
         assert self.num == other.num
         if self.type is None:
@@ -211,7 +211,7 @@ class Frame:
             for res in self.residues:
                 if res.name == itpres.name:
                     for atom, itpatom in zip(res, itpres):
-                        atom.add_missing(itpatom)
+                        atom.add_missing_data(itpatom)
 
     def output(self, filename, format="gro"):
         """

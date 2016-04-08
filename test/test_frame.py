@@ -14,6 +14,17 @@ class AtomTest(unittest.TestCase):
         self.assertEqual(0, atom.num)
         self.assertEqual("Type", atom.type)
 
+    def test_atom_add_missing_data(self):
+        atom1 = Atom(name="Name", num=0, type="Type")
+        atom2 = Atom(mass=1)
+
+        with self.assertRaises(AssertionError):
+            atom1.add_missing_data(atom2)
+
+        atom2 = Atom(name="Name", num=0, mass=1)
+        atom1.add_missing_data(atom2)
+        self.assertEqual(1, atom1.mass)
+
 
 class ResidueTest(unittest.TestCase):
     def test_residue_create(self):

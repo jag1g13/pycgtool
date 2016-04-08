@@ -90,6 +90,7 @@ class Mapping:
                     newbead = BeadMap(name=name, type=typ, atoms=atoms)
                     molmap.append(newbead)
 
+        # TODO this only works with one moleculetype in one itp - extend this
         if itp is not None:
             with CFG(itp) as itp:
                 atoms = {}
@@ -101,7 +102,6 @@ class Mapping:
                     for atom in bead:
                         bead.charge += atoms[atom][0]
                         bead.mass += atoms[atom][1]
-                    print(bead.name, bead.charge, bead.mass)
 
     def __len__(self):
         return len(self._mappings)
@@ -130,12 +130,9 @@ class Mapping:
         cgframe.residues = []
 
         for aares in frame:
-            if exclude is not None and aares.name in exclude:
+            if aares.name not in self._mappings:
                 continue
-            try:
-                molmap = self._mappings[aares.name]
-            except KeyError:
-                # Residue not in mapping, assume user doesn't want to map it (e.g. solvent)
+            if exclude is not None and aares.name in exclude:
                 continue
 
             res = self._apply_res_pbc(aares, frame.box)
