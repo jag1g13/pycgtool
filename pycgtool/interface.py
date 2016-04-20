@@ -238,11 +238,14 @@ class Progress:
 
     def _stop(self):
         if not self._quiet:
-            self._display()
-            print(" in {0:d}s".format(int(time.clock() - self._start_time)))
+            done = int(self._length * (self._its / self._maxits))
+            left = self._length - done
+            time_taken = int(time.clock() - self._start_time)
+            print("{0} [".format(self._its) + done * "#" + left * "-" + "] {0} took {1}s".format(self._maxits, time_taken))
         raise StopIteration
 
     def _display(self):
         done = int(self._length * (self._its / self._maxits))
         left = self._length - done
-        print("\r {0} [".format(self._its) + done * "#" + left * "-" + "] {0}".format(self._maxits), end="")
+        time_remain = int((time.clock() - self._start_time) * ((self._maxits - self._its) / self._its))
+        print("{0} [".format(self._its) + done * "#" + left * "-" + "] {0} {1}s left".format(self._maxits, time_remain), end="\r")

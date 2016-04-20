@@ -287,7 +287,7 @@ class BondSet:
                         atoms = [adj_res.get(name[0], res)[name.lstrip("-+")] for name in bond.atoms]
                         val = calc[len(atoms)](atoms)
                         bond.values.append(val)
-                    except (NotImplementedError, TypeError):
+                    except (NotImplementedError, TypeError, FloatingPointError):
                         # NotImplementedError is raised if form is not implemented
                         # TypeError is raised when residues on end of chain calc bond to next
                         pass
