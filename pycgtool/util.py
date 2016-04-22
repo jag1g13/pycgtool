@@ -110,7 +110,7 @@ def stat_moments(vals, ignore_nan=True):
     Return statistical (population) moments of data provided.
 
     :param vals: The data for which to calculate moments
-    :param ignore_nan: Whether to exclude np.nan from calculation
+    :param ignore_nan: Whether to exclude np.nan and infinity from calculation
     :return: Numpy array of moments - population mean and variance
     """
     if ignore_nan:
@@ -120,14 +120,9 @@ def stat_moments(vals, ignore_nan=True):
 
     res = np.zeros(2)
     try:
-        for val in vals_tmp:
-            res[0] += val
-        mean = res[0] / len(vals_tmp)
+        res[0] = np.mean(vals_tmp)
+        res[1] = np.var(vals_tmp)
 
-        for val in vals_tmp:
-            res[1] += pow(val - mean, 2)
-
-        res /= len(vals_tmp)
         return res
     except FloatingPointError:
         return np.zeros(2)

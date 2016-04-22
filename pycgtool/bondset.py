@@ -174,6 +174,7 @@ class BondSet:
             molmap = mapping[mol]
             index = [bead.name for bead in molmap]
             for bond in self._molecules[mol]:
+                # TODO this causes issue #8
                 bond.atom_numbers = [index.index(atom.lstrip("+-")) for atom in bond.atoms]
 
     def write_itp(self, filename, mapping):

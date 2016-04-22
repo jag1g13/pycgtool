@@ -107,6 +107,7 @@ class Frame:
 
             if xtc is not None:
                 self.xtc = trajectory.XtcTrajectory(xtc)
+                assert self.xtc.numatoms == self.natoms
                 self.numframes += self.xtc.numframes
 
             if itp is not None:
