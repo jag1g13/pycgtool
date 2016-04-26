@@ -8,6 +8,7 @@ from pycgtool.mapping import Mapping
 class DummyOptions:
     constr_threshold = 100000
     map_center = "geom"
+    angle_default_fc = False
 
 
 class BondSetTest(unittest.TestCase):

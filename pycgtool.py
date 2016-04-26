@@ -85,7 +85,9 @@ if __name__ == "__main__":
                       ("constr_threshold", 100000),
                       ("dump_measurements", False),
                       ("dump_n_values", 100000),
-                      ("output_forcefield", False)],
+                      ("output_forcefield", False),
+                      ("temperature", 310),
+                      ("angle_default_fc", True)],
                      args)
     if args.bnd is None:
         config.set("map_only", True)

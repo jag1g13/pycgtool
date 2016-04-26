@@ -150,7 +150,7 @@ class Frame:
                     i += 1
             self.number += 1
 
-            self.box = np.diag(self.xtc.box) / 10
+            self.box = np.diag(self.xtc.box)[0:3] / 10
 
             return True
         # IndexError - run out of xtc frames
@@ -192,7 +192,7 @@ class Frame:
                 atnum += 1
 
             line = gro.readline()
-            self.box = np.array([float(x) for x in line.split()], dtype=np.float32)
+            self.box = np.array([float(x) for x in line.split()[0:3]], dtype=np.float32)
             self.number += 1
 
     def _parse_itp(self, filename):

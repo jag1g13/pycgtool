@@ -40,18 +40,19 @@ class Bond:
     def __len__(self):
         return len(self.atoms)
 
-    def boltzmann_invert(self, temp=310):
+    def boltzmann_invert(self, temp=310, angle_default_fc=True):
         """
         Perform Boltzmann Inversion using measured values of this bond to calculate equilibrium value and force constant.
 
         :param temp: Temperature at which the simulation was performed
+        :param angle_default_fc: Use default value of 25 kJ mol-1 rad-2 for angle force constants
         """
         mean, var = stat_moments(self.values)
 
         rt = 8.314 * temp / 1000.
         rad2 = np.pi * np.pi / (180. * 180.)
         conv = {2: lambda: rt / var,
-                3: lambda: rt * np.sin(np.radians(mean))**2 / (var * rad2),
+                3: lambda: 25. if angle_default_fc else rt * np.sin(np.radians(mean))**2 / (var * rad2),
                 4: lambda: rt / (var * rad2)}
 
         self.eqm = mean
@@ -104,6 +105,14 @@ class BondSet:
         self._molecules = {}
 
         self._fconst_constr_threshold = options.constr_threshold
+        try:
+            self._temperature = options.temperature
+        except AttributeError:
+            self._temperature = 310.
+        try:
+            self._angle_default_fc = options.angle_default_fc
+        except AttributeError:
+            self._angle_default_fc = True
 
         with CFG(filename) as cfg:
             for mol in cfg:
@@ -262,16 +271,16 @@ class BondSet:
             return ret
 
         def calc_dihedral(atoms):
-            vec1 = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
-            vec2 = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.box)
-            vec3 = dist_with_pbc(atoms[2].coords, atoms[3].coords, frame.box)
+            veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
+            vecb = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.box)
+            vecc = dist_with_pbc(atoms[2].coords, atoms[3].coords, frame.box)
 
-            c1 = cross(vec1, vec2)
-            c2 = cross(vec2, vec3)
+            c1 = cross(veca, vecb)
+            c2 = cross(vecb, vecc)
             c3 = cross(c1, c2)
 
             ang = np.degrees(angle(c1, c2))
-            direction = np.dot(vec2, c3)
+            direction = np.dot(vecb, c3)
             return ang if direction > 0 else -ang
 
         for prev_res, res, next_res in sliding(frame):
@@ -302,7 +311,8 @@ class BondSet:
         """
         for mol in self._molecules:
             for bond in self._molecules[mol]:
-                bond.boltzmann_invert()
+                bond.boltzmann_invert(temp=self._temperature,
+                                      angle_default_fc=self._angle_default_fc)
 
     def dump_values(self, target_number=100000):
         def transpose(bond_list):
