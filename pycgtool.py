@@ -89,11 +89,14 @@ if __name__ == "__main__":
                       ("temperature", 310),
                       ("angle_default_fc", True)],
                      args)
-    if args.bnd is None:
+    if not args.bnd:
         config.set("map_only", True)
 
-    if args.map is None and args.bnd is None:
-        parser.error("One of both of -m and -b is required.")
+    if args.bnd and not args.map:
+        config.set("dump_measurements", True)
+
+    if not args.map and not args.bnd:
+        parser.error("One or both of -m and -b is required.")
 
     if args.interactive:
         config.interactive()

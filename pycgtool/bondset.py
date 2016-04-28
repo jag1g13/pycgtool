@@ -53,6 +53,7 @@ class Bond:
         rad2 = np.pi * np.pi / (180. * 180.)
         conv = {2: lambda: rt / var,
                 3: lambda: 25. if angle_default_fc else rt * np.sin(np.radians(mean))**2 / (var * rad2),
+                # 3: lambda: 25. if angle_default_fc else rt / (var * rad2),
                 4: lambda: rt / (var * rad2)}
 
         self.eqm = mean

@@ -11,6 +11,13 @@ from .frame import Atom, Residue, Frame
 from .parsers.cfg import CFG
 from .util import dist_with_pbc
 
+try:
+    from numba import jit
+except ImportError:
+    def jit(func):
+        # Dummy version of numba.jit
+        return func
+
 np.seterr(all="raise")
 
 
@@ -18,7 +25,7 @@ class BeadMap(Atom):
     """
     POD class holding values relating to the AA->CG transformation for a single bead.
     """
-    __slots__ = ["name", "type", "atoms", "charge", "mass"]
+    __slots__ = ["name", "type", "atoms", "charge", "mass", "weights"]
 
     def __init__(self, name=None, type=None, atoms=None, charge=0, mass=0):
         """
@@ -33,6 +40,8 @@ class BeadMap(Atom):
         """
         Atom.__init__(self, name=name, type=type, charge=charge, mass=mass)
         self.atoms = atoms
+        self.weights = {"geom": None,
+                        "mass": np.ones(len(self.atoms), dtype=np.float32)}
 
     def __iter__(self):
         """
@@ -87,6 +96,7 @@ class Mapping:
                 self._mappings[mol.name] = []
                 molmap = self._mappings[mol.name]
                 for name, typ, *atoms in mol:
+                    assert atoms, "Bead {0} specification contains no atoms".format(name)
                     newbead = BeadMap(name=name, type=typ, atoms=atoms)
                     molmap.append(newbead)
 
@@ -99,6 +109,7 @@ class Mapping:
                     atoms[toks[4]] = (float(toks[6]), float(toks[7]))
 
                 for bead in self._mappings[itp["moleculetype"][0][0]]:
+                    bead.weights["mass"] = np.array([[atoms[atom][1]] for atom in bead], dtype=np.float32)
                     for atom in bead:
                         bead.charge += atoms[atom][0]
                         bead.mass += atoms[atom][1]
@@ -149,6 +160,7 @@ class Mapping:
         :param box: Cubic periodic box vectors
         :return: A single coarse grained residue
         """
+
         molmap = self._mappings[aares.name]
         res = Residue(name=aares.name, num=aares.num)
         res.atoms = [Atom(name=bead.name, type=bead.type, charge=bead.charge, mass=bead.mass) for bead in molmap]
@@ -156,17 +168,36 @@ class Mapping:
         # Perform mapping
         for i, (bead, bmap) in enumerate(zip(res, molmap)):
             res.name_to_num[bead.name] = i
-            ref_coords = aares[bmap[0]].coords
             bead.charge = bmap.charge
             bead.mass = bmap.mass
 
-            bead.coords = np.zeros(3, dtype=np.float32)
-            for atom in bmap:
-                bead.coords += dist_with_pbc(ref_coords, aares[atom].coords, box)
+            ref_coords = aares[bmap[0]].coords
+            coords = np.array([aares[atom].coords for atom in bmap], dtype=np.float32)
 
-            center_scale = {"geom": len(bmap),
-                            "mass": bmap.mass}
-            bead.coords /= center_scale[self._map_center]
-            bead.coords += ref_coords
+            weights = bmap.weights[self._map_center]
+            if weights is None:
+                bead.coords = calc_coords(ref_coords, coords, box)
+            else:
+                bead.coords = calc_coords_weight(ref_coords, coords, box, weights)
 
         return res
+
+
+@jit
+def calc_coords_weight(ref_coords, coords, box, weights):
+    coords = dist_with_pbc(ref_coords, coords, box)
+    coords = np.sum(weights * coords, axis=0)
+    coords /= np.sum(weights)
+    coords += ref_coords
+    return coords
+
+
+@jit
+def calc_coords(ref_coords, coords, box):
+    coords = dist_with_pbc(ref_coords, coords, box)
+    n = len(coords)
+    coords = np.sum(coords, axis=0)
+    coords /= n
+    coords += ref_coords
+    return coords
+

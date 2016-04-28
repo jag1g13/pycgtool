@@ -66,7 +66,13 @@ class Residue:
         try:
             return self.atoms[item]
         except TypeError:
+            pass
+
+        try:
             return self.atoms[self.name_to_num[item]]
+        except KeyError as e:
+            e.args = ("Atom {0} does not exist in residue {1}".format(e.args[0], self.name),)
+            raise
 
     def __len__(self):
         return len(self.atoms)
