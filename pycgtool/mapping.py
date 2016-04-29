@@ -14,9 +14,7 @@ from .util import dist_with_pbc
 try:
     from numba import jit
 except ImportError:
-    def jit(func):
-        # Dummy version of numba.jit
-        return func
+    from .util import jit_dummy as jit
 
 np.seterr(all="raise")
 

@@ -5,15 +5,25 @@ This module contains some general purpose utility functions used in PyCGTOOL.
 import os
 import itertools
 
+import numpy as np
+np.seterr(all="raise")
+
+
+def jit_dummy(*args, **kwargs):
+    """
+    Dummy version of numba.jit decorator, does nothing
+    """
+    if len(args) == 1 and callable(args[0]):
+        return args[0]
+    else:
+        def wrap(f):
+            return f
+        return wrap
+
 try:
     from numba import jit
 except ImportError:
-    def jit(func):
-        # Dummy version of numba.jit
-        return func
-
-import numpy as np
-np.seterr(all="raise")
+    jit = jit_dummy
 
 
 @jit
