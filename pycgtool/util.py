@@ -58,7 +58,7 @@ def tuple_equivalent(tuple1, tuple2):
         return False
 
 
-@jit(nopython=True)
+@jit
 def dist_with_pbc(pos1, pos2, box):
     """
     Calculate the distance between two points accounting for periodicity.

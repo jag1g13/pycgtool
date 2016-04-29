@@ -172,10 +172,10 @@ class Mapping:
             ref_coords = aares[bmap[0]].coords
             coords = np.array([aares[atom].coords for atom in bmap], dtype=np.float32)
 
-            weights = bmap.weights[self._map_center]
-            if weights is None:
+            if self._map_center == "geom":
                 bead.coords = calc_coords(ref_coords, coords, box)
             else:
+                weights = bmap.weights[self._map_center]
                 bead.coords = calc_coords_weight(ref_coords, coords, box, weights)
 
         return res
@@ -192,10 +192,14 @@ def calc_coords_weight(ref_coords, coords, box, weights):
 
 @jit
 def calc_coords(ref_coords, coords, box):
-    coords = dist_with_pbc(ref_coords, coords, box)
     n = len(coords)
-    coords = np.sum(coords, axis=0)
-    coords /= n
-    coords += ref_coords
-    return coords
-
+    running = np.zeros(3, dtype=np.float32)
+    for i in range(n):
+        tmp_coords = coords[i]
+        tmp_coords -= ref_coords
+        if box[0] * box[1] * box[2] != 0:
+            tmp_coords -= box * np.rint(tmp_coords / box)
+        running += tmp_coords
+    running /= n
+    running += ref_coords
+    return running

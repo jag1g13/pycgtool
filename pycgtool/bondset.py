@@ -185,7 +185,12 @@ class BondSet:
             index = [bead.name for bead in molmap]
             for bond in self._molecules[mol]:
                 # TODO this causes issue #8
-                bond.atom_numbers = [index.index(atom.lstrip("+-")) for atom in bond.atoms]
+                try:
+                    bond.atom_numbers = [index.index(atom.lstrip("+-")) for atom in bond.atoms]
+                except ValueError as e:
+                    missing = [atom for atom in bond.atoms if atom not in index]
+                    e.args = ("Bead(s) {0} do(es) not exist in residue {1}".format(missing, mol),)
+                    raise
 
     def write_itp(self, filename, mapping):
         """

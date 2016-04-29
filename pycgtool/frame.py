@@ -64,14 +64,14 @@ class Residue:
 
     def __getitem__(self, item):
         try:
-            return self.atoms[item]
-        except TypeError:
+            return self.atoms[self.name_to_num[item]]
+        except KeyError:
             pass
 
         try:
-            return self.atoms[self.name_to_num[item]]
-        except KeyError as e:
-            e.args = ("Atom {0} does not exist in residue {1}".format(e.args[0], self.name),)
+            return self.atoms[item]
+        except TypeError as e:
+            e.args = ("Atom {0} does not exist in residue {1}".format(item, self.name),)
             raise
 
     def __len__(self):
