@@ -87,7 +87,9 @@ if __name__ == "__main__":
                       ("dump_n_values", 100000),
                       ("output_forcefield", False),
                       ("temperature", 310),
-                      ("angle_default_fc", True)],
+                      ("angle_default_fc", True),
+                      ("generate_angles", True),
+                      ("generate_dihedrals", False)],
                      args)
     if not args.bnd:
         config.set("map_only", True)

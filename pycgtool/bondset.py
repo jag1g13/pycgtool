@@ -7,6 +7,7 @@ BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a sin
 import itertools
 
 import numpy as np
+import math
 
 from .util import stat_moments, sliding, dist_with_pbc
 from .util import extend_graph_chain, cross, backup_file
@@ -74,20 +75,17 @@ class Bond:
             return "<Bond containing atoms {0}>".format(", ".join(self.atoms))
 
 
-def angle(a, b, c=None):
+def angle(a, b):
     """
-    Calculate the signed angle between two/three vectors.
+    Calculate the angle between two vectors.
 
     :param a: First vector
     :param b: Second vector
-    :param c: Optional third orientation vector
-    :return: Signed angle in radians
+    :return: Angle in radians
     """
-    if c is None:
-        c = cross(a, b)
-    dot = np.dot(a, b)
-    abscross = np.sqrt(np.dot(c, c))
-    return np.arctan2(abscross, dot)
+    dot = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+    mag = math.sqrt((a[0]*a[0] + a[1]*a[1] + a[2]*a[2]) * (b[0]*b[0] + b[1]*b[1] + b[2]*b[2]))
+    return math.acos(dot / mag)
 
 
 class BondSet:
@@ -126,8 +124,8 @@ class BondSet:
                     if len(atomlist) > 2:
                         angles_defined = True
 
-                if not angles_defined:
-                    self._create_angles(mol.name)
+                if not angles_defined and options.generate_angles:
+                    self._create_angles(mol.name, options.generate_dihedrals)
 
     def get_bond_lengths(self, mol, with_constr=False):
         if with_constr:
@@ -158,9 +156,12 @@ class BondSet:
     def get_bond_dihedrals(self, mol):
         return [bond for bond in self._molecules[mol] if len(bond.atoms) == 4]
 
-    def _create_angles(self, mol):
+    def _create_angles(self, mol, gen_dihedrals=False):
         """
-        Create angles and dihedrals from bonded topology.
+        Create angles (and dihedrals) from bonded topology.
+
+        :param mol: Molecule to generate angles for
+        :param gen_dihedrals: Also generate dihedrals?
         """
         bonds = [bond.atoms for bond in self._molecules[mol] if len(bond.atoms) == 2]
 
@@ -168,9 +169,10 @@ class BondSet:
         for atomlist in angles:
             self._molecules[mol].append(Bond(atoms=atomlist))
 
-        dihedrals = extend_graph_chain(angles, bonds)
-        for atomlist in dihedrals:
-            self._molecules[mol].append(Bond(atoms=atomlist))
+        if gen_dihedrals:
+            dihedrals = extend_graph_chain(angles, bonds)
+            for atomlist in dihedrals:
+                self._molecules[mol].append(Bond(atoms=atomlist))
 
     def _populate_atom_numbers(self, mapping):
         """
@@ -268,7 +270,7 @@ class BondSet:
         """
         def calc_length(atoms):
             vec = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
-            return np.sqrt(np.sum(vec * vec))
+            return math.sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2])
 
         def calc_angle(atoms):
             veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
@@ -289,27 +291,30 @@ class BondSet:
             direction = np.dot(vecb, c3)
             return ang if direction > 0 else -ang
 
+        calc = {2: calc_length,
+                3: calc_angle,
+                4: calc_dihedral}
+
         for prev_res, res, next_res in sliding(frame):
             try:
                 mol_meas = self._molecules[res.name]
-                for bond in mol_meas:
-                    try:
-                        # TODO tidy this
-                        calc = {2: calc_length,
-                                3: calc_angle,
-                                4: calc_dihedral}
-                        adj_res = {"-": prev_res,
-                                   "+": next_res}
-                        atoms = [adj_res.get(name[0], res)[name.lstrip("-+")] for name in bond.atoms]
-                        val = calc[len(atoms)](atoms)
-                        bond.values.append(val)
-                    except (NotImplementedError, TypeError, FloatingPointError):
-                        # NotImplementedError is raised if form is not implemented
-                        # TypeError is raised when residues on end of chain calc bond to next
-                        pass
             except KeyError:
                 # Bonds have not been specified for molecule - probably water
-                pass
+                continue
+
+            adj_res = {"-": prev_res,
+                       "+": next_res}
+
+            for bond in mol_meas:
+                try:
+                    # TODO tidy this
+                    atoms = [adj_res.get(name[0], res)[name.lstrip("-+")] for name in bond.atoms]
+                    val = calc[len(atoms)](atoms)
+                    bond.values.append(val)
+                except (NotImplementedError, TypeError, FloatingPointError):
+                    # NotImplementedError is raised if form is not implemented
+                    # TypeError is raised when residues on end of chain calc bond to next
+                    pass
 
     def boltzmann_invert(self):
         """
