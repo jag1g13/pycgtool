@@ -128,15 +128,35 @@ class BondSet:
                     self._create_angles(mol.name, options.generate_dihedrals)
 
     def get_bond_lengths(self, mol, with_constr=False):
+        """
+        Return list of all bond lengths in molecule.  May include constraints.
+
+        :param mol: Molecule name to return bonds for
+        :param with_constr: Include constraints?
+        :return: List of bonds
+        """
         if with_constr:
             return [bond for bond in self._molecules[mol] if len(bond.atoms) == 2]
         else:
             return [bond for bond in self._molecules[mol] if len(bond.atoms) == 2 and bond.fconst < self._fconst_constr_threshold]
 
     def get_bond_length_constraints(self, mol):
+        """
+        Return list of all bond length constraints in molecule.
+
+        :param mol: Molecule name to return bonds for
+        :return: List of bonds
+        """
         return [bond for bond in self._molecules[mol] if len(bond.atoms) == 2 and bond.fconst >= self._fconst_constr_threshold]
 
     def get_bond_angles(self, mol, exclude_triangle=True):
+        """
+        Return list of all bond angles in molecule.
+
+        :param mol: Molecule name to return bonds for
+        :param exclude_triangle: Exclude angles that are part of a triangle?
+        :return: List of bonds
+        """
         angles = [bond for bond in self._molecules[mol] if len(bond.atoms) == 3]
 
         if exclude_triangle:
@@ -154,6 +174,12 @@ class BondSet:
         return angles
 
     def get_bond_dihedrals(self, mol):
+        """
+        Return list of all bond dihedrals in molecule.
+
+        :param mol: Molecule name to return bonds for
+        :return: List of bonds
+        """
         return [bond for bond in self._molecules[mol] if len(bond.atoms) == 4]
 
     def _create_angles(self, mol, gen_dihedrals=False):
@@ -326,6 +352,11 @@ class BondSet:
                                       angle_default_fc=self._angle_default_fc)
 
     def dump_values(self, target_number=100000):
+        """
+        Output measured bond values to files for length, angles and dihedrals.
+
+        :param target_number: Approx number of sample measurements to output.  If None, all samples will be output
+        """
         def transpose(bond_list):
             """
             Transpose a list of bonds containing values and slice to provide target number of rows.

@@ -1,3 +1,6 @@
+"""
+This module contains classes for interaction at the terminal.
+"""
 import collections
 import curses
 import curses.textpad
@@ -7,8 +10,16 @@ import time
 class Options:
     """
     Class to hold program options not specified at the initial command line.
+
+    Values can be queried by indexing as a dictionary or by attribute.  Iterable.
     """
     def __init__(self, default, args=None):
+        """
+        Create Options instance from iterable of keys and default values.
+
+        :param default: Iterable of key, default value pairs (e.g. list of tuples)
+        :param args: Optional program arguments from Argparse, will be displayed in interactive mode
+        """
         self._dict = collections.OrderedDict()
         for key, val in default:
             try:
@@ -221,6 +232,11 @@ class Progress:
         return self
 
     def __next__(self):
+        """
+        Allow iteration over Progress while testing prewhile and postwhile conditions.
+
+        :return: Iteration number
+        """
         if self._postwhile is not None and self._its > 0 and not self._postwhile():
             self._stop()
 

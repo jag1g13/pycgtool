@@ -13,7 +13,7 @@ Contents:
 
    members
 
-Indices and tables
+Indexes
 ==================
 
 * :ref:`genindex`

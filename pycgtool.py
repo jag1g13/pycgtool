@@ -13,7 +13,7 @@ def main(args, config):
     """
     Main function of the program PyCGTOOL.
 
-    Performs the complete AA->CG mapping and outputs a GROMACS forcefield directory.
+    Performs the complete AA->CG mapping and outputs a files dependent on given input.
 
     :param args: Arguments from argparse
     :param config: Configuration dictionary
