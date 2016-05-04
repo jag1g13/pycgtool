@@ -1,6 +1,8 @@
 [![Build Status](https://travis-ci.org/jag1g13/pycgtool.svg?branch=master)](https://travis-ci.org/jag1g13/pycgtool)
 
 # PyCGTOOL
+Please see http://pycgtool.readthedocs.io/en/master/ for full documentation.
+
 Python reimplementation of [CGTOOL](https://bitbucket.org/jag1g13/cgtool) performing coarse-grain mapping of molecular dynamics trajectories.
 
 The aim of this project is to provide a tool to aid in parametrising coarse-grained (CG) molecular mechanics models.  PyCGTOOL generates coarse-grained models from atomistic trajectories using a user-provided mapping.  Equilibrium values and force constants of bonded terms are calculated by Boltzmann Inversion of histograms collected from the input trajectory allowing good replication of target properties.
@@ -18,7 +20,7 @@ This version has several advantages over the original C++ implementation CGTOOL:
 If you experience problems or wish to see a new feature added please [file an issue](https://github.com/jag1g13/pycgtool/issues).
 
 ## Usage
-Input to PyCGTOOL is GROMACS GRO and XTC files, along with two custom files: MAP and BND.  These files provide the atomistic-to-CG mapping and bonded topology respectively.  Example files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/master/test/data) directory.
+Input to PyCGTOOL is GROMACS GRO and XTC files, along with two custom files: MAP and BND.  These files provide the atomistic-to-CG mapping and bonded topology respectively.  Example files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/master/test/data) directory.  The format of these files is described in the [full documentation] (http://pycgtool.readthedocs.io/en/master/).
 
 To run PyCGTOOL:
 `pycgtool.py -g <GRO file> -x <XTC file> -m <MAP file> -b <BND file>`

@@ -15,7 +15,7 @@ class DummyOptions:
 
 class BondSetTest(unittest.TestCase):
     def test_bondset_create(self):
-        measure = BondSet("test/data/sugar.bnds", DummyOptions)
+        measure = BondSet("test/data/sugar.bnd", DummyOptions)
         self.assertEqual(2, len(measure))
         self.assertTrue("SOL" in measure)
         self.assertTrue("ALLA" in measure)
@@ -23,7 +23,7 @@ class BondSetTest(unittest.TestCase):
         self.assertEqual(18, len(measure["ALLA"]))
 
     def test_bondset_apply(self):
-        measure = BondSet("test/data/sugar.bnds", DummyOptions)
+        measure = BondSet("test/data/sugar.bnd", DummyOptions)
         frame = Frame("test/data/sugar-cg.gro")
         measure.apply(frame)
         # First six are bond lengths
@@ -66,7 +66,7 @@ class BondSetTest(unittest.TestCase):
                (-85.923133935, 124765.874439),
                (70.3195444564, 1555761.24713)]
 
-        measure = BondSet("test/data/sugar.bnds", DummyOptions)
+        measure = BondSet("test/data/sugar.bnd", DummyOptions)
         frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
         mapping = Mapping("test/data/sugar.map", DummyOptions)
         cgframe = mapping.apply(frame)
