@@ -85,7 +85,15 @@ def angle(a, b):
     """
     dot = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
     mag = math.sqrt((a[0]*a[0] + a[1]*a[1] + a[2]*a[2]) * (b[0]*b[0] + b[1]*b[1] + b[2]*b[2]))
-    return math.acos(dot / mag)
+    try:
+        return math.acos(dot / mag)
+    except ValueError as e:
+        val = dot / mag
+        if abs(val) - 1 < 0.01:
+            # If within 1% of acceptable value correct it, else reraise
+            return math.acos(max(-1, min(1, dot / mag)))
+        e.args = (e.args[0] + " in acos(" + str(dot / mag) + ")",)
+        raise
 
 
 class BondSet:
@@ -216,7 +224,7 @@ class BondSet:
                 try:
                     bond.atom_numbers = [index.index(atom.lstrip("+-")) for atom in bond.atoms]
                 except ValueError as e:
-                    missing = [atom for atom in bond.atoms if atom not in index]
+                    missing = [atom for atom in bond.atoms if atom.lstrip("+-") not in index]
                     e.args = ("Bead(s) {0} do(es) not exist in residue {1}".format(missing, mol),)
                     raise
 

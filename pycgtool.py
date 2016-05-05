@@ -42,10 +42,11 @@ def main(args, config):
     if args.bnd:
         if args.map:
             bonds.boltzmann_invert()
-            bonds.write_itp("out.itp", mapping=mapping)
             if config.output_forcefield:
                 ff = ForceField("fftest.ff")
                 ff.write_rtp("test.rtp", mapping, bonds)
+            else:
+                bonds.write_itp("out.itp", mapping=mapping)
 
         if config.dump_measurements:
             bonds.dump_values(config.dump_n_values)
