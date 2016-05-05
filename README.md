@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/jag1g13/pycgtool.svg?branch=master)](https://travis-ci.org/jag1g13/pycgtool)
+[![Build Status](https://travis-ci.org/jag1g13/pycgtool.svg?branch=master)](https://travis-ci.org/jag1g13/pycgtool) [![Documentation Status](https://readthedocs.org/projects/pycgtool/badge/?version=master)](http://pycgtool.readthedocs.io/en/master/?badge=master)
 
 # PyCGTOOL
 Please see http://pycgtool.readthedocs.io/en/master/ for full documentation.
