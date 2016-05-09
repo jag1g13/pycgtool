@@ -29,6 +29,7 @@ def main(args):
                     for c_line in constr_lines:
                         print(c_line, file=outfile)
                     print(file=outfile)
+                    has_constr = True
 
                 print(line, file=outfile)
                 continue
@@ -48,10 +49,7 @@ def main(args):
                 constr_lines.append(line[:line.rindex(line.split()[4]) - 1])
                 continue
 
-            if args.fc is not None and section == "constraints":
-
             print(line, file=outfile)
-
 
 
 if __name__ == "__main__":

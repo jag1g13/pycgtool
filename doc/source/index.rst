@@ -48,6 +48,8 @@ The program is called by:
 
 Example mapping and bond definition files are present in the ``test/data`` directory.  Their format is explained below.
 
+After running PyCGTOOL two files, ``out.gro`` and ``out.itp`` will be created.  The gro file contains the mapped coarse-grain coordinates with every molecule for which a mapping was provided.  The itp file contains the parameters for each molecule type.  **NB**: charges are not currently set by PyCGTOOL as MARTINI only allows charges on certain bead types.
+
 Mapping / Bond Definition Files
 -------------------------------
 The mapping and bond definition input files use a format similar to the GROMACS itp/top format.
