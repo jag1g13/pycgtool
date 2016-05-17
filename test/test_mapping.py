@@ -5,15 +5,11 @@ import os
 import numpy as np
 
 from pycgtool.mapping import Mapping
-from pycgtool.frame import Frame, Atom
+from pycgtool.frame import Frame
 
 
 class DummyOptions:
     map_center = "geom"
-
-
-class DummyOptionsMass:
-    map_center = "mass"
 
 
 class MappingTest(unittest.TestCase):
@@ -40,16 +36,33 @@ class MappingTest(unittest.TestCase):
         cgframe = mapping.apply(frame)
         np.testing.assert_allclose(frame[0][0].coords, cgframe[0][0].coords)
 
-    def test_mapping_weights(self):
+    def test_mapping_weights_geom(self):
         frame = Frame("test/data/two.gro")
-
         mapping = Mapping("test/data/two.map", DummyOptions, itp="test/data/two.itp")
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([1.5, 1.5, 1.5]), cg[0][0].coords)
 
-        mapping = Mapping("test/data/two.map", DummyOptionsMass, itp="test/data/two.itp")
+    def test_mapping_weights_mass(self):
+        frame = Frame("test/data/two.gro")
+        options = DummyOptions()
+        options.map_center = "mass"
+
+        mapping = Mapping("test/data/two.map", options, itp="test/data/two.itp")
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([2., 2., 2.]), cg[0][0].coords)
+
+        with self.assertRaises(Exception):
+            mapping = Mapping("test/data/two.map", options)
+            cg = mapping.apply(frame)
+
+    def test_mapping_weights_first(self):
+        frame = Frame("test/data/two.gro")
+        options = DummyOptions()
+        options.map_center = "first"
+
+        mapping = Mapping("test/data/two.map", options, itp="test/data/two.itp")
+        cg = mapping.apply(frame)
+        np.testing.assert_allclose(np.array([1., 1., 1.]), cg[0][0].coords)
 
 
 

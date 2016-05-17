@@ -38,8 +38,9 @@ class BeadMap(Atom):
         """
         Atom.__init__(self, name=name, type=type, charge=charge, mass=mass)
         self.atoms = atoms
+        # NB: weights are overwritten in Mapping.__init__ if an itp file is provided
         self.weights = {"geom": None,
-                        "mass": np.ones(len(self.atoms), dtype=np.float32)}
+                        "first": np.array([[1]] + [[0] for _ in range(len(self.atoms) - 1)], dtype=np.float32)}
 
     def __iter__(self):
         """
@@ -61,15 +62,6 @@ class EmptyBeadError(Exception):
     Exception used to indicate that none of the required atoms are present.
     """
     pass
-
-
-def coordinate_weight(center, atom):
-    centers = {"geom": lambda at: at.coords,
-               "mass": lambda at: at.coords * at.mass}
-    try:
-        return centers[center](atom)
-    except KeyError:
-        raise ValueError("Invalid map-center type '{0}'".format(center))
 
 
 class Mapping:
@@ -175,7 +167,14 @@ class Mapping:
             if self._map_center == "geom":
                 bead.coords = calc_coords(ref_coords, coords, box)
             else:
-                weights = bmap.weights[self._map_center]
+                try:
+                    weights = bmap.weights[self._map_center]
+                except KeyError as e:
+                    if self._map_center == "mass":
+                        e.args = ("Error with mapping type 'mass', did you provide an itp file?",)
+                    else:
+                        e.args = ("Error, unknown mapping type '{0}'".format(e.args[0]),)
+                    raise
                 bead.coords = calc_coords_weight(ref_coords, coords, box, weights)
 
         return res
