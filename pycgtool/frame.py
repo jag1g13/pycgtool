@@ -5,6 +5,8 @@ The Frame class may contain multiple Residues which may each contain multiple At
 Both Frame and Residue are iterable. Residue is indexable with either atom numbers or names.
 """
 
+import os
+
 import numpy as np
 
 from simpletraj import trajectory
@@ -13,6 +15,15 @@ from .util import backup_file
 from .parsers.cfg import CFG
 
 np.seterr(all="raise")
+
+
+try:
+    raise FileNotFoundError
+except FileNotFoundError:
+    pass
+except NameError:
+    class FileNotFoundError(OSError):
+        pass
 
 
 class Atom:
@@ -112,9 +123,17 @@ class Frame:
             self.numframes += 1
 
             if xtc is not None:
-                self.xtc = trajectory.XtcTrajectory(xtc)
-                assert self.xtc.numatoms == self.natoms
-                self.numframes += self.xtc.numframes
+                try:
+                    self.xtc = trajectory.XtcTrajectory(xtc)
+                except OSError as e:
+                    if not os.path.isfile(xtc):
+                        raise FileNotFoundError(xtc) from e
+                    e.args = ("Error opening file '{0}'".format(xtc),)
+                    raise
+                else:
+                    if self.xtc.numatoms != self.natoms:
+                        raise AssertionError("Number of atoms does not match between gro and xtc files.")
+                    self.numframes += self.xtc.numframes
 
             if itp is not None:
                 self._parse_itp(itp)
