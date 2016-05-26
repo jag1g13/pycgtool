@@ -18,9 +18,10 @@ np.seterr(all="raise")
 
 
 try:
-    raise FileNotFoundError
-except FileNotFoundError:
-    pass
+    try:
+        raise FileNotFoundError
+    except FileNotFoundError:
+        pass
 except NameError:
     class FileNotFoundError(OSError):
         pass
