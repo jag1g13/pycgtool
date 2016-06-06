@@ -11,12 +11,15 @@ import numpy as np
 
 from simpletraj import trajectory
 
+from mdtraj.formats import XTCTrajectoryFile
+
 from .util import backup_file
 from .parsers.cfg import CFG
 
 np.seterr(all="raise")
 
 
+# Create FileNotFoundError if using older version of Python
 try:
     try:
         raise FileNotFoundError
@@ -105,7 +108,7 @@ class Frame:
     Hold Atom data separated into Residues
     """
 
-    def __init__(self, gro=None, xtc=None, itp=None, frame_start=0):
+    def __init__(self, gro=None, xtc=None, itp=None, frame_start=0, xtc_reader="simpletraj"):
         """
         Return Frame instance having read Residues and Atoms from GRO if provided
 
@@ -119,25 +122,65 @@ class Frame:
         self.numframes = 0
         self.box = np.zeros(3, dtype=np.float32)
 
+        self._out_xtc = None
+
         if gro is not None:
             self._parse_gro(gro)
             self.numframes += 1
 
             if xtc is not None:
+                self._xtc_reader = xtc_reader
+                open_xtc = {"simpletraj": self._open_xtc_simpletraj,
+                            "mdtraj":     self._open_xtc_mdtraj}
                 try:
-                    self.xtc = trajectory.XtcTrajectory(xtc)
-                except OSError as e:
-                    if not os.path.isfile(xtc):
-                        raise FileNotFoundError(xtc) from e
-                    e.args = ("Error opening file '{0}'".format(xtc),)
+                    open_xtc[self._xtc_reader](xtc)
+                except KeyError as e:
+                    e.args = ("XTC reader {0} is not a valid option.".format(self._xtc_reader))
                     raise
-                else:
-                    if self.xtc.numatoms != self.natoms:
-                        raise AssertionError("Number of atoms does not match between gro and xtc files.")
-                    self.numframes += self.xtc.numframes
 
             if itp is not None:
                 self._parse_itp(itp)
+
+    def _open_xtc_simpletraj(self, xtc):
+        try:
+            self.xtc = trajectory.XtcTrajectory(xtc)
+        except OSError as e:
+            if not os.path.isfile(xtc):
+                raise FileNotFoundError(xtc) from e
+            e.args = ("Error opening file '{0}'".format(xtc),)
+            raise
+        else:
+            if self.xtc.numatoms != self.natoms:
+                raise AssertionError("Number of atoms does not match between gro and xtc files.")
+            self.numframes += self.xtc.numframes
+
+    def _open_xtc_mdtraj(self, xtc):
+        try:
+            self.xtc = XTCTrajectoryFile(xtc)
+        except OSError as e:
+            if not os.path.isfile(xtc):
+                raise FileNotFoundError(xtc) from e
+            e.args = ("Error opening file '{0}'".format(xtc),)
+            raise
+        else:
+            xyz, time, step, box = self.xtc.read(n_frames=1)
+            natoms = len(xyz[0])
+            if natoms != self.natoms:
+                print(xyz[0])
+                print(natoms, self.natoms)
+                raise AssertionError("Number of atoms does not match between gro and xtc files.")
+
+            # Seek to end to count frames
+            # self.xtc.seek(0, whence=2)
+            self.numframes += 1
+            self.xtc.seek(0)
+            while True:
+                try:
+                    self.xtc.seek(1, whence=1)
+                    self.numframes += 1
+                except IndexError:
+                    break
+            self.xtc.seek(0)
 
     def __len__(self):
         return len(self.residues)
@@ -163,6 +206,36 @@ class Frame:
 
         :return: True if successful else False
         """
+        xtc_read = {"simpletraj": self._next_frame_simpletraj,
+                    "mdtraj":     self._next_frame_mdtraj}
+        try:
+            return xtc_read[self._xtc_reader](exclude)
+        except KeyError as e:
+            e.args = ("XTC reader {0} is not a valid option.".format(self._xtc_reader))
+            raise
+
+    def _next_frame_mdtraj(self, exclude=None):
+        try:
+            # self.xtc.seek(self.number)
+            i = 0
+            xyz, time, step, box = self.xtc.read(n_frames=1)
+            xyz = xyz[0]
+            for res in self.residues:
+                if exclude is not None and res.name in exclude:
+                    continue
+                for atom in res:
+                    atom.coords = xyz[i]
+                    i += 1
+
+            self.number += 1
+            self.box = np.diag(box[0]) / 10.
+            return True
+        # IndexError - run out of xtc frames
+        # AttributeError - we didn't provide an xtc
+        except (IndexError, AttributeError):
+            return False
+
+    def _next_frame_simpletraj(self, exclude=None):
         try:
             self.xtc.get_frame(self.number)
             i = 0
@@ -183,6 +256,22 @@ class Frame:
         # AttributeError - we didn't provide an xtc
         except (IndexError, AttributeError):
             return False
+
+    def write_xtc(self, filename=None):
+        if self._out_xtc is None:
+           self._out_xtc = XTCTrajectoryFile(filename, mode="w")
+
+        xyz = np.ndarray((1, self.natoms, 3), dtype=np.float32)
+        i = 0
+        for residue in self.residues:
+            for atom in residue.atoms:
+                xyz[0][i] = atom.coords
+                i += 1
+        step = np.array([self.number], dtype=np.int32)
+        box = np.zeros((1, 3, 3), dtype=np.float32)
+        for i in range(3):
+            box[0][i][i] = self.box[i]
+        self._out_xtc.write(xyz, step=step, box=box)
 
     def _parse_gro(self, filename):
         """

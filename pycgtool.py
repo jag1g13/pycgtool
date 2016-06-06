@@ -33,6 +33,8 @@ def main(args, config):
     for _ in Progress(numframes, postwhile=frame.next_frame):
         if args.map:
             cgframe = mapping.apply(frame, exclude={"SOL"})
+            if config.output_xtc:
+                cgframe.write_xtc("out.xtc")
         else:
             cgframe = frame
 
@@ -59,10 +61,17 @@ def map_only(args, config):
     :param args: Program arguments
     :param config: Object containing run options
     """
-    frame = Frame(gro=args.gro)
+    frame = Frame(gro=args.gro, xtc=args.xtc)
     mapping = Mapping(args.map, config)
     cgframe = mapping.apply(frame, exclude={"SOL"})
     cgframe.output("out.gro", format=config.output)
+
+    if args.xtc and config.output_xtc:
+        numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
+        for _ in Progress(numframes, postwhile=frame.next_frame):
+            cgframe = mapping.apply(frame, exclude={"SOL"})
+            cgframe.write_xtc("out.xtc")
+
 
 
 if __name__ == "__main__":
@@ -90,7 +99,8 @@ if __name__ == "__main__":
                       ("temperature", 310),
                       ("angle_default_fc", True),
                       ("generate_angles", True),
-                      ("generate_dihedrals", False)],
+                      ("generate_dihedrals", False),
+                      ("output_xtc", False)],
                      args)
     if not args.bnd:
         config.set("map_only", True)

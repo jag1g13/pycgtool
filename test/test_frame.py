@@ -65,6 +65,10 @@ class FrameTest(unittest.TestCase):
         self.assertTrue(filecmp.cmp("test/data/water.gro", "water-out.gro"))
         os.remove("water-out.gro")
 
+    def test_frame_read_xtc_simpletraj_numframes(self):
+        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc")
+        self.assertEqual(12, frame.numframes)
+
     def test_frame_read_xtc(self):
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc")
         # These are the coordinates from the gro file
@@ -77,6 +81,31 @@ class FrameTest(unittest.TestCase):
         frame.next_frame()
         np.testing.assert_allclose(np.array([1.122, 1.130, 1.534]),
                                    frame.residues[0].atoms[0].coords)
+
+    def test_frame_read_xtc_mdtraj_numframes(self):
+        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
+                      xtc_reader="mdtraj")
+        self.assertEqual(12, frame.numframes)
+
+    def test_frame_read_xtc_mdtraj(self):
+        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
+                      xtc_reader="mdtraj")
+        # These are the coordinates from the gro file
+        np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),
+                                   frame.residues[0].atoms[0].coords)
+        frame.next_frame()
+        # These coordinates are from the xtc file
+        np.testing.assert_allclose(np.array([1.176, 1.152, 1.586]),
+                                   frame.residues[0].atoms[0].coords)
+        frame.next_frame()
+        np.testing.assert_allclose(np.array([1.122, 1.130, 1.534]),
+                                   frame.residues[0].atoms[0].coords)
+
+    def test_frame_write_xtc_mdtraj(self):
+        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
+                      xtc_reader="mdtraj")
+        while frame.next_frame():
+            frame.write_xtc("test.xtc")
 
 
 if __name__ == '__main__':
