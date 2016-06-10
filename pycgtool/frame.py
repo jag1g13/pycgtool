@@ -122,7 +122,7 @@ class Frame:
         self.numframes = 0
         self.box = np.zeros(3, dtype=np.float32)
 
-        self._out_xtc = None
+        self._xtc_buffer = None
 
         if gro is not None:
             self._parse_gro(gro)
@@ -257,9 +257,52 @@ class Frame:
         except (IndexError, AttributeError):
             return False
 
-    def write_xtc(self, filename=None):
-        if self._out_xtc is None:
-           self._out_xtc = XTCTrajectoryFile(filename, mode="w")
+    class XTCBuffer:
+        def __init__(self):
+            self.coords = []
+            self.step = []
+            self.box = []
+
+        def __call__(self):
+            return (np.array(self.coords, dtype=np.float32),
+                    np.array(self.step,   dtype=np.int32),
+                    np.array(self.box,    dtype=np.float32))
+
+        def append(self, coords, step, box):
+            self.coords.append(coords)
+            self.step.append(step)
+            self.box.append(box)
+
+    def write_to_xtc_buffer(self):
+        if self._xtc_buffer is None:
+            self._xtc_buffer = self.XTCBuffer()
+
+        xyz = np.ndarray((self.natoms, 3))
+        i = 0
+        for residue in self.residues:
+            for atom in residue.atoms:
+                xyz[i] = atom.coords
+                i += 1
+
+        box = np.zeros((3, 3), dtype=np.float32)
+        for i in range(3):
+            box[i][i] = self.box[i]
+
+        self._xtc_buffer.append(xyz, self.number, box)
+
+    def flush_xtc_buffer(self, filename):
+        if self._xtc_buffer is not None:
+            xtc = XTCTrajectoryFile(filename, mode="w")
+
+            xyz, step, box = self._xtc_buffer()
+            xtc.write(xyz, step=step, box=box)
+            xtc.close()
+
+            self._xtc_buffer = None
+
+    def write_xtc(self, filename):
+        if self._xtc_buffer is None:
+            self._xtc_buffer = XTCTrajectoryFile(filename, mode="w")
 
         xyz = np.ndarray((1, self.natoms, 3), dtype=np.float32)
         i = 0
@@ -267,11 +310,15 @@ class Frame:
             for atom in residue.atoms:
                 xyz[0][i] = atom.coords
                 i += 1
+
         step = np.array([self.number], dtype=np.int32)
+
         box = np.zeros((1, 3, 3), dtype=np.float32)
         for i in range(3):
             box[0][i][i] = self.box[i]
-        self._out_xtc.write(xyz, step=step, box=box)
+
+        self._xtc_buffer.write(xyz, step=step, box=box)
+        # self._xtc_buffer.close()
 
     def _parse_gro(self, filename):
         """

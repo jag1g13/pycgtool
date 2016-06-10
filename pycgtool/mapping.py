@@ -116,7 +116,7 @@ class Mapping:
     def __iter__(self):
         return iter(self._mappings)
 
-    def apply(self, frame, exclude=None):
+    def apply(self, frame, cgframe=None, exclude=None):
         """
         Apply the AA->CG mapping to an atomistic Frame.
 
@@ -124,8 +124,10 @@ class Mapping:
         :param exclude: Set of molecule names to exclude from mapping - e.g. solvent
         :return: A new Frame instance containing the CG frame
         """
-        cgframe = Frame()
+        if cgframe is None:
+            cgframe = Frame()
         cgframe.name = frame.name
+        cgframe.number = frame.number
         cgframe.box = frame.box
         cgframe.natoms = 0
         cgframe.residues = []

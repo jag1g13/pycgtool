@@ -32,9 +32,9 @@ def main(args, config):
     numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
     for _ in Progress(numframes, postwhile=frame.next_frame):
         if args.map:
-            cgframe = mapping.apply(frame, exclude={"SOL"})
+            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
             if config.output_xtc:
-                cgframe.write_xtc("out.xtc")
+                cgframe.write_to_xtc_buffer()
         else:
             cgframe = frame
 
@@ -53,6 +53,9 @@ def main(args, config):
         if config.dump_measurements:
             bonds.dump_values(config.dump_n_values)
 
+    if args.map and config.output_xtc:
+        cgframe.flush_xtc_buffer("out.xtc")
+
 
 def map_only(args, config):
     """
@@ -69,9 +72,9 @@ def map_only(args, config):
     if args.xtc and config.output_xtc:
         numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
         for _ in Progress(numframes, postwhile=frame.next_frame):
-            cgframe = mapping.apply(frame, exclude={"SOL"})
-            cgframe.write_xtc("out.xtc")
-
+            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            cgframe.write_to_xtc_buffer()
+        cgframe.flush_xtc_buffer("out.xtc")
 
 
 if __name__ == "__main__":

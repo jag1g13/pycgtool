@@ -6,6 +6,12 @@ import numpy as np
 
 from pycgtool.frame import Atom, Residue, Frame
 
+try:
+    import mdtraj
+    mdtraj_present = True
+except ImportError:
+    mdtraj_present = False
+
 
 class AtomTest(unittest.TestCase):
     def test_atom_create(self):
@@ -82,11 +88,13 @@ class FrameTest(unittest.TestCase):
         np.testing.assert_allclose(np.array([1.122, 1.130, 1.534]),
                                    frame.residues[0].atoms[0].coords)
 
+    @unittest.skipIf(not mdtraj_present, "MDTRAJ not present")
     def test_frame_read_xtc_mdtraj_numframes(self):
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="mdtraj")
         self.assertEqual(12, frame.numframes)
 
+    @unittest.skipIf(not mdtraj_present, "MDTRAJ not present")
     def test_frame_read_xtc_mdtraj(self):
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="mdtraj")
@@ -101,11 +109,20 @@ class FrameTest(unittest.TestCase):
         np.testing.assert_allclose(np.array([1.122, 1.130, 1.534]),
                                    frame.residues[0].atoms[0].coords)
 
+    @unittest.skipIf(not mdtraj_present, "MDTRAJ not present")
+    def test_frame_write_xtc_buffered_mdtraj(self):
+        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
+                      xtc_reader="mdtraj")
+        while frame.next_frame():
+            frame.write_to_xtc_buffer()
+        frame.flush_xtc_buffer("test.xtc")
+
+    @unittest.skipIf(not mdtraj_present, "MDTRAJ not present")
     def test_frame_write_xtc_mdtraj(self):
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="mdtraj")
         while frame.next_frame():
-            frame.write_xtc("test.xtc")
+            frame.write_xtc("test2.xtc")
 
 
 if __name__ == '__main__':
