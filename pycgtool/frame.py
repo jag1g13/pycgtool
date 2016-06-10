@@ -11,7 +11,11 @@ import numpy as np
 
 from simpletraj import trajectory
 
-from mdtraj.formats import XTCTrajectoryFile
+try:
+    from mdtraj.formats import XTCTrajectoryFile
+except ImportError:
+    pass
+
 
 from .util import backup_file
 from .parsers.cfg import CFG
@@ -162,6 +166,8 @@ class Frame:
                 raise FileNotFoundError(xtc) from e
             e.args = ("Error opening file '{0}'".format(xtc),)
             raise
+        except NameError as e:
+            raise ImportError("No module named 'mdtraj'") from e
         else:
             xyz, time, step, box = self.xtc.read(n_frames=1)
             natoms = len(xyz[0])
@@ -215,6 +221,8 @@ class Frame:
             raise
 
     def _next_frame_mdtraj(self, exclude=None):
+        if XTCTrajectoryFile is None:
+            raise ImportError("No module named 'mdtraj'")
         try:
             # self.xtc.seek(self.number)
             i = 0
@@ -292,13 +300,16 @@ class Frame:
 
     def flush_xtc_buffer(self, filename):
         if self._xtc_buffer is not None:
-            xtc = XTCTrajectoryFile(filename, mode="w")
+            try:
+                xtc = XTCTrajectoryFile(filename, mode="w")
 
-            xyz, step, box = self._xtc_buffer()
-            xtc.write(xyz, step=step, box=box)
-            xtc.close()
+                xyz, step, box = self._xtc_buffer()
+                xtc.write(xyz, step=step, box=box)
+                xtc.close()
 
-            self._xtc_buffer = None
+                self._xtc_buffer = None
+            except NameError as e:
+                raise ImportError("No module named 'mdtraj'") from e
 
     def write_xtc(self, filename):
         if self._xtc_buffer is None:
