@@ -53,7 +53,7 @@ def main(args, config):
         if config.dump_measurements:
             bonds.dump_values(config.dump_n_values)
 
-    if args.map and config.output_xtc:
+    if args.map and (config.output_xtc or args.outputxtc):
         cgframe.flush_xtc_buffer("out.xtc")
 
 
@@ -69,7 +69,7 @@ def map_only(args, config):
     cgframe = mapping.apply(frame, exclude={"SOL"})
     cgframe.output("out.gro", format=config.output)
 
-    if args.xtc and config.output_xtc:
+    if args.xtc and (config.output_xtc or args.outputxtc):
         numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
         for _ in Progress(numframes, postwhile=frame.next_frame):
             cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
@@ -87,6 +87,7 @@ if __name__ == "__main__":
     input_files.add_argument('-i', '--itp', type=str, help="GROMACS ITP file")
 
     parser.add_argument('--interactive', default=False, action='store_true')
+    parser.add_argument('--outputxtc', default=False, action='store_true')
     # parser.add_argument('-f', '--frames', type=int, default=-1, help="Number of frames to read")
     input_files.add_argument('--begin', type=int, default=0, help="Frame number to begin")
     input_files.add_argument('--end', type=int, default=-1, help="Frame number to end")
@@ -103,7 +104,7 @@ if __name__ == "__main__":
                       ("angle_default_fc", True),
                       ("generate_angles", True),
                       ("generate_dihedrals", False),
-                      ("output_xtc", False)],
+                      ("output_xtc", args.outputxtc)],
                      args)
     if not args.bnd:
         config.set("map_only", True)

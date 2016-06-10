@@ -156,8 +156,8 @@ class Options:
             window.refresh()
 
         pos = 0
-        move = {"KEY_UP": lambda x: max(x - 1, 0),
-                "KEY_DOWN": lambda x: min(x + 1, nrows - 1),
+        move = {"KEY_UP": lambda x: (x - 1) % nrows,
+                "KEY_DOWN": lambda x: (x + 1) % nrows,
                 "KEY_LEFT": lambda x: x,
                 "KEY_RIGHT": lambda x: x}
 
