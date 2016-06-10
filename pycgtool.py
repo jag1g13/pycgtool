@@ -26,7 +26,7 @@ def main(args, config):
     if args.map:
         mapping = Mapping(args.map, config, itp=args.itp)
         cgframe = mapping.apply(frame, exclude={"SOL"})
-        cgframe.output("out.gro", format=config.output)
+        cgframe.output(config.output_name + ".gro", format=config.output)
 
     # Main loop - perform mapping and measurement on every frame in XTC
     numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
@@ -45,16 +45,16 @@ def main(args, config):
         if args.map:
             bonds.boltzmann_invert()
             if config.output_forcefield:
-                ff = ForceField("fftest.ff")
-                ff.write_rtp("test.rtp", mapping, bonds)
+                ff = ForceField("ff" + config.output_name + ".ff")
+                ff.write_rtp(config.output_name + ".rtp", mapping, bonds)
             else:
-                bonds.write_itp("out.itp", mapping=mapping)
+                bonds.write_itp(config.output_name + ".itp", mapping=mapping)
 
         if config.dump_measurements:
             bonds.dump_values(config.dump_n_values)
 
     if args.map and (config.output_xtc or args.outputxtc):
-        cgframe.flush_xtc_buffer("out.xtc")
+        cgframe.flush_xtc_buffer(config.output_name + ".xtc")
 
 
 def map_only(args, config):
@@ -67,14 +67,14 @@ def map_only(args, config):
     frame = Frame(gro=args.gro, xtc=args.xtc)
     mapping = Mapping(args.map, config)
     cgframe = mapping.apply(frame, exclude={"SOL"})
-    cgframe.output("out.gro", format=config.output)
+    cgframe.output(config.output_name + ".gro", format=config.output)
 
     if args.xtc and (config.output_xtc or args.outputxtc):
         numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
         for _ in Progress(numframes, postwhile=frame.next_frame):
             cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
             cgframe.write_to_xtc_buffer()
-        cgframe.flush_xtc_buffer("out.xtc")
+        cgframe.flush_xtc_buffer(config.output_name + ".xtc")
 
 
 if __name__ == "__main__":
@@ -93,7 +93,8 @@ if __name__ == "__main__":
     input_files.add_argument('--end', type=int, default=-1, help="Frame number to end")
 
     args = parser.parse_args()
-    config = Options([("output", "gro"),
+    config = Options([("output_name", "out"),
+                      ("output", "gro"),
                       ("map_only", False),
                       ("map_center", "geom"),
                       ("constr_threshold", 100000),
