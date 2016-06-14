@@ -126,11 +126,13 @@ class Mapping:
         """
         if cgframe is None:
             cgframe = Frame()
-        cgframe.name = frame.name
-        cgframe.number = frame.number
-        cgframe.box = frame.box
+            cgframe.name = frame.name
+
         cgframe.natoms = 0
         cgframe.residues = []
+
+        cgframe.number = frame.number
+        cgframe.box = frame.box
 
         for aares in frame:
             if aares.name not in self._mappings:

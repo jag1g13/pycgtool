@@ -95,23 +95,20 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config = Options([("output_name", "out"),
                       ("output", "gro"),
-                      ("map_only", False),
+                      ("output_xtc", args.outputxtc),
+                      ("map_only", bool(args.bnd)),
                       ("map_center", "geom"),
                       ("constr_threshold", 100000),
-                      ("dump_measurements", False),
+                      ("dump_measurements", bool(args.bnd) and not bool(args.map)),
                       ("dump_n_values", 100000),
                       ("output_forcefield", False),
                       ("temperature", 310),
                       ("angle_default_fc", True),
                       ("generate_angles", True),
-                      ("generate_dihedrals", False),
-                      ("output_xtc", args.outputxtc)],
+                      ("generate_dihedrals", False)],
                      args)
     if not args.bnd:
         config.set("map_only", True)
-
-    if args.bnd and not args.map:
-        config.set("dump_measurements", True)
 
     if not args.map and not args.bnd:
         parser.error("One or both of -m and -b is required.")
