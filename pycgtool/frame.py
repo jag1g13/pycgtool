@@ -12,7 +12,7 @@ import numpy as np
 from simpletraj import trajectory
 
 try:
-    from mdtraj.formats import XTCTrajectoryFile
+    import mdtraj
 except ImportError:
     pass
 
@@ -137,7 +137,7 @@ class Frame:
                 open_xtc = {"simpletraj": self._open_xtc_simpletraj,
                             "mdtraj":     self._open_xtc_mdtraj}
                 try:
-                    open_xtc[self._xtc_reader](xtc)
+                    open_xtc[self._xtc_reader](xtc, gro)
                 except KeyError as e:
                     e.args = ("XTC reader {0} is not a valid option.".format(self._xtc_reader))
                     raise
@@ -145,7 +145,7 @@ class Frame:
             if itp is not None:
                 self._parse_itp(itp)
 
-    def _open_xtc_simpletraj(self, xtc):
+    def _open_xtc_simpletraj(self, xtc, gro=None):
         try:
             self.xtc = trajectory.XtcTrajectory(xtc)
         except OSError as e:
@@ -158,9 +158,9 @@ class Frame:
                 raise AssertionError("Number of atoms does not match between gro and xtc files.")
             self.numframes += self.xtc.numframes
 
-    def _open_xtc_mdtraj(self, xtc):
+    def _open_xtc_mdtraj(self, xtc, gro):
         try:
-            self.xtc = XTCTrajectoryFile(xtc)
+            self.xtc = mdtraj.load_xtc(xtc, top=gro)
         except OSError as e:
             if not os.path.isfile(xtc):
                 raise FileNotFoundError(xtc) from e
@@ -168,25 +168,11 @@ class Frame:
             raise
         except NameError as e:
             raise ImportError("No module named 'mdtraj'") from e
-        else:
-            xyz, time, step, box = self.xtc.read(n_frames=1)
-            natoms = len(xyz[0])
-            if natoms != self.natoms:
-                print(xyz[0])
-                print(natoms, self.natoms)
-                raise AssertionError("Number of atoms does not match between gro and xtc files.")
 
-            # Seek to end to count frames
-            # self.xtc.seek(0, whence=2)
-            self.numframes += 1
-            self.xtc.seek(0)
-            while True:
-                try:
-                    self.xtc.seek(1, whence=1)
-                    self.numframes += 1
-                except IndexError:
-                    break
-            self.xtc.seek(0)
+        if self.xtc.n_atoms != self.natoms:
+            raise AssertionError("Number of atoms does not match between gro and xtc files.")
+
+        self.numframes += self.xtc.n_frames
 
     def __len__(self):
         return len(self.residues)
@@ -221,25 +207,22 @@ class Frame:
             raise
 
     def _next_frame_mdtraj(self, exclude=None):
-        if XTCTrajectoryFile is None:
-            raise ImportError("No module named 'mdtraj'")
         try:
-            # self.xtc.seek(self.number)
             i = 0
-            xyz, time, step, box = self.xtc.read(n_frames=1)
-            xyz = xyz[0]
+            # This returns a slice of length 1, properties still need to be indexed
+            xtc_frame = self.xtc[self.number]
             for res in self.residues:
                 if exclude is not None and res.name in exclude:
                     continue
                 for atom in res:
-                    atom.coords = xyz[i]
+                    atom.coords = xtc_frame.xyz[0][i]
                     i += 1
 
             self.number += 1
-            self.box = np.diag(box[0]) / 10.
+            self.box = xtc_frame.unitcell_lengths[0]
             return True
         # IndexError - run out of xtc frames
-        # AttributeError - we didn't provide an xtc
+        # AttributeError - we didn't provide an xtc or is wrong reader
         except (IndexError, AttributeError):
             return False
 
@@ -265,55 +248,12 @@ class Frame:
         except (IndexError, AttributeError):
             return False
 
-    class XTCBuffer:
-        def __init__(self):
-            self.coords = []
-            self.step = []
-            self.box = []
-
-        def __call__(self):
-            return (np.array(self.coords, dtype=np.float32),
-                    np.array(self.step,   dtype=np.int32),
-                    np.array(self.box,    dtype=np.float32))
-
-        def append(self, coords, step, box):
-            self.coords.append(coords)
-            self.step.append(step)
-            self.box.append(box)
-
-    def write_to_xtc_buffer(self):
-        if self._xtc_buffer is None:
-            self._xtc_buffer = self.XTCBuffer()
-
-        xyz = np.ndarray((self.natoms, 3))
-        i = 0
-        for residue in self.residues:
-            for atom in residue.atoms:
-                xyz[i] = atom.coords
-                i += 1
-
-        box = np.zeros((3, 3), dtype=np.float32)
-        for i in range(3):
-            box[i][i] = self.box[i]
-
-        self._xtc_buffer.append(xyz, self.number, box)
-
-    def flush_xtc_buffer(self, filename):
-        if self._xtc_buffer is not None:
-            try:
-                xtc = XTCTrajectoryFile(filename, mode="w")
-
-                xyz, step, box = self._xtc_buffer()
-                xtc.write(xyz, step=step, box=box)
-                xtc.close()
-
-                self._xtc_buffer = None
-            except NameError as e:
-                raise ImportError("No module named 'mdtraj'") from e
-
     def write_xtc(self, filename):
         if self._xtc_buffer is None:
-            self._xtc_buffer = XTCTrajectoryFile(filename, mode="w")
+            try:
+                self._xtc_buffer = mdtraj.formats.XTCTrajectoryFile(filename, mode="w")
+            except NameError as e:
+                raise ImportError("No module named 'mdtraj'") from e
 
         xyz = np.ndarray((1, self.natoms, 3), dtype=np.float32)
         i = 0

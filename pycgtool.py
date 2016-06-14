@@ -34,7 +34,7 @@ def main(args, config):
         if args.map:
             cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
             if config.output_xtc:
-                cgframe.write_to_xtc_buffer()
+                cgframe.write_xtc(config.output_name + ".xtc")
         else:
             cgframe = frame
 
@@ -53,9 +53,6 @@ def main(args, config):
         if config.dump_measurements:
             bonds.dump_values(config.dump_n_values)
 
-    if args.map and (config.output_xtc or args.outputxtc):
-        cgframe.flush_xtc_buffer(config.output_name + ".xtc")
-
 
 def map_only(args, config):
     """
@@ -73,8 +70,7 @@ def map_only(args, config):
         numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
         for _ in Progress(numframes, postwhile=frame.next_frame):
             cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
-            cgframe.write_to_xtc_buffer()
-        cgframe.flush_xtc_buffer(config.output_name + ".xtc")
+            cgframe.write_xtc(config.output_name + ".xtc")
 
 
 if __name__ == "__main__":
@@ -96,7 +92,7 @@ if __name__ == "__main__":
     config = Options([("output_name", "out"),
                       ("output", "gro"),
                       ("output_xtc", args.outputxtc),
-                      ("map_only", bool(args.bnd)),
+                      ("map_only", not bool(args.bnd)),
                       ("map_center", "geom"),
                       ("constr_threshold", 100000),
                       ("dump_measurements", bool(args.bnd) and not bool(args.map)),
@@ -107,8 +103,6 @@ if __name__ == "__main__":
                       ("generate_angles", True),
                       ("generate_dihedrals", False)],
                      args)
-    if not args.bnd:
-        config.set("map_only", True)
 
     if not args.map and not args.bnd:
         parser.error("One or both of -m and -b is required.")

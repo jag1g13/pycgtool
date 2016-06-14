@@ -77,16 +77,24 @@ class FrameTest(unittest.TestCase):
 
     def test_frame_read_xtc(self):
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc")
+        self.assertEqual(663, frame.natoms)
         # These are the coordinates from the gro file
         np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),
                                    frame.residues[0].atoms[0].coords)
+        np.testing.assert_allclose(np.array([1.89868, 1.89868, 1.89868]),
+                                   frame.box)
+
         frame.next_frame()
         # These coordinates are from the xtc file
         np.testing.assert_allclose(np.array([1.176, 1.152, 1.586]),
                                    frame.residues[0].atoms[0].coords)
+        np.testing.assert_allclose(np.array([1.9052, 1.9052, 1.9052]),
+                                   frame.box)
         frame.next_frame()
         np.testing.assert_allclose(np.array([1.122, 1.130, 1.534]),
                                    frame.residues[0].atoms[0].coords)
+        np.testing.assert_allclose(np.array([1.90325272, 1.90325272, 1.90325272]),
+                                   frame.box)
 
     @unittest.skipIf(not mdtraj_present, "MDTRAJ not present")
     def test_frame_read_xtc_mdtraj_numframes(self):
@@ -98,31 +106,30 @@ class FrameTest(unittest.TestCase):
     def test_frame_read_xtc_mdtraj(self):
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="mdtraj")
+        self.assertEqual(663, frame.natoms)
         # These are the coordinates from the gro file
         np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),
                                    frame.residues[0].atoms[0].coords)
+        np.testing.assert_allclose(np.array([1.89868, 1.89868, 1.89868]),
+                                   frame.box)
         frame.next_frame()
         # These coordinates are from the xtc file
         np.testing.assert_allclose(np.array([1.176, 1.152, 1.586]),
                                    frame.residues[0].atoms[0].coords)
+        np.testing.assert_allclose(np.array([1.9052, 1.9052, 1.9052]),
+                                   frame.box)
         frame.next_frame()
         np.testing.assert_allclose(np.array([1.122, 1.130, 1.534]),
                                    frame.residues[0].atoms[0].coords)
-
-    @unittest.skipIf(not mdtraj_present, "MDTRAJ not present")
-    def test_frame_write_xtc_buffered_mdtraj(self):
-        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
-                      xtc_reader="mdtraj")
-        while frame.next_frame():
-            frame.write_to_xtc_buffer()
-        frame.flush_xtc_buffer("test.xtc")
+        np.testing.assert_allclose(np.array([1.90325272, 1.90325272, 1.90325272]),
+                                   frame.box)
 
     @unittest.skipIf(not mdtraj_present, "MDTRAJ not present")
     def test_frame_write_xtc_mdtraj(self):
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="mdtraj")
         while frame.next_frame():
-            frame.write_xtc("test2.xtc")
+            frame.write_xtc("water_test2.xtc")
 
 
 if __name__ == '__main__':
