@@ -146,6 +146,12 @@ class Frame:
                 self._parse_itp(itp)
 
     def _open_xtc_simpletraj(self, xtc, gro=None):
+        """
+        Open input XTC file from which to read coordinates using simpletraj library.
+
+        :param xtc: GROMACS XTC file to read subsequent frames
+        :param gro: GROMACS GRO file - not used
+        """
         try:
             self.xtc = trajectory.XtcTrajectory(xtc)
         except OSError as e:
@@ -159,6 +165,12 @@ class Frame:
             self.numframes += self.xtc.numframes
 
     def _open_xtc_mdtraj(self, xtc, gro):
+        """
+        Open input XTC file from which to read coordinates using mdtraj library.
+
+        :param xtc: GROMACS XTC file to read subsequent frames
+        :param gro: GROMACS GRO file from which to read topology
+        """
         try:
             self.xtc = mdtraj.load_xtc(xtc, top=gro)
         except OSError as e:
@@ -194,7 +206,7 @@ class Frame:
 
     def next_frame(self, exclude=None):
         """
-        Read next frame from XTC
+        Read next frame from input XTC.
 
         :return: True if successful else False
         """
@@ -207,6 +219,11 @@ class Frame:
             raise
 
     def _next_frame_mdtraj(self, exclude=None):
+        """
+        Read next frame from XTC using mdtraj library.
+
+        :return: True if successful else False
+        """
         try:
             i = 0
             # This returns a slice of length 1, properties still need to be indexed
@@ -227,6 +244,11 @@ class Frame:
             return False
 
     def _next_frame_simpletraj(self, exclude=None):
+        """
+        Read next frame from XTC using simpletraj library.
+
+        :return: True if successful else False
+        """
         try:
             self.xtc.get_frame(self.number)
             i = 0
@@ -249,7 +271,13 @@ class Frame:
             return False
 
     def write_xtc(self, filename):
+        """
+        Write frame to output XTC file.
+
+        :param filename: XTC filename to write to
+        """
         if self._xtc_buffer is None:
+            backup_file(filename, verbose=True)
             try:
                 self._xtc_buffer = mdtraj.formats.XTCTrajectoryFile(filename, mode="w")
             except NameError as e:
@@ -269,7 +297,6 @@ class Frame:
             box[0][i][i] = self.box[i]
 
         self._xtc_buffer.write(xyz, step=step, box=box)
-        # self._xtc_buffer.close()
 
     def _parse_gro(self, filename):
         """

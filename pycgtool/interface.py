@@ -220,6 +220,9 @@ class Progress:
         :param postwhile: Function to check after each iteration, stops if False
         :param quiet: Skip printing of progress bar - for testing
         """
+        if prewhile is not None:
+            raise NotImplementedError("Prewhile conditions are not yet implemented")
+
         self._maxits = maxits
         self._length = length
         self._prewhile = prewhile
@@ -235,16 +238,20 @@ class Progress:
         """
         Allow iteration over Progress while testing prewhile and postwhile conditions.
 
+        Will catch Ctrl-C and return control as if the iterator has been fully consumed.
+
         :return: Iteration number
         """
-        if self._postwhile is not None and self._its > 0 and not self._postwhile():
-            self._stop()
+        try:
+            if self._postwhile is not None and self._its > 0 and not self._postwhile():
+                self._stop()
 
-        if self._prewhile is not None and not self._prewhile():
+        except KeyboardInterrupt:
+            print(end="\r")
             self._stop()
 
         self._its += 1
-        if self._its % 10 == 0 and not self._quiet:
+        if self._its % 1 == 0 and not self._quiet:
             self._display()
 
         if self._its >= self._maxits:
@@ -252,16 +259,24 @@ class Progress:
 
         return self._its
 
+    def run(self):
+        """
+        Iterate through self until stopped by maximum iterations or False condition.
+        """
+        collections.deque(self, maxlen=0)
+
+    @property
+    def _bar(self):
+        done = int(self._length * (self._its / self._maxits))
+        left = self._length - done
+        return "{0} [".format(self._its) + done * "#" + left * "-" + "] {0}".format(self._maxits)
+
     def _stop(self):
         if not self._quiet:
-            done = int(self._length * (self._its / self._maxits))
-            left = self._length - done
             time_taken = int(time.clock() - self._start_time)
-            print("{0} [".format(self._its) + done * "#" + left * "-" + "] {0} took {1}s".format(self._maxits, time_taken))
+            print(self._bar + " took {0}s".format(time_taken))
         raise StopIteration
 
     def _display(self):
-        done = int(self._length * (self._its / self._maxits))
-        left = self._length - done
         time_remain = int((time.clock() - self._start_time) * ((self._maxits - self._its) / self._its))
-        print("{0} [".format(self._its) + done * "#" + left * "-" + "] {0} {1}s left".format(self._maxits, time_remain), end="\r")
+        print(self._bar + " {0}s left".format(time_remain), end="\r")

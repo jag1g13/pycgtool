@@ -126,6 +126,10 @@ class FrameTest(unittest.TestCase):
 
     @unittest.skipIf(not mdtraj_present, "MDTRAJ not present")
     def test_frame_write_xtc_mdtraj(self):
+        try:
+            os.remove("water_test2.xtc")
+        except IOError:
+            pass
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="mdtraj")
         while frame.next_frame():

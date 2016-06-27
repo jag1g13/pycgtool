@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import sys
 
 from pycgtool.frame import Frame
 from pycgtool.mapping import Mapping
@@ -18,7 +19,7 @@ def main(args, config):
     :param args: Arguments from argparse
     :param config: Configuration dictionary
     """
-    frame = Frame(gro=args.gro, xtc=args.xtc, itp=args.itp, frame_start=args.begin)
+    frame = Frame(gro=args.gro, xtc=args.xtc, itp=args.itp, frame_start=args.begin, xtc_reader="mdtraj")
 
     if args.bnd:
         bonds = BondSet(args.bnd, config)
@@ -29,17 +30,20 @@ def main(args, config):
         cgframe.output(config.output_name + ".gro", format=config.output)
 
     # Main loop - perform mapping and measurement on every frame in XTC
-    numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
-    for _ in Progress(numframes, postwhile=frame.next_frame):
+    def main_loop():
+        nonlocal cgframe
+        frame.next_frame()
         if args.map:
             cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
             if config.output_xtc:
                 cgframe.write_xtc(config.output_name + ".xtc")
         else:
             cgframe = frame
-
         if args.bnd:
             bonds.apply(cgframe)
+
+    numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
+    Progress(numframes, postwhile=main_loop).run()
 
     if args.bnd:
         if args.map:
@@ -68,9 +72,15 @@ def map_only(args, config):
 
     if args.xtc and (config.output_xtc or args.outputxtc):
         numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
-        for _ in Progress(numframes, postwhile=frame.next_frame):
+
+        # Main loop - perform mapping and measurement on every frame in XTC
+        def main_loop():
+            nonlocal cgframe
+            frame.next_frame()
             cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
             cgframe.write_xtc(config.output_name + ".xtc")
+
+        Progress(numframes, postwhile=main_loop).run()
 
 
 if __name__ == "__main__":
@@ -84,7 +94,6 @@ if __name__ == "__main__":
 
     parser.add_argument('--interactive', default=False, action='store_true')
     parser.add_argument('--outputxtc', default=False, action='store_true')
-    # parser.add_argument('-f', '--frames', type=int, default=-1, help="Number of frames to read")
     input_files.add_argument('--begin', type=int, default=0, help="Frame number to begin")
     input_files.add_argument('--end', type=int, default=-1, help="Frame number to end")
 
@@ -108,7 +117,10 @@ if __name__ == "__main__":
         parser.error("One or both of -m and -b is required.")
 
     if args.interactive:
-        config.interactive()
+        try:
+            config.interactive()
+        except KeyboardInterrupt:
+            sys.exit(0)
     else:
         print("Using GRO: {0}".format(args.gro))
         print("Using XTC: {0}".format(args.xtc))

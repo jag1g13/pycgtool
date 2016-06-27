@@ -121,6 +121,7 @@ class Mapping:
         Apply the AA->CG mapping to an atomistic Frame.
 
         :param frame: Frame to which mapping will be applied
+        :param cgframe: CG Frame to remap - optional
         :param exclude: Set of molecule names to exclude from mapping - e.g. solvent
         :return: A new Frame instance containing the CG frame
         """
