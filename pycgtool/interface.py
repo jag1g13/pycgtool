@@ -264,6 +264,7 @@ class Progress:
         Iterate through self until stopped by maximum iterations or False condition.
         """
         collections.deque(self, maxlen=0)
+        return self._its
 
     @property
     def _bar(self):
