@@ -263,14 +263,17 @@ class Progress:
         """
         Iterate through self until stopped by maximum iterations or False condition.
         """
-        collections.deque(self, maxlen=0)
+        # collections.deque(self, maxlen=0)
+        for _ in self:
+            pass
         return self._its
 
     @property
     def _bar(self):
         done = int(self._length * (self._its / self._maxits))
         left = self._length - done
-        return "{0} [".format(self._its) + done * "#" + left * "-" + "] {0}".format(self._maxits)
+        width = len(str(self._maxits))
+        return "{0:-{width}} [".format(self._its, width=width) + done * "#" + left * "-" + "] {0}".format(self._maxits)
 
     def _stop(self):
         if not self._quiet:

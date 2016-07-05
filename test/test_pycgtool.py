@@ -2,11 +2,56 @@ import unittest
 import subprocess
 import os
 
+import numpy as np
+
+from simpletraj.trajectory import XtcTrajectory
+
+from pycgtool.interface import Options
+from pycgtool.pycgtool import main, map_only
+
+
+class Args:
+    def __init__(self, name, map=True, bnd=True):
+        self.gro = os.path.join("test/data", name+".gro")
+        self.xtc = os.path.join("test/data", name+".xtc")
+        self.map = os.path.join("test/data", name+".map") if map else None
+        self.bnd = os.path.join("test/data", name+".bnd") if bnd else None
+        self.begin = 0
+        self.end = -1
+        self.quiet = True
+
 
 class PycgtoolTest(unittest.TestCase):
+    config = Options([("output_name", "out"),
+                      ("output", "gro"),
+                      ("output_xtc", True),
+                      ("map_only", False),
+                      ("map_center", "geom"),
+                      ("constr_threshold", 100000),
+                      ("dump_measurements", False),
+                      ("dump_n_values", 100000),
+                      ("output_forcefield", False),
+                      ("temperature", 310),
+                      ("angle_default_fc", True),
+                      ("generate_angles", True),
+                      ("generate_dihedrals", False)])
+
     def test_run(self):
         path = os.path.dirname(os.path.dirname(__file__))
         self.assertEqual(0, subprocess.check_call([os.path.join(path, "pycgtool.py"), "-h"], stdout=subprocess.PIPE))
+
+    def test_map_only(self):
+        map_only(Args("sugar"), self.config)
+
+        xtc = XtcTrajectory("out.xtc")
+        xtc_ref = XtcTrajectory("test/data/sugar_out.xtc")
+        self.assertEqual(xtc_ref.numframes, xtc.numframes)
+
+        for i in range(xtc_ref.numframes):
+            xtc.get_frame(i)
+            xtc_ref.get_frame(i)
+            np.testing.assert_array_almost_equal(xtc_ref.box, xtc.box, decimal=3)
+            np.testing.assert_array_almost_equal(xtc_ref.x, xtc.x, decimal=3)
 
     # TODO more tests
 
