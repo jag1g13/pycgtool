@@ -6,6 +6,12 @@ import numpy as np
 
 from simpletraj.trajectory import XtcTrajectory
 
+try:
+    import mdtraj
+    mdtraj_present = True
+except ImportError:
+    mdtraj_present = False
+
 from pycgtool.interface import Options
 from pycgtool.pycgtool import main, map_only
 
@@ -40,6 +46,7 @@ class PycgtoolTest(unittest.TestCase):
         path = os.path.dirname(os.path.dirname(__file__))
         self.assertEqual(0, subprocess.check_call([os.path.join(path, "pycgtool.py"), "-h"], stdout=subprocess.PIPE))
 
+    @unittest.skipIf(not mdtraj_present, "MDTRAJ not present")
     def test_map_only(self):
         map_only(Args("sugar"), self.config)
 

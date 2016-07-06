@@ -51,7 +51,7 @@ def main(args, config):
 
     numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
     logger.info("Beginning analysis of {0} frames".format(numframes))
-    Progress(numframes, postwhile=main_loop, quiet=args.quiet).run()
+    Progress(numframes, dowhile=main_loop, quiet=args.quiet).run()
 
     if args.bnd:
         if args.map:
@@ -94,5 +94,5 @@ def map_only(args, config):
 
         numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
         logger.info("Beginning analysis of {0} frames".format(numframes))
-        Progress(numframes, postwhile=main_loop, quiet=args.quiet).run()
+        Progress(numframes, dowhile=main_loop, quiet=args.quiet).run()
 

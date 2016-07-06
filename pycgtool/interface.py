@@ -210,23 +210,18 @@ class Progress:
     Display a progress bar during the main loop of a program.
     """
 
-    def __init__(self, maxits, length=20, prewhile=None, postwhile=None, quiet=False):
+    def __init__(self, maxits, length=20, dowhile=None, quiet=False):
         """
         Return progress bar instance to handle printing of a progress bar within loops.
 
         :param maxits: Expected number of iterations
         :param length: Length of progress bar in characters
-        :param prewhile: Function to check before each iteration, stops if False
-        :param postwhile: Function to check after each iteration, stops if False
+        :param dowhile: Function to call after each iteration, stops if False
         :param quiet: Skip printing of progress bar - for testing
         """
-        if prewhile is not None:
-            raise NotImplementedError("Prewhile conditions are not yet implemented")
-
         self._maxits = maxits
         self._length = length
-        self._prewhile = prewhile
-        self._postwhile = postwhile
+        self._dowhile = dowhile
         self._quiet = quiet
         self._its = 0
         self._start_time = time.clock()
@@ -236,14 +231,14 @@ class Progress:
 
     def __next__(self):
         """
-        Allow iteration over Progress while testing prewhile and postwhile conditions.
+        Allow iteration over Progress while testing dowhile condition.
 
         Will catch Ctrl-C and return control as if the iterator has been fully consumed.
 
         :return: Iteration number
         """
         try:
-            if self._postwhile is not None and self._its > 0 and not self._postwhile():
+            if self._dowhile is not None and self._its > 0 and not self._dowhile():
                 self._stop()
 
         except KeyboardInterrupt:
@@ -263,9 +258,7 @@ class Progress:
         """
         Iterate through self until stopped by maximum iterations or False condition.
         """
-        # collections.deque(self, maxlen=0)
-        for _ in self:
-            pass
+        collections.deque(self, maxlen=0)
         return self._its
 
     @property

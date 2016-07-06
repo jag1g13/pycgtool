@@ -10,16 +10,9 @@ class UtilTest(unittest.TestCase):
             sum += i
         self.assertEqual(45, sum)
 
-    @unittest.expectedFailure
-    def test_progress_prewhile(self):
-        sum = 0
-        for i in Progress(20, prewhile=lambda: sum < 20, quiet=True):
-           sum += i
-        self.assertEqual(15, sum)
-
     def test_progress_postwhile(self):
         sum = 0
-        for i in Progress(20, postwhile=lambda: sum < 20, quiet=True):
+        for i in Progress(20, dowhile=lambda: sum < 20, quiet=True):
             sum += i
         self.assertEqual(21, sum)
 
