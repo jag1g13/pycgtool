@@ -46,7 +46,7 @@ class PycgtoolTest(unittest.TestCase):
         path = os.path.dirname(os.path.dirname(__file__))
         self.assertEqual(0, subprocess.check_call([os.path.join(path, "pycgtool.py"), "-h"], stdout=subprocess.PIPE))
 
-    @unittest.skipIf(not mdtraj_present, "MDTRAJ not present")
+    @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_map_only(self):
         map_only(Args("sugar"), self.config)
 

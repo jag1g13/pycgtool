@@ -5,6 +5,7 @@
 /*.itp
 /fftest.ff
 /env
+/minenv
 .coverage
 /cover
 /tmp

@@ -226,6 +226,16 @@ class Progress:
         self._its = 0
         self._start_time = time.clock()
 
+    def __len__(self):
+        """
+        Maximum iterator length.
+
+        This length will be reached if the iterator is not stopped by a False dowhile condition or KeyboardInterrupt.
+
+        :return: Maximum length of iterator
+        """
+        return self._maxits - self._its
+
     def __iter__(self):
         return self
 

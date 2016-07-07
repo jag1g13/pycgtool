@@ -11,10 +11,23 @@ import numpy as np
 
 from simpletraj import trajectory
 
+
+class MDTrajState:
+    # __slots__ = ["found", "missing_scipy", "not_found"]
+    _default = "XTC output requires both MDTraj and Scipy - "
+    found = _default + "both are present"
+    missing_scipy = _default + "Scipy is missing"
+    not_found = _default + "both are missing"
+
 try:
     import mdtraj
-except ImportError:
-    pass
+except ImportError as e:
+    if "no module named 'scipy'" in repr(e).lower():
+        mdtraj_state = MDTrajState.missing_scipy
+    else:
+        mdtraj_state = MDTrajState.not_found
+else:
+    mdtraj_state = MDTrajState.found
 
 
 from .util import backup_file
@@ -179,7 +192,7 @@ class Frame:
             e.args = ("Error opening file '{0}'".format(xtc),)
             raise
         except NameError as e:
-            raise ImportError("No module named 'mdtraj'") from e
+            raise ImportError(mdtraj_state) from e
 
         if self.xtc.n_atoms != self.natoms:
             raise AssertionError("Number of atoms does not match between gro and xtc files.")
@@ -281,7 +294,7 @@ class Frame:
             try:
                 self._xtc_buffer = mdtraj.formats.XTCTrajectoryFile(filename, mode="w")
             except NameError as e:
-                raise ImportError("No module named 'mdtraj'") from e
+                raise ImportError(mdtraj_state) from e
 
         xyz = np.ndarray((1, self.natoms, 3), dtype=np.float32)
         i = 0

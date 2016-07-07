@@ -96,13 +96,13 @@ class FrameTest(unittest.TestCase):
         np.testing.assert_allclose(np.array([1.90325272, 1.90325272, 1.90325272]),
                                    frame.box)
 
-    @unittest.skipIf(not mdtraj_present, "MDTRAJ not present")
+    @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_frame_read_xtc_mdtraj_numframes(self):
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="mdtraj")
         self.assertEqual(12, frame.numframes)
 
-    @unittest.skipIf(not mdtraj_present, "MDTRAJ not present")
+    @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_frame_read_xtc_mdtraj(self):
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="mdtraj")
@@ -124,7 +124,7 @@ class FrameTest(unittest.TestCase):
         np.testing.assert_allclose(np.array([1.90325272, 1.90325272, 1.90325272]),
                                    frame.box)
 
-    @unittest.skipIf(not mdtraj_present, "MDTRAJ not present")
+    @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_frame_write_xtc_mdtraj(self):
         try:
             os.remove("water_test2.xtc")
