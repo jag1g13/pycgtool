@@ -18,7 +18,7 @@ def main(args, config):
     :param args: Arguments from argparse
     :param config: Configuration dictionary
     """
-    frame = Frame(gro=args.gro, xtc=args.xtc, itp=args.itp, frame_start=args.begin, xtc_reader="mdtraj")
+    frame = Frame(gro=args.gro, xtc=args.xtc, itp=args.itp, frame_start=args.begin)
 
     if args.bnd:
         bonds = BondSet(args.bnd, config)

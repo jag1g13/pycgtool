@@ -72,11 +72,13 @@ class FrameTest(unittest.TestCase):
         os.remove("water-out.gro")
 
     def test_frame_read_xtc_simpletraj_numframes(self):
-        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc")
+        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
+                      xtc_reader="simpletraj")
         self.assertEqual(12, frame.numframes)
 
-    def test_frame_read_xtc(self):
-        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc")
+    def test_frame_read_xtc_simpletraj(self):
+        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
+                      xtc_reader="simpletraj")
         self.assertEqual(663, frame.natoms)
         # These are the coordinates from the gro file
         np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),

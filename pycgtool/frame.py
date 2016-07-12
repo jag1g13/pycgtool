@@ -124,7 +124,6 @@ class Frame:
     """
     Hold Atom data separated into Residues
     """
-
     def __init__(self, gro=None, xtc=None, itp=None, frame_start=0, xtc_reader="simpletraj"):
         """
         Return Frame instance having read Residues and Atoms from GRO if provided

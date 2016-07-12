@@ -6,6 +6,11 @@ import curses
 import curses.textpad
 import time
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    pass
+
 
 class Options:
     """
@@ -267,8 +272,19 @@ class Progress:
     def run(self):
         """
         Iterate through self until stopped by maximum iterations or False condition.
+
+        Use the tqdm library if it is present.
         """
-        collections.deque(self, maxlen=0)
+        if self._quiet:
+            collections.deque(self, maxlen=0)
+        else:
+            try:
+                self._quiet = True
+                collections.deque(tqdm(self, total=len(self)-1), maxlen=0)
+            except NameError:
+                self._quiet = False
+                collections.deque(self, maxlen=0)
+
         return self._its
 
     @property
