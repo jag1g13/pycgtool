@@ -18,6 +18,7 @@ Submodules
    pycgtool.frame
    pycgtool.interface
    pycgtool.mapping
+   pycgtool.pycgtool
    pycgtool.util
    pycgtool.warnings
 

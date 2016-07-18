@@ -4,7 +4,7 @@ import os
 import numpy as np
 import numpy.testing
 
-from pycgtool.util import tuple_equivalent, extend_graph_chain, stat_moments
+from pycgtool.util import tuple_equivalent, extend_graph_chain, stat_moments, transpose_and_sample
 from pycgtool.util import dir_up, backup_file, sliding, r_squared, dist_with_pbc
 
 
@@ -89,6 +89,19 @@ class UtilTest(unittest.TestCase):
         self.assertEqual(0, r_squared(ref, fit))
         fit = [i for i in range(1, 6)]
         self.assertEqual(0.5, r_squared(ref, fit))
+
+    def test_transpose_and_sample_no_sample(self):
+        l = [(1, 2), (3, 4), (5, 6)]
+        l_t = [(1, 3, 5), (2, 4, 6)]
+        self.assertEqual(l_t, transpose_and_sample(l, None))
+
+    def test_transpose_and_sample(self):
+        l = [(1, 2), (3, 4), (5, 6)]
+        l_t = [(1, 3, 5), (2, 4, 6)]
+
+        l_t_test = transpose_and_sample(l, n=1)
+        self.assertEqual(1, len(l_t_test))
+        self.assertIn(l_t_test[0], l_t)
 
 
 if __name__ == '__main__':

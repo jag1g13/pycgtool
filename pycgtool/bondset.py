@@ -8,8 +8,9 @@ import itertools
 
 import numpy as np
 import math
+import random
 
-from .util import stat_moments, sliding, dist_with_pbc
+from .util import stat_moments, sliding, dist_with_pbc, transpose_and_sample
 from .util import extend_graph_chain, cross, backup_file
 from .parsers.cfg import CFG
 
@@ -365,36 +366,23 @@ class BondSet:
 
         :param target_number: Approx number of sample measurements to output.  If None, all samples will be output
         """
-        def transpose(bond_list):
-            """
-            Transpose a list of bonds containing values and slice to provide target number of rows.
-            """
-            if not bond_list:
-                return []
-
-            lenmin = min([len(bond.values) for bond in bond_list])
-            rows = zip(*(bond.values for bond in bond_list))
-            if target_number is not None:
-                skip = 1 + max(0, lenmin // target_number)
-                rows = itertools.islice(rows, 0, None, skip)
-            return rows
 
         for mol in self._molecules:
             if mol == "SOL":
                 continue
             with open("{0}_length.dat".format(mol), "w") as f:
                 bonds = self.get_bond_lengths(mol, with_constr=True)
-                for row in transpose(bonds):
+                for row in transpose_and_sample((bond.values for bond in bonds), n=target_number):
                     print((len(row) * "{:12.5f}").format(*row), file=f)
 
             with open("{0}_angle.dat".format(mol), "w") as f:
                 bonds = self.get_bond_angles(mol)
-                for row in transpose(bonds):
+                for row in transpose_and_sample((bond.values for bond in bonds), n=target_number):
                     print((len(row) * "{:12.5f}").format(*row), file=f)
 
             with open("{0}_dihedral.dat".format(mol), "w") as f:
                 bonds = self.get_bond_dihedrals(mol)
-                for row in transpose(bonds):
+                for row in transpose_and_sample((bond.values for bond in bonds), n=target_number):
                     print((len(row) * "{:12.5f}").format(*row), file=f)
 
     def __len__(self):

@@ -6,10 +6,17 @@
 Welcome to PyCGTOOL's documentation!
 ====================================
 
-Contents:
+.. toctree::
+   :hidden:
+
+   self
+   tutorial
+   Module Documentation <modules>
+
 
 .. toctree::
    :maxdepth: 2
+
 
 Features
 --------

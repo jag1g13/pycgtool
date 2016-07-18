@@ -4,6 +4,7 @@ This module contains some general purpose utility functions used in PyCGTOOL.
 
 import os
 import itertools
+import random
 
 import numpy as np
 np.seterr(all="raise")
@@ -136,6 +137,21 @@ def stat_moments(vals, ignore_nan=True):
         return res
     except FloatingPointError:
         return np.zeros(2)
+
+
+def transpose_and_sample(sequence, n=None):
+    """
+    Transpose a sequence of lists and sample to provide target number of rows.
+
+    :param sequence: 2d sequence object to transpose
+    :param n: Number of samples to take
+    """
+    rows = list(zip(*sequence))
+
+    if n is not None and len(rows) > n:
+        rows = random.sample(rows, n)
+
+    return rows
 
 
 def dir_up(name, n=1):
