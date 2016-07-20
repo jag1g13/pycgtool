@@ -8,7 +8,11 @@ import itertools
 
 import numpy as np
 import math
-import random
+
+try:
+    from tqdm import tqdm
+except ImportError:
+    pass
 
 from .util import stat_moments, sliding, dist_with_pbc, transpose_and_sample
 from .util import extend_graph_chain, cross, backup_file
@@ -351,14 +355,24 @@ class BondSet:
                     # TypeError is raised when residues on end of chain calc bond to next
                     pass
 
-    def boltzmann_invert(self):
+    def boltzmann_invert(self, progress=False):
         """
         Perform Boltzmann Inversion of all bonds to calculate equilibrium value and force constant.
+
+        :param progress: Display a progress bar using tqdm if available
         """
-        for mol in self._molecules:
-            for bond in self._molecules[mol]:
-                bond.boltzmann_invert(temp=self._temperature,
-                                      angle_default_fc=self._angle_default_fc)
+        bond_iter = itertools.chain(*self._molecules.values())
+        bond_iter_wrap = bond_iter
+        if progress:
+            try:
+                total = sum(map(len, self._molecules.values()))
+                bond_iter_wrap = tqdm(bond_iter, total=total)
+            except NameError:
+                pass
+
+        for bond in bond_iter_wrap:
+            bond.boltzmann_invert(temp=self._temperature,
+                                  angle_default_fc=self._angle_default_fc)
 
     def dump_values(self, target_number=100000):
         """

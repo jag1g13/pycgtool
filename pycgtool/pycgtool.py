@@ -56,7 +56,7 @@ def main(args, config):
     if args.bnd:
         if args.map:
             logger.info("Beginning Boltzmann inversion")
-            bonds.boltzmann_invert()
+            bonds.boltzmann_invert(progress=True)
             if config.output_forcefield:
                 logger.info("Creating GROMACS forcefield directory")
                 ff = ForceField("ff" + config.output_name + ".ff")
