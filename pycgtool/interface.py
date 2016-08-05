@@ -280,7 +280,7 @@ class Progress:
         else:
             try:
                 self._quiet = True
-                collections.deque(tqdm(self, total=len(self)-1), maxlen=0)
+                collections.deque(tqdm(self, total=len(self)-1, ncols=80), maxlen=0)
             except NameError:
                 self._quiet = False
                 collections.deque(self, maxlen=0)

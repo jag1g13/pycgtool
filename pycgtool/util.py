@@ -5,6 +5,7 @@ This module contains some general purpose utility functions used in PyCGTOOL.
 import os
 import itertools
 import random
+import math
 
 import numpy as np
 np.seterr(all="raise")
@@ -22,13 +23,14 @@ def jit_dummy(*args, **kwargs):
         return wrap
 
 try:
+    import numba
     from numba import jit
 except ImportError:
     jit = jit_dummy
 
 
-@jit
-def cross(u, v):
+@jit(numba.float32[3](numba.float32[3], numba.float32[3]))
+def vector_cross(u, v):
     """
     Return vector cross product of two 3d vectors as numpy array.
 
@@ -41,6 +43,54 @@ def cross(u, v):
     res[1] = u[2] * v[0] - u[0] * v[2]
     res[2] = u[0] * v[1] - u[1] * v[0]
     return res
+
+
+@jit(numba.float32(numba.float32[3], numba.float32[3]))
+def vector_dot(u, v):
+    """
+    Return vector dot product of two 3d vectors.
+
+    :param u: First 3d vector
+    :param v: Second 3d vector
+    :return: Dot product of two vectors
+    """
+    return u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
+
+
+@jit(numba.float32(numba.float32[3]))
+def vector_len(v):
+    return math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
+
+
+@jit(numba.float32(numba.float32[3], numba.float32[3]))
+def vector_angle(a, b):
+    """
+    Calculate the angle between two vectors.
+
+    :param a: First vector
+    :param b: Second vector
+    :return: Angle in radians
+    """
+    mag = vector_len(a) * vector_len(b)
+    dot = vector_dot(a, b) / mag
+    # Previously checked to within 1%, but this prevented numba optimisation
+    ang = math.acos(max(-1, min(1, dot)))
+    return ang
+
+
+@jit
+def vector_angle_signed(a, b, ref=np.array([0., 0., 1.])):
+    """
+    Calculate the signed angle between two vectors.
+
+    :param a: First vector
+    :param b: Second vector
+    :param ref: Optional reference vector, will use global z-axis if not provided
+    :return: Signed angle in radians
+    """
+    ang = vector_angle(a, b)
+    signum = math.copysign(1, vector_dot(vector_cross(a, b), ref))
+    return ang * signum
 
 
 def tuple_equivalent(tuple1, tuple2):

@@ -15,7 +15,8 @@ except ImportError:
     pass
 
 from .util import stat_moments, sliding, dist_with_pbc, transpose_and_sample
-from .util import extend_graph_chain, cross, backup_file
+from .util import extend_graph_chain, backup_file
+from .util import vector_len, vector_cross, vector_angle, vector_angle_signed
 from .parsers.cfg import CFG
 
 np.seterr(all="raise")
@@ -59,8 +60,10 @@ class Bond:
         rad2 = np.pi * np.pi / (180. * 180.)
         conv = {2: lambda: rt / var,
                 3: lambda: 25. if angle_default_fc else rt * np.sin(np.radians(mean))**2 / (var * rad2),
-                # 3: lambda: 25. if angle_default_fc else rt / (var * rad2),
                 4: lambda: rt / (var * rad2)}
+        # conv = {2: lambda: rt / (2 * var),
+        #         3: lambda: 25. if angle_default_fc else rt / (2 * np.sin(np.radians(mean))**2 * var * rad2),
+        #         4: lambda: rt / (var * rad2)}
 
         self.eqm = mean
         try:
@@ -78,27 +81,6 @@ class Bond:
             )
         except (AttributeError, TypeError):
             return "<Bond containing atoms {0}>".format(", ".join(self.atoms))
-
-
-def angle(a, b):
-    """
-    Calculate the angle between two vectors.
-
-    :param a: First vector
-    :param b: Second vector
-    :return: Angle in radians
-    """
-    dot = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
-    mag = math.sqrt((a[0]*a[0] + a[1]*a[1] + a[2]*a[2]) * (b[0]*b[0] + b[1]*b[1] + b[2]*b[2]))
-    try:
-        return math.acos(dot / mag)
-    except ValueError as e:
-        val = dot / mag
-        if abs(val) - 1 < 0.01:
-            # If within 1% of acceptable value correct it, else reraise
-            return math.acos(max(-1, min(1, dot / mag)))
-        e.args = (e.args[0] + " in acos(" + str(dot / mag) + ")",)
-        raise
 
 
 class BondSet:
@@ -309,26 +291,22 @@ class BondSet:
         """
         def calc_length(atoms):
             vec = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
-            return math.sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2])
+            return vector_len(vec)
 
         def calc_angle(atoms):
             veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
             vecb = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.box)
-            ret = np.degrees(np.pi - angle(veca, vecb))
-            return ret
+            return math.degrees(math.pi - vector_angle(veca, vecb))
 
         def calc_dihedral(atoms):
             veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
             vecb = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.box)
             vecc = dist_with_pbc(atoms[2].coords, atoms[3].coords, frame.box)
 
-            c1 = cross(veca, vecb)
-            c2 = cross(vecb, vecc)
-            c3 = cross(c1, c2)
+            c1 = vector_cross(veca, vecb)
+            c2 = vector_cross(vecb, vecc)
 
-            ang = np.degrees(angle(c1, c2))
-            direction = np.dot(vecb, c3)
-            return ang if direction > 0 else -ang
+            return math.degrees(vector_angle_signed(c1, c2, vecb))
 
         calc = {2: calc_length,
                 3: calc_angle,
@@ -338,7 +316,7 @@ class BondSet:
             try:
                 mol_meas = self._molecules[res.name]
             except KeyError:
-                # Bonds have not been specified for molecule - probably water
+                # Bonds have not been specified for molecule - probably water - ignore this residue
                 continue
 
             adj_res = {"-": prev_res,
@@ -350,8 +328,7 @@ class BondSet:
                     atoms = [adj_res.get(name[0], res)[name.lstrip("-+")] for name in bond.atoms]
                     val = calc[len(atoms)](atoms)
                     bond.values.append(val)
-                except (NotImplementedError, TypeError, FloatingPointError):
-                    # NotImplementedError is raised if form is not implemented
+                except (NotImplementedError, TypeError):
                     # TypeError is raised when residues on end of chain calc bond to next
                     pass
 
@@ -366,7 +343,7 @@ class BondSet:
         if progress:
             try:
                 total = sum(map(len, self._molecules.values()))
-                bond_iter_wrap = tqdm(bond_iter, total=total)
+                bond_iter_wrap = tqdm(bond_iter, total=total, ncols=80)
             except NameError:
                 pass
 
