@@ -116,6 +116,31 @@ class Mapping:
     def __iter__(self):
         return iter(self._mappings)
 
+    def _cg_frame_setup(self, aa_residues, name=None):
+        """
+        Create a new CG Frame and populate beads
+        :param aa_residues: Iterable of atomistic residues to map from
+        :param name: Name of Frame
+        :return: New CG Frame instance
+        """
+        cgframe = Frame()
+        cgframe.name = name
+
+        for aares in aa_residues:
+            molmap = self._mappings[aares.name]
+            cgres = Residue(name=aares.name, num=aares.num)
+            cgres.atoms = [Atom(name=bead.name, type=bead.type, charge=bead.charge, mass=bead.mass) for bead in molmap]
+
+            for i, (bead, bmap) in enumerate(zip(cgres, molmap)):
+                cgres.name_to_num[bead.name] = i
+                bead.charge = bmap.charge
+                bead.mass = bmap.mass
+
+            cgframe.add_residue(cgres)
+            cgframe.natoms += len(cgres)
+
+        return cgframe
+
     def apply(self, frame, cgframe=None, exclude=None):
         """
         Apply the AA->CG mapping to an atomistic Frame.
@@ -123,73 +148,46 @@ class Mapping:
         :param frame: Frame to which mapping will be applied
         :param cgframe: CG Frame to remap - optional
         :param exclude: Set of molecule names to exclude from mapping - e.g. solvent
-        :return: A new Frame instance containing the CG frame
+        :return: Frame instance containing the CG frame
         """
-        if cgframe is None:
-            cgframe = Frame()
-            cgframe.name = frame.name
+        select_predicate = lambda res: res.name in self._mappings and not (exclude is not None and res.name in exclude)
+        aa_residues = (aares for aares in frame if select_predicate(aares))
 
-        cgframe.natoms = 0
-        cgframe.residues = []
+        if cgframe is None:
+            aa_residues = list(aa_residues)
+            cgframe = self._cg_frame_setup(aa_residues, frame.name)
 
         cgframe.number = frame.number
         cgframe.box = frame.box
 
-        for aares in frame:
-            if aares.name not in self._mappings:
-                continue
-            if exclude is not None and aares.name in exclude:
-                continue
+        for aares, cgres in zip(aa_residues, cgframe):
+            molmap = self._mappings[aares.name]
 
-            res = self._apply_res_pbc(aares, frame.box)
+            for i, (bead, bmap) in enumerate(zip(cgres, molmap)):
+                ref_coords = aares[bmap[0]].coords
+                coords = np.array([aares[atom].coords for atom in bmap], dtype=np.float32)
 
-            cgframe.natoms += len(res)
-            cgframe.residues.append(res)
+                if self._map_center == "geom":
+                    bead.coords = calc_coords(ref_coords, coords, cgframe.box)
+                else:
+                    try:
+                        weights = bmap.weights[self._map_center]
+                    except KeyError as e:
+                        if self._map_center == "mass":
+                            e.args = ("Error with mapping type 'mass', did you provide an itp file?",)
+                        else:
+                            e.args = ("Error, unknown mapping type '{0}'".format(e.args[0]),)
+                        raise
+                    bead.coords = calc_coords_weight(ref_coords, coords, cgframe.box, weights)
+
         return cgframe
-
-    def _apply_res_pbc(self, aares, box):
-        """
-        Apply mapping transformation to a single residue to allow multithreading.
-
-        :param aares: Atomistic residue to apply mapping
-        :param box: Cubic periodic box vectors
-        :return: A single coarse grained residue
-        """
-
-        molmap = self._mappings[aares.name]
-        res = Residue(name=aares.name, num=aares.num)
-        res.atoms = [Atom(name=bead.name, type=bead.type, charge=bead.charge, mass=bead.mass) for bead in molmap]
-
-        # Perform mapping
-        for i, (bead, bmap) in enumerate(zip(res, molmap)):
-            res.name_to_num[bead.name] = i
-            bead.charge = bmap.charge
-            bead.mass = bmap.mass
-
-            ref_coords = aares[bmap[0]].coords
-            coords = np.array([aares[atom].coords for atom in bmap], dtype=np.float32)
-
-            if self._map_center == "geom":
-                bead.coords = calc_coords(ref_coords, coords, box)
-            else:
-                try:
-                    weights = bmap.weights[self._map_center]
-                except KeyError as e:
-                    if self._map_center == "mass":
-                        e.args = ("Error with mapping type 'mass', did you provide an itp file?",)
-                    else:
-                        e.args = ("Error, unknown mapping type '{0}'".format(e.args[0]),)
-                    raise
-                bead.coords = calc_coords_weight(ref_coords, coords, box, weights)
-
-        return res
 
 
 @jit
 def calc_coords_weight(ref_coords, coords, box, weights):
     coords = dist_with_pbc(ref_coords, coords, box)
     coords = np.sum(weights * coords, axis=0)
-    coords /= np.sum(weights)
+    coords /= sum(weights)
     coords += ref_coords
     return coords
 

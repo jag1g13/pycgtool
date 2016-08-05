@@ -136,6 +136,7 @@ class Frame:
         self.residues = []
         self.number = frame_start - 1
         self.numframes = 0
+        self.natoms = 0
         self.box = np.zeros(3, dtype=np.float32)
 
         self._xtc_buffer = None
