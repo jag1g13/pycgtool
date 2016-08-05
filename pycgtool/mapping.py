@@ -12,9 +12,10 @@ from .parsers.cfg import CFG
 from .util import dist_with_pbc
 
 try:
-    from numba import jit
+    import numba
 except ImportError:
-    from .util import jit_dummy as jit
+    from .util import NumbaDummy
+    numba = NumbaDummy()
 
 np.seterr(all="raise")
 
@@ -183,7 +184,7 @@ class Mapping:
         return cgframe
 
 
-@jit
+@numba.jit
 def calc_coords_weight(ref_coords, coords, box, weights):
     coords = dist_with_pbc(ref_coords, coords, box)
     coords = np.sum(weights * coords, axis=0)
@@ -192,7 +193,7 @@ def calc_coords_weight(ref_coords, coords, box, weights):
     return coords
 
 
-@jit
+@numba.jit
 def calc_coords(ref_coords, coords, box):
     n = len(coords)
     running = np.zeros(3, dtype=np.float32)

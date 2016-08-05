@@ -11,25 +11,40 @@ import numpy as np
 np.seterr(all="raise")
 
 
-def jit_dummy(*args, **kwargs):
+class NumbaDummy:
     """
-    Dummy version of numba.jit decorator, does nothing
+    Dummy Numba module
     """
-    if len(args) == 1 and callable(args[0]):
-        return args[0]
-    else:
-        def wrap(f):
-            return f
-        return wrap
+    def __getattr__(self, item):
+        if item == "jit":
+            return self.jit
+        return self
+
+    def __getitem__(self, item):
+        return self
+
+    def __call__(self, *args, **kwargs):
+        return None
+
+    def jit(self, *args, **kwargs):
+        """
+        Dummy version of numba.jit decorator, does nothing
+        """
+        if len(args) == 1 and callable(args[0]):
+            return args[0]
+        else:
+            def wrap(func):
+                return func
+            return wrap
 
 try:
     import numba
-    from numba import jit
 except ImportError:
-    jit = jit_dummy
+    # If numba isn't installed, create dummy so we don't get NameErrors
+    numba = NumbaDummy()
 
 
-@jit(numba.float32[3](numba.float32[3], numba.float32[3]))
+@numba.jit(numba.float32[3](numba.float32[3], numba.float32[3]))
 def vector_cross(u, v):
     """
     Return vector cross product of two 3d vectors as numpy array.
@@ -45,7 +60,7 @@ def vector_cross(u, v):
     return res
 
 
-@jit(numba.float32(numba.float32[3], numba.float32[3]))
+@numba.jit(numba.float32(numba.float32[3], numba.float32[3]))
 def vector_dot(u, v):
     """
     Return vector dot product of two 3d vectors.
@@ -57,12 +72,12 @@ def vector_dot(u, v):
     return u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
 
 
-@jit(numba.float32(numba.float32[3]))
+@numba.jit(numba.float32(numba.float32[3]))
 def vector_len(v):
     return math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
 
 
-@jit(numba.float32(numba.float32[3], numba.float32[3]))
+@numba.jit(numba.float32(numba.float32[3], numba.float32[3]))
 def vector_angle(a, b):
     """
     Calculate the angle between two vectors.
@@ -78,7 +93,7 @@ def vector_angle(a, b):
     return ang
 
 
-@jit
+@numba.jit
 def vector_angle_signed(a, b, ref=np.array([0., 0., 1.])):
     """
     Calculate the signed angle between two vectors.
@@ -109,7 +124,7 @@ def tuple_equivalent(tuple1, tuple2):
         return False
 
 
-@jit
+@numba.jit
 def dist_with_pbc(pos1, pos2, box):
     """
     Calculate the distance between two points accounting for periodicity.
