@@ -26,7 +26,7 @@ class Bond:
     """
     Class holding the properties of a single bonded term.
 
-    Bond lengths, angles and dihedrals are all equivalent, distinguised by the number of atoms present.
+    Bond lengths, angles and dihedrals are all equivalent, distinguished by the number of atoms present.
     """
     __slots__ = ["atoms", "atom_numbers", "values", "eqm", "fconst"]
 
@@ -69,7 +69,8 @@ class Bond:
         try:
             self.fconst = conv[len(self.atoms)]()
         except FloatingPointError:
-            self.fconst = 0
+            # Happens when variance is 0, i.e. infinitely sharp peak
+            self.fconst = float("inf")
 
     def r_squared(self):
         raise NotImplementedError("Bond r-squared is not yet implemented")

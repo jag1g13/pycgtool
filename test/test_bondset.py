@@ -102,4 +102,4 @@ class BondSetTest(unittest.TestCase):
         bondset.boltzmann_invert()
         for bond in bondset.get_bond_lengths("ETH", True):
             self.assertAlmostEqual(1., bond.eqm)
-            self.assertEqual(0., bond.fconst)
+            self.assertEqual(float("inf"), bond.fconst)

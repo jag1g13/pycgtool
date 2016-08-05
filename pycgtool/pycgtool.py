@@ -32,7 +32,13 @@ def main(args, config):
         cgframe.output(config.output_name + ".gro", format=config.output)
         logger.info("Mapping will be performed")
     else:
+        cgframe = frame
         logger.info("Mapping will not be performed")
+
+    # Only measure bonds from GRO frame if no XTC is provided
+    # Allows the user to get a topology from a single snapshot
+    if args.bnd and args.xtc is None:
+        bonds.apply(cgframe)
 
     # Main loop - perform mapping and measurement on every frame in XTC
     def main_loop():

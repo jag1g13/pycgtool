@@ -155,6 +155,7 @@ class Mapping:
         aa_residues = (aares for aares in frame if select_predicate(aares))
 
         if cgframe is None:
+            # Frame needs initialising
             aa_residues = list(aa_residues)
             cgframe = self._cg_frame_setup(aa_residues, frame.name)
 
@@ -177,7 +178,7 @@ class Mapping:
                         if self._map_center == "mass":
                             e.args = ("Error with mapping type 'mass', did you provide an itp file?",)
                         else:
-                            e.args = ("Error, unknown mapping type '{0}'".format(e.args[0]),)
+                            e.args = ("Error with mapping type '{0}', unknown mapping type.".format(e.args[0]),)
                         raise
                     bead.coords = calc_coords_weight(ref_coords, coords, cgframe.box, weights)
 
