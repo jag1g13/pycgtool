@@ -345,30 +345,29 @@ class BondSet:
             bond.boltzmann_invert(temp=self._temperature,
                                   angle_default_fc=self._angle_default_fc)
 
-    def dump_values(self, target_number=100000):
+    def dump_values(self, target_number=10000):
         """
         Output measured bond values to files for length, angles and dihedrals.
 
         :param target_number: Approx number of sample measurements to output.  If None, all samples will be output
         """
 
+        def write_bonds_to_file(bonds, filename):
+            with open(filename, "w") as f:
+                for row in transpose_and_sample((bond.values for bond in bonds), n=target_number):
+                    print((len(row) * "{:12.5f}").format(*row), file=f)
+
         for mol in self._molecules:
             if mol == "SOL":
                 continue
-            with open("{0}_length.dat".format(mol), "w") as f:
-                bonds = self.get_bond_lengths(mol, with_constr=True)
-                for row in transpose_and_sample((bond.values for bond in bonds), n=target_number):
-                    print((len(row) * "{:12.5f}").format(*row), file=f)
+            bonds = self.get_bond_lengths(mol, with_constr=True)
+            write_bonds_to_file(bonds, "{0}_length.dat".format(mol))
 
-            with open("{0}_angle.dat".format(mol), "w") as f:
-                bonds = self.get_bond_angles(mol)
-                for row in transpose_and_sample((bond.values for bond in bonds), n=target_number):
-                    print((len(row) * "{:12.5f}").format(*row), file=f)
+            bonds = self.get_bond_angles(mol)
+            write_bonds_to_file(bonds, "{0}_angle.dat".format(mol))
 
-            with open("{0}_dihedral.dat".format(mol), "w") as f:
-                bonds = self.get_bond_dihedrals(mol)
-                for row in transpose_and_sample((bond.values for bond in bonds), n=target_number):
-                    print((len(row) * "{:12.5f}").format(*row), file=f)
+            bonds = self.get_bond_dihedrals(mol)
+            write_bonds_to_file(bonds, "{0}_dihedral.dat".format(mol))
 
     def __len__(self):
         return len(self._molecules)

@@ -6,6 +6,7 @@ import os
 import itertools
 import random
 import math
+import filecmp
 
 import numpy as np
 np.seterr(all="raise")
@@ -307,3 +308,47 @@ def gaussian(xs, mean=0, sdev=1, amplitude=1):
         top_bit = (x - mean) * (x - mean) / (2 * sdev * sdev)
         return prefactor * np.exp(-top_bit)
     return map(gaussian_single, xs)
+
+
+def cmp_whitespace_float(ref_filename, test_filename, float_rel_error=0.01):
+    """
+    Compare two files ignoring spacing on a line and using a tolerance on floats
+
+    :param ref_filename: Name of reference file
+    :param test_filename: Name of test file
+    :param float_rel_error: Acceptable relative error on floating point numbers
+    :return: True if files are the same, else False
+    """
+    def float_or_string(string):
+        try:
+            int(string)
+            return string
+        except ValueError:
+            try:
+                return float(string)
+            except ValueError:
+                return string
+
+    if filecmp.cmp(ref_filename, test_filename):
+        return True
+    with open(ref_filename) as ref_file, open(test_filename) as test_file:
+        for ref_line, test_line in itertools.zip_longest(ref_file, test_file):
+            if ref_line is None or test_line is None:
+                return False
+            if ref_line == test_line:
+                continue
+
+            ref_toks = ref_line.split()
+            test_toks = test_line.split()
+            if len(ref_toks) != len(test_toks):
+                return False
+            for ref_tok, test_tok in zip(map(float_or_string, ref_toks),
+                                         map(float_or_string, test_toks)):
+                if ref_tok != test_tok:
+                    if float == type(ref_tok) and float == type(test_tok):
+                        if abs(ref_tok - test_tok) > ref_tok * float_rel_error:
+                            return False
+                    else:
+                        return False
+    return True
+

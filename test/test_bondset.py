@@ -1,9 +1,9 @@
 import unittest
-import filecmp
 
 from pycgtool.bondset import BondSet
 from pycgtool.frame import Frame
 from pycgtool.mapping import Mapping
+from pycgtool.util import cmp_whitespace_float
 
 
 class DummyOptions:
@@ -118,4 +118,4 @@ class BondSetTest(unittest.TestCase):
         measure.boltzmann_invert()
         measure.write_itp("sugar_out.itp", mapping, exclude={"SOL"})
 
-        self.assertTrue(filecmp.cmp("sugar_out.itp", "test/data/sugar_out.itp"))
+        self.assertTrue(cmp_whitespace_float("sugar_out.itp", "test/data/sugar_out.itp", float_rel_error=0.001))
