@@ -1,4 +1,5 @@
 import unittest
+import filecmp
 
 from pycgtool.bondset import BondSet
 from pycgtool.frame import Frame
@@ -103,3 +104,18 @@ class BondSetTest(unittest.TestCase):
         for bond in bondset.get_bond_lengths("ETH", True):
             self.assertAlmostEqual(1., bond.eqm)
             self.assertEqual(float("inf"), bond.fconst)
+
+    def test_full_itp_sugar(self):
+        measure = BondSet("test/data/sugar.bnd", DummyOptions)
+        frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
+        mapping = Mapping("test/data/sugar.map", DummyOptions)
+        cgframe = mapping.apply(frame)
+
+        while frame.next_frame():
+            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            measure.apply(cgframe)
+
+        measure.boltzmann_invert()
+        measure.write_itp("sugar_out.itp", mapping, exclude={"SOL"})
+
+        self.assertTrue(filecmp.cmp("sugar_out.itp", "test/data/sugar_out.itp"))

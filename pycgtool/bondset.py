@@ -226,26 +226,29 @@ class BondSet:
                     e.args = ("Bead(s) {0} do(es) not exist in residue {1}".format(missing, mol),)
                     raise
 
-    def write_itp(self, filename, mapping):
+    def write_itp(self, filename, mapping, exclude=set()):
         """
         Output a GROMACS .itp file containing atoms/beads and bonded terms.
 
         :param filename: Name of output file
         :param mapping: AA->CG Mapping from which to collect bead properties
+        :param exclude: Set of molecule names to be excluded from itp
         """
         self._populate_atom_numbers(mapping)
         backup_file(filename, verbose=True)
 
-        def write_bond_angle_dih(bonds, section_header, itp, fconst=True):
+        def write_bond_angle_dih(bonds, section_header, itp, fconst=True, multiplicity=None):
             if bonds:
                 print("\n[ {0:s} ]".format(section_header), file=itp)
             for bond in bonds:
                 # Factor is usually 1, unless doing correction
                 eqm = bond.eqm * self._empirical_correction_factor
                 line = " ".join(["{0:4d}".format(atnum + 1) for atnum in bond.atom_numbers])
-                line += " {0:12.5f}".format(eqm)
+                line += " {0:4d} {1:12.5f}".format(1, eqm)
                 if fconst:
                     line += " {0:12.5f}".format(bond.fconst)
+                if multiplicity is not None:
+                    line += " {0:4d}".format(multiplicity)
                 print(line, file=itp)
 
         with open(filename, "w") as itp:
@@ -258,7 +261,7 @@ class BondSet:
             print(header, file=itp)
 
             # Print molecule
-            for mol in self._molecules:
+            for mol in filter(lambda mol: mol not in exclude, self._molecules):
                 print("\n[ moleculetype ]", file=itp)
                 print("{0:4s} {1:4d}".format(mol, 1), file=itp)
 
@@ -271,7 +274,7 @@ class BondSet:
 
                 write_bond_angle_dih(self.get_bond_lengths(mol), "bonds", itp)
                 write_bond_angle_dih(self.get_bond_angles(mol), "angles", itp)
-                write_bond_angle_dih(self.get_bond_dihedrals(mol), "dihedrals", itp)
+                write_bond_angle_dih(self.get_bond_dihedrals(mol), "dihedrals", itp, multiplicity=1)
                 write_bond_angle_dih(self.get_bond_length_constraints(mol), "constraints", itp, fconst=False)
 
     def apply(self, frame):
