@@ -100,10 +100,20 @@ class BondSet:
         self._molecules = {}
 
         self._fconst_constr_threshold = options.constr_threshold
+
+        self._empirical_correction_factor = 1.
+        try:
+            self._empirical_correction = options.empirical_corr
+            if self._empirical_correction:
+                self._empirical_correction_factor = 1.05
+        except AttributeError:
+            self._empirical_correction = False
+
         try:
             self._temperature = options.temperature
         except AttributeError:
             self._temperature = 310.
+
         try:
             self._angle_default_fc = options.angle_default_fc
         except AttributeError:
@@ -226,6 +236,18 @@ class BondSet:
         self._populate_atom_numbers(mapping)
         backup_file(filename, verbose=True)
 
+        def write_bond_angle_dih(bonds, section_header, itp, fconst=True):
+            if bonds:
+                print("\n[ {0:s} ]".format(section_header), file=itp)
+            for bond in bonds:
+                # Factor is usually 1, unless doing correction
+                eqm = bond.eqm * self._empirical_correction_factor
+                line = " ".join(["{0:4d}".format(atnum + 1) for atnum in bond.atom_numbers])
+                line += " {0:12.5f}".format(eqm)
+                if fconst:
+                    line += " {0:12.5f}".format(bond.fconst)
+                print(line, file=itp)
+
         with open(filename, "w") as itp:
             header = ("; \n"
                       "; Topology prepared automatically using PyCGTOOL \n"
@@ -247,42 +269,10 @@ class BondSet:
                           i + 1, bead.type, 1, mol, bead.name, i + 1, bead.charge
                           ), file=itp)
 
-                bonds = self.get_bond_lengths(mol)
-                if len(bonds):
-                    print("\n[ bonds ]", file=itp)
-                for bond in bonds:
-                    print("{0:4d} {1:4d} {2:4d} {3:12.5f} {4:12.5f}".format(
-                        bond.atom_numbers[0] + 1, bond.atom_numbers[1] + 1,
-                        1, bond.eqm, bond.fconst
-                    ), file=itp)
-
-                bonds = self.get_bond_angles(mol)
-                if len(bonds):
-                    print("\n[ angles ]", file=itp)
-                for bond in bonds:
-                    print("{0:4d} {1:4d} {2:4d} {3:4d} {4:12.5f} {5:12.5f}".format(
-                        bond.atom_numbers[0] + 1, bond.atom_numbers[1] + 1, bond.atom_numbers[2] + 1,
-                        1, bond.eqm, bond.fconst
-                    ), file=itp)
-
-                bonds = self.get_bond_dihedrals(mol)
-                if len(bonds):
-                    print("\n[ dihedrals ]", file=itp)
-                for bond in bonds:
-                    print("{0:4d} {1:4d} {2:4d} {3:4d} {4:4d} {5:12.5f} {6:12.5f} {7:4d}".format(
-                        bond.atom_numbers[0] + 1, bond.atom_numbers[1] + 1,
-                        bond.atom_numbers[2] + 1, bond.atom_numbers[3] + 1,
-                        1, bond.eqm, bond.fconst, 1
-                    ), file=itp)
-
-                bonds = self.get_bond_length_constraints(mol)
-                if len(bonds):
-                    print("\n[ constraints ]", file=itp)
-                for bond in bonds:
-                    print("{0:4d} {1:4d} {2:4d} {3:12.5f}".format(
-                        bond.atom_numbers[0] + 1, bond.atom_numbers[1] + 1,
-                        1, bond.eqm
-                    ), file=itp)
+                write_bond_angle_dih(self.get_bond_lengths(mol), "bonds", itp)
+                write_bond_angle_dih(self.get_bond_angles(mol), "angles", itp)
+                write_bond_angle_dih(self.get_bond_dihedrals(mol), "dihedrals", itp)
+                write_bond_angle_dih(self.get_bond_length_constraints(mol), "constraints", itp, fconst=False)
 
     def apply(self, frame):
         """

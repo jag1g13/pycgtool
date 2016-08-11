@@ -34,7 +34,8 @@ if __name__ == "__main__":
                       ("temperature", 310),
                       ("angle_default_fc", True),
                       ("generate_angles", True),
-                      ("generate_dihedrals", False)],
+                      ("generate_dihedrals", False),
+                      ("empirical_corr", False)],
                      args)
 
     if not args.map and not args.bnd:
