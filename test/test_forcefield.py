@@ -6,10 +6,11 @@ from pycgtool.forcefield import ForceField
 
 class ForceFieldTest(unittest.TestCase):
     def test_create(self):
-        name = "fftest.ff"
+        name = "test"
+        dirname = "fftest.ff"
         ForceField(name)
-        self.assertTrue(os.path.exists(name))
-        self.assertTrue(os.path.isdir(name))
+        self.assertTrue(os.path.exists(dirname))
+        self.assertTrue(os.path.isdir(dirname))
         ForceField(name)
 
 if __name__ == '__main__':
