@@ -47,23 +47,20 @@ class Bond:
     def __len__(self):
         return len(self.atoms)
 
-    def boltzmann_invert(self, temp=310, angle_default_fc=True):
+    def boltzmann_invert(self, temp=310, default_fc=True):
         """
-        Perform Boltzmann Inversion using measured values of this bond to calculate equilibrium value and force constant.
+        Perform Boltzmann Inversion using measured values of bond to calculate equilibrium value and force constant.
 
         :param temp: Temperature at which the simulation was performed
-        :param angle_default_fc: Use default value of 25 kJ mol-1 rad-2 for angle force constants
+        :param default_fc: Use default value of 1250 kJ mol-1 nm-2 for length fc and 25 kJ mol-1 for angle fc
         """
         mean, var = stat_moments(self.values)
 
         rt = 8.314 * temp / 1000.
         rad2 = np.pi * np.pi / (180. * 180.)
-        conv = {2: lambda: rt / var,
-                3: lambda: 25. if angle_default_fc else rt * np.sin(np.radians(mean))**2 / (var * rad2),
-                4: lambda: rt / (var * rad2)}
-        # conv = {2: lambda: rt / (2 * var),
-        #         3: lambda: 25. if angle_default_fc else rt / (2 * np.sin(np.radians(mean))**2 * var * rad2),
-        #         4: lambda: rt / (var * rad2)}
+        conv = {2: lambda: 1250. if default_fc else rt / (2 * var),
+                3: lambda: 25. if default_fc else rt / (2 * np.sin(np.radians(mean))**2 * var * rad2),
+                4: lambda: rt / (2 * var * rad2)}
 
         self.eqm = mean
         try:
@@ -115,9 +112,9 @@ class BondSet:
             self._temperature = 310.
 
         try:
-            self._angle_default_fc = options.angle_default_fc
+            self._default_fc = options.default_fc
         except AttributeError:
-            self._angle_default_fc = True
+            self._default_fc = False
 
         with CFG(filename) as cfg:
             for mol in cfg:
@@ -237,16 +234,17 @@ class BondSet:
         self._populate_atom_numbers(mapping)
         backup_file(filename, verbose=True)
 
-        def write_bond_angle_dih(bonds, section_header, itp, fconst=True, multiplicity=None):
+        def write_bond_angle_dih(bonds, section_header, itp, print_fconst=True, multiplicity=None):
             if bonds:
                 print("\n[ {0:s} ]".format(section_header), file=itp)
             for bond in bonds:
                 # Factor is usually 1, unless doing correction
                 eqm = bond.eqm * self._empirical_correction_factor
+                fconst = bond.fconst * self._empirical_correction_factor
                 line = " ".join(["{0:4d}".format(atnum + 1) for atnum in bond.atom_numbers])
                 line += " {0:4d} {1:12.5f}".format(1, eqm)
-                if fconst:
-                    line += " {0:12.5f}".format(bond.fconst)
+                if print_fconst:
+                    line += " {0:12.5f}".format(fconst)
                 if multiplicity is not None:
                     line += " {0:4d}".format(multiplicity)
                 print(line, file=itp)
@@ -275,7 +273,7 @@ class BondSet:
                 write_bond_angle_dih(self.get_bond_lengths(mol), "bonds", itp)
                 write_bond_angle_dih(self.get_bond_angles(mol), "angles", itp)
                 write_bond_angle_dih(self.get_bond_dihedrals(mol), "dihedrals", itp, multiplicity=1)
-                write_bond_angle_dih(self.get_bond_length_constraints(mol), "constraints", itp, fconst=False)
+                write_bond_angle_dih(self.get_bond_length_constraints(mol), "constraints", itp, print_fconst=False)
 
     def apply(self, frame):
         """
@@ -343,7 +341,7 @@ class BondSet:
 
         for bond in bond_iter_wrap:
             bond.boltzmann_invert(temp=self._temperature,
-                                  angle_default_fc=self._angle_default_fc)
+                                  default_fc=self._default_fc)
 
     def dump_values(self, target_number=10000):
         """

@@ -22,21 +22,22 @@ if __name__ == "__main__":
     input_files.add_argument('--end', type=int, default=-1, help="Frame number to end")
 
     args = parser.parse_args()
-    config = Options([("output_name", "out"),
-                      ("output", "gro"),
-                      ("output_xtc", args.outputxtc),
-                      ("map_only", not bool(args.bnd)),
-                      ("map_center", "geom"),
-                      ("constr_threshold", 100000),
-                      ("dump_measurements", bool(args.bnd) and not bool(args.map)),
-                      ("dump_n_values", 100000),
-                      ("output_forcefield", False),
-                      ("temperature", 310),
-                      ("angle_default_fc", True),
-                      ("generate_angles", True),
-                      ("generate_dihedrals", False),
-                      ("empirical_corr", False)],
-                     args)
+    config = Options([
+        ("output_name", "out"),
+        ("output", "gro"),
+        ("output_xtc", args.outputxtc),
+        ("map_only", not bool(args.bnd)),
+        ("map_center", "geom"),
+        ("constr_threshold", 100000),
+        ("dump_measurements", bool(args.bnd) and not bool(args.map)),
+        ("dump_n_values", 10000),
+        ("output_forcefield", False),
+        ("temperature", 310),
+        ("default_fc", False),
+        ("generate_angles", True),
+        ("generate_dihedrals", False),
+        ("empirical_corr", False)
+    ], args)
 
     if not args.map and not args.bnd:
         parser.error("One or both of -m and -b is required.")

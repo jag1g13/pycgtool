@@ -38,7 +38,7 @@ class PycgtoolTest(unittest.TestCase):
                       ("dump_n_values", 100000),
                       ("output_forcefield", False),
                       ("temperature", 310),
-                      ("angle_default_fc", True),
+                      ("default_fc", False),
                       ("generate_angles", True),
                       ("generate_dihedrals", False)])
 
