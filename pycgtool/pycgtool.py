@@ -67,7 +67,7 @@ def main(args, config):
             print("If your CG molecule should contain charges the itp will need to be edited")
             if config.output_forcefield:
                 logger.info("Creating GROMACS forcefield directory")
-                ff = ForceField("ff" + config.output_name + ".ff")
+                ff = ForceField(config.output_name)
                 ff.write_rtp(config.output_name + ".rtp", mapping, bonds)
                 logger.info("GROMACS forcefield directory created")
             else:

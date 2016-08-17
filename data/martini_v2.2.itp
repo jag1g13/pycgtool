@@ -907,28 +907,4 @@ BP4 72.0 0.000 A 0.0 0.0
   Qa 	SQ0 	1 	0.19402E-00 	0.20914E-02 ; almost attractive
   SQa 	Q0 	1 	0.19402E-00 	0.20914E-02 ; almost attractive
   SQa 	SQ0 	1 	0.85338E-01 	0.53946E-03 ; 75almost attractive, s=0.43
-  Q0 	SQ0 	1 	0.15091E-00 	0.16267E-02 ; intermediate 
-
-
-  
-;;;;;; WATER (representing 4 H2O molecules)
-
-[ moleculetype ]
-; molname  	nrexcl
-  W 	    	1
-
-[ atoms ]
-;id 	type 	resnr 	residu 	atom 	cgnr 	charge
- 1 	P4 	1 	W 	W 	1 	0 
-
-;;;;;; ANTIFREEZE (prevents freezing of water)
-
-[ moleculetype ]
-; molname 	 nrexcl
-  WF	   	 1
-                                                                                
-[ atoms ]
-;id 	type 	resnr 	residu 	atom 	cgnr 	charge
- 1 	BP4 	1 	WF	WF	1 	0
-
-
+  Q0 	SQ0 	1 	0.15091E-00 	0.16267E-02 ; intermediate
