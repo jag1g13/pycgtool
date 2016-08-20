@@ -125,7 +125,7 @@ Mapping-only mode performs a coarse-grain mapping on a single frame and may be u
 
    pycgtool.py -g <GRO file> -m <MAP file>
 
-Measure-only mode may be used to aid in the testing of a coarse-grained model by making measurements of bonds from a true corase-grained simulation trajectory.  These bond measurements are those collected from the pseudo-coarse-grained trajectory used to generate the model, so are a directly comparable measure of model accuracy.  This mode may be invoked by::
+Measure-only mode may be used to aid in the testing of a coarse-grained model by making measurements of bonds from a true coarse-grained simulation trajectory.  These bond measurements may be compared directly to those collected from the pseudo-coarse-grained trajectory used to generate the model.  This mode may be invoked by::
 
    pycgtool.py -g <GRO file> -x <XTC file> -b <BND file>
 
@@ -143,10 +143,10 @@ map_only             Run in mapping-only mode                     **False**, Tru
 map_center           Mapping method                               **geom**, mass
 constr_threshold     Convert stiff bonds to constraints over      **100000**, any number
 dump_measurements    Whether to output bond measurements          **False**, True
-dump_n_values        How many measurements to output              **100000**, any number
+dump_n_values        How many measurements to output              **10000**, any number
 output_forcefield    Output a GROMACS forcefield directory?       **False**, True
 temperature          Temperature of reference simulation          **310**, any number
-angle_default_fc     Default MARTINI force constant on angles?    **True**, False
+default_fc           Use default MARTINI force constants?         **False**, True
 generate_angles      Generate angles from bonds                   **True**, False
 generate_dihedrals   Generate dihedrals from bonds                **False**, True
 ==================   ==========================================   =======================

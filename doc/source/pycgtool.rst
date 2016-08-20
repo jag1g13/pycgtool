@@ -20,7 +20,6 @@ Submodules
    pycgtool.mapping
    pycgtool.pycgtool
    pycgtool.util
-   pycgtool.warnings
 
 Module contents
 ---------------

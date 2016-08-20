@@ -3,19 +3,21 @@
 # PyCGTOOL
 Please see http://pycgtool.readthedocs.io/en/master/ for full documentation.
 
-Python reimplementation of [CGTOOL](https://bitbucket.org/jag1g13/cgtool) performing coarse-grain mapping of molecular dynamics trajectories.
 
-The aim of this project is to provide a tool to aid in parametrising coarse-grained (CG) molecular mechanics models.  PyCGTOOL generates coarse-grained models from atomistic trajectories using a user-provided mapping.  Equilibrium values and force constants of bonded terms are calculated by Boltzmann Inversion of histograms collected from the input trajectory allowing good replication of target properties.
+A Python program for automated generation of coarse-grained molecular dynamics models from atomistic simulation trajectories.
 
-Alternatively it may be used in map-only mode (behaving similarly to MARTINIZE) to generate initial coordinates to use with existing CG topologies such as the MARTINI lipid models.
+The aim of this project is to provide a tool to aid in parametrising coarse-grained (CG) molecular mechanics models.  PyCGTOOL generates coarse-grained models from atomistic simulation trajectories using a user-provided mapping.  Equilibrium values and force constants of bonded terms are calculated by Boltzmann Inversion of bond distributions collected from the input trajectory.
 
-PyCGTOOL makes it easy to test multiple variations in mapping and bond topology by making simple changes to the config file.
+Alternatively map-only mode (behaving similarly to MARTINIZE) may be used to generate initial coordinates to use with existing CG topologies such as the MARTINI lipid models.  For instance, a pre-equilibrated atomistic membrane may be used to create starting coordinates for a MARTINI membrane simulation.
+
+PyCGTOOL makes it easy to test multiple variations in mapping and bond topology by making simple changes to the config files.
 
 This version has several advantages over the original C++ implementation CGTOOL:
 * PyCGTOOL is able to run anywhere the necessary library dependencies are available (all available from pip)
 * Does not require that residues are present in contiguous sorted blocks
+* May map multiple residues with a single pass
+* Support for polymers such as DNA or proteins making use of GROMACS' pdb2gmx
 * Much more automated testing ensures that regressions will be identified quickly
-* Work-in-progress support for polymers such as DNA or proteins making use of GROMACS' pdb2gmx
 
 If you experience problems or wish to see a new feature added please [file an issue](https://github.com/jag1g13/pycgtool/issues).
 
@@ -39,3 +41,5 @@ PyCGTOOL requires:
 
 The bundled test code may be run using your preferred Python testing frontend although nose is recommended.
 All library dependencies may be installed from pip using the command `pip install -r requirements.txt`
+
+This program is a reimplementation of the earlier [CGTOOL](https://bitbucket.org/jag1g13/cgtool).
