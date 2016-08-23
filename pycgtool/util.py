@@ -354,6 +354,12 @@ def cmp_whitespace_float(ref_filename, test_filename, float_rel_error=0.01):
 
 
 def once_wrapper(func):
+    """
+    Wrap a function such that it runs only once, subsequent calls are ignored.
+
+    :param func: Function to wrap
+    :return: Wrapped function which will only run once.
+    """
     called = False
 
     def wrap(*args, **kwargs):

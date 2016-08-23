@@ -103,7 +103,7 @@ class Mapping:
         # TODO this only works with one moleculetype in one itp - extend this
         if itp is not None:
             with CFG(itp) as itp:
-                print_once = once_wrapper(print)
+                warn_charge_once = once_wrapper(print)
                 atoms = {}
                 for toks in itp["atoms"]:
                     # Store charge and mass
@@ -118,7 +118,7 @@ class Mapping:
                             bead.charge += atoms[atom][0]
                         else:
                             warnstring = "WARNING: Charges assigned in mapping for molecule {0}, ignoring itp charges."
-                            print_once(warnstring.format(molname))
+                            warn_charge_once(warnstring.format(molname))
 
     def __len__(self):
         return len(self._mappings)

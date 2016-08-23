@@ -39,7 +39,7 @@ PyCGTOOL requires:
 * [NumPy](http://www.numpy.org/)
 * [simpletraj](https://github.com/arose/simpletraj)
 
-The bundled test code may be run using your preferred Python testing frontend although nose is recommended.
+The bundled test code may be run using your preferred Python testing frontend although py.test or nose2 is recommended.
 All library dependencies may be installed from pip using the command `pip install -r requirements.txt`
 
 This program is a reimplementation of the earlier [CGTOOL](https://bitbucket.org/jag1g13/cgtool).
