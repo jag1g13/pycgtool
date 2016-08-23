@@ -63,8 +63,6 @@ def main(args, config):
         if args.map:
             logger.info("Beginning Boltzmann inversion")
             bonds.boltzmann_invert(progress=True)
-            print("Note: charges are not currently handled")
-            print("If your CG molecule should contain charges the itp will need to be edited")
             if config.output_forcefield:
                 logger.info("Creating GROMACS forcefield directory")
                 ff = ForceField(config.output_name)

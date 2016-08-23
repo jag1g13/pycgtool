@@ -58,7 +58,7 @@ The program is called by::
 
 Example mapping and bond definition files are present in the ``test/data`` directory.  Their format is explained below.
 
-After running PyCGTOOL two files, ``out.gro`` and ``out.itp`` will be created.  The gro file contains the mapped coarse-grain coordinates with every molecule for which a mapping was provided.  The itp file contains the parameters for each molecule type.  **NB**: charges are not currently set by PyCGTOOL as MARTINI only allows charges on certain bead types.
+After running PyCGTOOL two files, ``out.gro`` and ``out.itp`` will be created.  The gro file contains the mapped coarse-grain coordinates with every molecule for which a mapping was provided.  The itp file contains the parameters for each molecule type.
 
 Mapping / Bond Definition Files
 -------------------------------
@@ -68,7 +68,9 @@ Mapping Definition
 ~~~~~~~~~~~~~~~~~~
 An example of mapping definition file for the monosaccharide allose taken from ``test/data/sugar.map`` is shown below.
 
-Molecule names (as present in the gro coordinate file) are used as section headers inside square brackets.  Each of the following lines describes a single coarse-grained bead mapping.  The items on a line are: the name of the bead, its MARTINI bead type, a list of all the atom names it should contain.  All items on a line are whitespace separated.  Multiple molecules may be specified in their own sections.  It is not recommended to provide a mapping for water since MARTINI water combines four molecules into a single bead which is not yet supported by PyCGTOOL. ::
+Molecule names (as present in the gro coordinate file) are used as section headers inside square brackets.  Each of the following lines describes a single coarse-grained bead mapping.  The items on a line are: the name of the bead, its MARTINI bead type, optionally the bead charge, and a list of all the atom names it should contain.  All items on a line are whitespace separated.  Multiple molecules may be specified in their own sections.
+It is not recommended to provide a mapping for water since MARTINI water combines four molecules into a single bead which is not yet supported by PyCGTOOL.
+Note that bead charges in the MARTINI framework are by convention integers and are used only for formally charged functional groups.  An example of a molecule mapping using charges can be found in ``test/data/dppc.map``. ::
 
    ; comments begin with a semicolon
    [ALLA]

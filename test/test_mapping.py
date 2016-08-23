@@ -30,6 +30,15 @@ class MappingTest(unittest.TestCase):
         self.assertTrue(filecmp.cmp("test/data/water-cg.gro", "water-cg.gro"))
         os.remove("water-cg.gro")
 
+    def test_mapping_charges(self):
+        mapping = Mapping("test/data/dppc.map", DummyOptions)
+        self.assertEqual( 1, mapping["DPPC"][0].charge)
+        self.assertEqual(-1, mapping["DPPC"][1].charge)
+        frame = Frame("test/data/dppc.gro")
+        cgframe = mapping.apply(frame)
+        self.assertEqual( 1, cgframe[0][0].charge)
+        self.assertEqual(-1, cgframe[0][1].charge)
+
     def test_mapping_pbc(self):
         mapping = Mapping("test/data/water.map", DummyOptions)
         frame = Frame("test/data/pbcwater.gro")

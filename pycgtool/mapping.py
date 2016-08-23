@@ -39,9 +39,9 @@ class BeadMap(Atom):
         """
         Atom.__init__(self, name=name, type=type, charge=charge, mass=mass)
         self.atoms = atoms
-        # NB: weights are overwritten in Mapping.__init__ if an itp file is provided
-        self.weights = {"geom": None,
-                        "first": np.array([[1]] + [[0] for _ in range(len(self.atoms) - 1)], dtype=np.float32)}
+        # NB: Mass weights are added in Mapping.__init__ if an itp file is provided
+        self.weights = {"geom": np.array([[1] for _ in self.atoms]),
+                        "first": np.array([[1]] + [[0] for _ in self.atoms[1:]], dtype=np.float32)}
 
     def __iter__(self):
         """
@@ -86,9 +86,15 @@ class Mapping:
             for mol in cfg:
                 self._mappings[mol.name] = []
                 molmap = self._mappings[mol.name]
-                for name, typ, *atoms in mol:
+                for name, typ, first, *atoms in mol:
+                    charge = 0
+                    try:
+                        # Allow optional charge in mapping file
+                        charge = int(first)
+                    except ValueError:
+                        atoms.insert(0, first)
                     assert atoms, "Bead {0} specification contains no atoms".format(name)
-                    newbead = BeadMap(name=name, type=typ, atoms=atoms)
+                    newbead = BeadMap(name=name, type=typ, atoms=atoms, charge=charge)
                     molmap.append(newbead)
 
         # TODO this only works with one moleculetype in one itp - extend this
