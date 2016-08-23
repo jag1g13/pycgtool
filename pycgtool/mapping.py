@@ -9,7 +9,7 @@ import numpy as np
 
 from .frame import Atom, Residue, Frame
 from .parsers.cfg import CFG
-from .util import dist_with_pbc
+from .util import dist_with_pbc, once_wrapper
 
 try:
     import numba
@@ -83,14 +83,17 @@ class Mapping:
         self._map_center = options.map_center
 
         with CFG(filename) as cfg:
+            self._manual_charges = {}
             for mol in cfg:
                 self._mappings[mol.name] = []
+                self._manual_charges[mol.name] = False
                 molmap = self._mappings[mol.name]
                 for name, typ, first, *atoms in mol:
                     charge = 0
                     try:
                         # Allow optional charge in mapping file
                         charge = int(first)
+                        self._manual_charges[mol.name] = True
                     except ValueError:
                         atoms.insert(0, first)
                     assert atoms, "Bead {0} specification contains no atoms".format(name)
@@ -100,16 +103,22 @@ class Mapping:
         # TODO this only works with one moleculetype in one itp - extend this
         if itp is not None:
             with CFG(itp) as itp:
+                print_once = once_wrapper(print)
                 atoms = {}
                 for toks in itp["atoms"]:
                     # Store charge and mass
                     atoms[toks[4]] = (float(toks[6]), float(toks[7]))
 
-                for bead in self._mappings[itp["moleculetype"][0][0]]:
+                molname = itp["moleculetype"][0][0]
+                for bead in self._mappings[molname]:
                     bead.weights["mass"] = np.array([[atoms[atom][1]] for atom in bead], dtype=np.float32)
                     for atom in bead:
-                        bead.charge += atoms[atom][0]
                         bead.mass += atoms[atom][1]
+                        if self._manual_charges[molname]:
+                            bead.charge += atoms[atom][0]
+                        else:
+                            warnstring = "WARNING: Charges assigned in mapping for molecule {0}, ignoring itp charges."
+                            print_once(warnstring.format(molname))
 
     def __len__(self):
         return len(self._mappings)

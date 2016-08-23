@@ -352,3 +352,14 @@ def cmp_whitespace_float(ref_filename, test_filename, float_rel_error=0.01):
                         return False
     return True
 
+
+def once_wrapper(func):
+    called = False
+
+    def wrap(*args, **kwargs):
+        nonlocal called
+        if not called:
+            called = True
+            return func(*args, **kwargs)
+
+    return wrap
