@@ -6,10 +6,11 @@ Each list corresponds to a single molecule.
 """
 
 import numpy as np
+import warnings
 
 from .frame import Atom, Residue, Frame
 from .parsers.cfg import CFG
-from .util import dist_with_pbc, once_wrapper
+from .util import dist_with_pbc
 
 try:
     import numba
@@ -103,7 +104,7 @@ class Mapping:
         # TODO this only works with one moleculetype in one itp - extend this
         if itp is not None:
             with CFG(itp) as itp:
-                warn_charge_once = once_wrapper(print)
+                warnings.simplefilter("once")
                 atoms = {}
                 for toks in itp["atoms"]:
                     # Store charge and mass
@@ -118,7 +119,7 @@ class Mapping:
                             bead.charge += atoms[atom][0]
                         else:
                             warnstring = "WARNING: Charges assigned in mapping for molecule {0}, ignoring itp charges."
-                            warn_charge_once(warnstring.format(molname))
+                            warnings.warn(warnstring, RuntimeWarning)
 
     def __len__(self):
         return len(self._mappings)

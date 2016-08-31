@@ -188,21 +188,17 @@ def stat_moments(vals, ignore_nan=True):
 
     :param vals: The data for which to calculate moments
     :param ignore_nan: Whether to exclude np.nan and infinity from calculation
-    :return: Numpy array of moments - population mean and variance
+    :return: Tuple of moments - population mean and variance, both zero if input is empty list
     """
     if ignore_nan:
         vals_tmp = [val for val in vals if np.isfinite(val)]
     else:
         vals_tmp = vals
 
-    res = np.zeros(2)
     try:
-        res[0] = np.mean(vals_tmp)
-        res[1] = np.var(vals_tmp)
-
-        return res
+        return np.mean(vals_tmp), np.var(vals_tmp)
     except FloatingPointError:
-        return np.zeros(2)
+        return 0., 0.
 
 
 def transpose_and_sample(sequence, n=None):
