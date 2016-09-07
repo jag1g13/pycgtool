@@ -4,6 +4,7 @@ This module contains a single class ForceField used to output a GROMACS .ff forc
 
 import os
 import shutil
+import functools
 
 from .util import dir_up
 from .parsers.cfg import CFG
@@ -66,6 +67,27 @@ class ForceField:
                     line += " {0:4d}".format(multiplicity)
                 print(line, file=file)
 
+        def any_starts_with(iterable, char):
+            """
+            Return True if any atoms of any bonds in molecule start with 'char'.
+
+            i.e. if char='-' or '+' is part of polymer.
+
+            :param iterable: Iterable of bond entries to check
+            :param char: Char to check each atom name for startswith, in '-+'
+            :return: True if any atom name in molecule bonds starts with char, else False
+            """
+            recurse = functools.partial(any_starts_with, char=char)
+            if type(iterable) is str:
+                return iterable.startswith(char)
+            else:
+                return any(map(recurse, iterable))
+
+        def strip_polymer_bonds(bonds, char):
+            return [bond for bond in bonds if not any_starts_with(bond, char)]
+
+        # def write_residue(name):
+
         with open(os.path.join(self.dirname, name), "w") as rtp:
             print("[ bondedtypes ]", file=rtp)
             print(("{:4d}" * 8).format(1, 1, 1, 1, 1, 1, 0, 0), file=rtp)
@@ -84,9 +106,25 @@ class ForceField:
                         bead.name, bead.type, bead.charge, 0
                     ), file=rtp)
 
+                needs_terminal_entry = [False, False]
+
                 bond_tmp = bonds.get_bond_lengths(mol, with_constr=True)
                 write_bond_angle_dih(bond_tmp, "bonds", rtp)
+                needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
+                needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
+
                 bond_tmp = bonds.get_bond_angles(mol)
                 write_bond_angle_dih(bond_tmp, "angles", rtp)
+                needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
+                needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
+
                 bond_tmp = bonds.get_bond_dihedrals(mol)
                 write_bond_angle_dih(bond_tmp, "dihedrals", rtp, multiplicity=1)
+                needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
+                needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
+
+                # print(mol, needs_terminal_entry)
+                # bond_tmp = bonds.get_bond_lengths(mol, with_constr=True)
+                # if needs_terminal_entry[0]:
+                #     print(strip_polymer_bonds(bond_tmp, "-"))
+

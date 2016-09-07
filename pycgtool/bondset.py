@@ -47,6 +47,9 @@ class Bond:
     def __len__(self):
         return len(self.atoms)
 
+    def __iter__(self):
+        return iter(self.atoms)
+
     def boltzmann_invert(self, temp=310, default_fc=True):
         """
         Perform Boltzmann Inversion using measured values of bond to calculate equilibrium value and force constant.
@@ -58,9 +61,9 @@ class Bond:
 
         rt = 8.314 * temp / 1000.
         rad2 = np.pi * np.pi / (180. * 180.)
-        conv = {2: lambda: 1250. if default_fc else rt / (2 * var),
-                3: lambda: 25. if default_fc else rt / (2 * np.sin(np.radians(mean))**2 * var * rad2),
-                4: lambda: rt / (2 * var * rad2)}
+        conv = {2: lambda: 1250. if default_fc else rt / var,
+                3: lambda: 25. if default_fc else rt / (np.sin(np.radians(mean))**2 * var * rad2),
+                4: lambda: rt / (var * rad2)}
 
         self.eqm = mean
         try:
