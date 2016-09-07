@@ -46,7 +46,11 @@ class ForceField:
         with open(os.path.join(self.dirname, "forcefield.doc"), "w") as doc:
             print("PyCGTOOL produced MARTINI force field - {0}".format(name), file=doc)
 
-    def write_rtp(self, filename, mapping, bonds):
+    def write(self, filename, mapping, bonds):
+        nterms, cterms, bothterms = self._write_rtp(filename, mapping, bonds)
+        self._write_r2b(filename, nterms, cterms, bothterms)
+
+    def _write_rtp(self, filename, mapping, bonds):
         """
         Write a GROMACS .rtp file.
 
@@ -82,9 +86,6 @@ class ForceField:
             else:
                 return any(map(recurse, iterable))
 
-        def strip_polymer_bonds(bonds, char):
-            return [bond for bond in bonds if not any_starts_with(bond, char)]
-
         def write_residue(name, rtp, strip=None, prepend=""):
             print("[ {0} ]".format(prepend + name), file=rtp)
 
@@ -97,26 +98,18 @@ class ForceField:
 
             needs_terminal_entry = [False, False]
 
-            bond_tmp = bonds.get_bond_lengths(name, with_constr=True)
-            if strip is not None:
-                bond_tmp = strip_polymer_bonds(bond_tmp, strip)
-            write_bond_angle_dih(bond_tmp, "bonds", rtp)
-            needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
-            needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
+            get_bond_functions = [("bonds", functools.partial(bonds.get_bond_lengths, with_constr=True)),
+                                  ("angles", bonds.get_bond_angles),
+                                  ("dihedrals", bonds.get_bond_dihedrals)]
 
-            bond_tmp = bonds.get_bond_angles(name)
-            if strip is not None:
-                bond_tmp = strip_polymer_bonds(bond_tmp, strip)
-            write_bond_angle_dih(bond_tmp, "angles", rtp)
-            needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
-            needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
-
-            bond_tmp = bonds.get_bond_dihedrals(name)
-            if strip is not None:
-                bond_tmp = strip_polymer_bonds(bond_tmp, strip)
-            write_bond_angle_dih(bond_tmp, "dihedrals", rtp, multiplicity=1)
-            needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
-            needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
+            for get_bond in get_bond_functions:
+                bond_tmp = get_bond[1](name)
+                if strip is not None:
+                    bond_tmp = [bond for bond in bond_tmp if not any_starts_with(bond, strip)]
+                write_bond_angle_dih(bond_tmp, get_bond[0], rtp,
+                                     multiplicity=1 if get_bond[0] == "dihedrals" else None)
+                needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
+                needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
 
             return needs_terminal_entry
 
@@ -140,11 +133,11 @@ class ForceField:
                 if needs_terminal_entry[1]:
                     write_residue(mol, rtp, strip="+", prepend="C")
                     c_terms.add(mol)
-                    if needs_terminal_entry[0]:
-                        write_residue(mol, rtp, strip=("-", "+"), prepend="2")
-                        both_terms.add(mol)
+                if all(needs_terminal_entry):
+                    write_residue(mol, rtp, strip=("-", "+"), prepend="2")
+                    both_terms.add(mol)
 
-        self._write_r2b(filename, n_terms, c_terms, both_terms)
+        return n_terms, c_terms, both_terms
 
     def _write_r2b(self, filename, n_terms, c_terms, both_terms):
         with open(os.path.join(self.dirname, filename + ".r2b"), "w") as r2b:
