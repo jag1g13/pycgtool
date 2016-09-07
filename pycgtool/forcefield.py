@@ -14,7 +14,6 @@ class ForceField:
     """
     Class used to output a GROMACS .ff forcefield
     """
-    # TODO output r2b file for ends of chain
     def __init__(self, name):
         """
         Open a named forcefield directory.  If it does not exist it is created.
@@ -47,13 +46,13 @@ class ForceField:
         with open(os.path.join(self.dirname, "forcefield.doc"), "w") as doc:
             print("PyCGTOOL produced MARTINI force field - {0}".format(name), file=doc)
 
-    def write_rtp(self, name, mapping, bonds):
+    def write_rtp(self, filename, mapping, bonds):
         """
         Write a GROMACS .rtp file.
 
         This file defines the residues present in the forcefield and allows pdb2gmx to be used.
 
-        :param name: Name of the .rtp file to create
+        :param filename: Name of the .rtp file to create, N.B. .rtp is appended here
         :param mapping: AA->CG mapping from which to collect molecules
         :param bonds: BondSet from which to collect bonds
         """
@@ -86,45 +85,74 @@ class ForceField:
         def strip_polymer_bonds(bonds, char):
             return [bond for bond in bonds if not any_starts_with(bond, char)]
 
-        # def write_residue(name):
+        def write_residue(name, rtp, strip=None, prepend=""):
+            print("[ {0} ]".format(prepend + name), file=rtp)
 
-        with open(os.path.join(self.dirname, name), "w") as rtp:
+            print("  [ atoms ]", file=rtp)
+            for bead in mapping[name]:
+                #          name  type  charge  chg-group
+                print("    {:>4s} {:>4s} {:3.6f} {:4d}".format(
+                    bead.name, bead.type, bead.charge, 0
+                ), file=rtp)
+
+            needs_terminal_entry = [False, False]
+
+            bond_tmp = bonds.get_bond_lengths(name, with_constr=True)
+            if strip is not None:
+                bond_tmp = strip_polymer_bonds(bond_tmp, strip)
+            write_bond_angle_dih(bond_tmp, "bonds", rtp)
+            needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
+            needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
+
+            bond_tmp = bonds.get_bond_angles(name)
+            if strip is not None:
+                bond_tmp = strip_polymer_bonds(bond_tmp, strip)
+            write_bond_angle_dih(bond_tmp, "angles", rtp)
+            needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
+            needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
+
+            bond_tmp = bonds.get_bond_dihedrals(name)
+            if strip is not None:
+                bond_tmp = strip_polymer_bonds(bond_tmp, strip)
+            write_bond_angle_dih(bond_tmp, "dihedrals", rtp, multiplicity=1)
+            needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
+            needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
+
+            return needs_terminal_entry
+
+        n_terms = set()
+        c_terms = set()
+        both_terms = set()
+
+        with open(os.path.join(self.dirname, filename + ".rtp"), "w") as rtp:
             print("[ bondedtypes ]", file=rtp)
             print(("{:4d}" * 8).format(1, 1, 1, 1, 1, 1, 0, 0), file=rtp)
 
             for mol in mapping:
-                # Skip molecules without bonds
+                # Skip molecules not listed in bonds
                 if mol not in bonds:
                     continue
 
-                print("[ {0} ]".format(mol), file=rtp)
+                needs_terminal_entry = write_residue(mol, rtp)
+                if needs_terminal_entry[0]:
+                    write_residue(mol, rtp, strip="-", prepend="N")
+                    n_terms.add(mol)
+                if needs_terminal_entry[1]:
+                    write_residue(mol, rtp, strip="+", prepend="C")
+                    c_terms.add(mol)
+                    if needs_terminal_entry[0]:
+                        write_residue(mol, rtp, strip=("-", "+"), prepend="2")
+                        both_terms.add(mol)
 
-                print("  [ atoms ]", file=rtp)
-                for bead in mapping[mol]:
-                    #          name  type  charge  chg-group
-                    print("    {:>4s} {:>4s} {:3.6f} {:4d}".format(
-                        bead.name, bead.type, bead.charge, 0
-                    ), file=rtp)
+        self._write_r2b(filename, n_terms, c_terms, both_terms)
 
-                needs_terminal_entry = [False, False]
+    def _write_r2b(self, filename, n_terms, c_terms, both_terms):
+        with open(os.path.join(self.dirname, filename + ".r2b"), "w") as r2b:
+            print("; rtp residue to rtp building block table", file=r2b)
+            print(";     main  N-ter C-ter 2-ter", file=r2b)
 
-                bond_tmp = bonds.get_bond_lengths(mol, with_constr=True)
-                write_bond_angle_dih(bond_tmp, "bonds", rtp)
-                needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
-                needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
-
-                bond_tmp = bonds.get_bond_angles(mol)
-                write_bond_angle_dih(bond_tmp, "angles", rtp)
-                needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
-                needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
-
-                bond_tmp = bonds.get_bond_dihedrals(mol)
-                write_bond_angle_dih(bond_tmp, "dihedrals", rtp, multiplicity=1)
-                needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
-                needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
-
-                # print(mol, needs_terminal_entry)
-                # bond_tmp = bonds.get_bond_lengths(mol, with_constr=True)
-                # if needs_terminal_entry[0]:
-                #     print(strip_polymer_bonds(bond_tmp, "-"))
-
+            for resname in set.union(n_terms, c_terms, both_terms):
+                nter_str = ("N" + resname) if resname in n_terms else "-"
+                cter_str = ("C" + resname) if resname in c_terms else "-"
+                both_ter_str = ("2" + resname) if resname in both_terms else "-"
+                print("{0:5s} {0:5s} {1:5s} {2:5s} {3:5s}".format(resname, nter_str, cter_str, both_ter_str), file=r2b)

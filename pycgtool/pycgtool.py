@@ -66,7 +66,7 @@ def main(args, config):
             if config.output_forcefield:
                 logger.info("Creating GROMACS forcefield directory")
                 ff = ForceField(config.output_name)
-                ff.write_rtp(config.output_name + ".rtp", mapping, bonds)
+                ff.write_rtp(config.output_name, mapping, bonds)
                 logger.info("GROMACS forcefield directory created")
             else:
                 bonds.write_itp(config.output_name + ".itp", mapping=mapping)
