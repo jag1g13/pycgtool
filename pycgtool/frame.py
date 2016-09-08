@@ -135,6 +135,7 @@ class Frame:
         """
         self.residues = []
         self.number = frame_start - 1
+        self.time = 0
         self.numframes = 0
         self.natoms = 0
         self.box = np.zeros(3, dtype=np.float32)
@@ -249,6 +250,7 @@ class Frame:
                     i += 1
 
             self.number += 1
+            self.time = xtc_frame.time[0]
             self.box = xtc_frame.unitcell_lengths[0]
             return True
         # IndexError - run out of xtc frames
@@ -274,6 +276,7 @@ class Frame:
                     atom.coords = self.xtc.x[i]
                     i += 1
             self.number += 1
+            self.time = self.xtc.time
 
             self.box = np.diag(self.xtc.box)[0:3] / 10
 
@@ -303,13 +306,14 @@ class Frame:
                 xyz[0][i] = atom.coords
                 i += 1
 
+        time = np.array([self.time], dtype=np.float32)
         step = np.array([self.number], dtype=np.int32)
 
         box = np.zeros((1, 3, 3), dtype=np.float32)
         for i in range(3):
             box[0][i][i] = self.box[i]
 
-        self._xtc_buffer.write(xyz, step=step, box=box)
+        self._xtc_buffer.write(xyz, time=time, step=step, box=box)
 
     def _parse_gro(self, filename):
         """

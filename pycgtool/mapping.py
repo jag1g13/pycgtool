@@ -175,6 +175,7 @@ class Mapping:
             aa_residues = list(aa_residues)
             cgframe = self._cg_frame_setup(aa_residues, frame.name)
 
+        cgframe.time = frame.time
         cgframe.number = frame.number
         cgframe.box = frame.box
 
