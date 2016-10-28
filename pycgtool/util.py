@@ -289,23 +289,6 @@ def r_squared(ref, fit):
         return 0
 
 
-def gaussian(xs, mean=0, sdev=1, amplitude=1):
-    """
-    Return y values from a Gaussian/normal distribution with provided mean, standard deviation and amplitude at x coordinates in vector x.
-
-    :param xs: X values at which to calculate y values
-    :param mean: Mean of Gaussian distribution
-    :param sdev: Standard devaition of Gaussian distribution
-    :param amplitude: Amplitude of Gaussian distribuion
-    :return: Y values of Gaussian distribution at X values in x
-    """
-    def gaussian_single(x):
-        prefactor = amplitude / (sdev * np.sqrt(2 * np.pi))
-        top_bit = (x - mean) * (x - mean) / (2 * sdev * sdev)
-        return prefactor * np.exp(-top_bit)
-    return map(gaussian_single, xs)
-
-
 def cmp_whitespace_float(ref_filename, test_filename, float_rel_error=0.01):
     """
     Compare two files ignoring spacing on a line and using a tolerance on floats

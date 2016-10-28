@@ -100,4 +100,3 @@ def map_only(args, config):
         numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
         logger.info("Beginning analysis of {0} frames".format(numframes))
         Progress(numframes, dowhile=main_loop, quiet=args.quiet).run()
-
