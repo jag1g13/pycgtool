@@ -60,9 +60,15 @@ class MappingTest(unittest.TestCase):
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([2., 2., 2.]), cg[0][0].coords)
 
-        with self.assertRaises(Exception):
-            mapping = Mapping("test/data/two.map", options)
-            cg = mapping.apply(frame)
+    def test_mapping_weights_guess_mass(self):
+        frame = Frame("test/data/two.gro")
+        options = DummyOptions()
+        options.map_center = "mass"
+
+        mapping = Mapping("test/data/two.map", options)
+        cg = mapping.apply(frame)
+        np.testing.assert_allclose(np.array([1.922575,  1.922575,  1.922575], dtype=np.float32),
+                                   cg[0][0].coords, rtol=0.01)
 
     def test_mapping_weights_first(self):
         frame = Frame("test/data/two.gro")

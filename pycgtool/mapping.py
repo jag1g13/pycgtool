@@ -7,10 +7,12 @@ Each list corresponds to a single molecule.
 
 import numpy as np
 import warnings
+import json
+import os
 
 from .frame import Atom, Residue, Frame
 from .parsers.cfg import CFG
-from .util import dist_with_pbc
+from .util import dist_with_pbc, dir_up
 
 try:
     import numba
@@ -82,6 +84,7 @@ class Mapping:
         self._mappings = {}
 
         self._map_center = options.map_center
+        self._masses_are_set = False
 
         with CFG(filename) as cfg:
             self._manual_charges = {}
@@ -93,7 +96,7 @@ class Mapping:
                     charge = 0
                     try:
                         # Allow optional charge in mapping file
-                        charge = int(first)
+                        charge = float(first)
                         self._manual_charges[mol.name] = True
                     except ValueError:
                         atoms.insert(0, first)
@@ -116,10 +119,11 @@ class Mapping:
                     for atom in bead:
                         bead.mass += atoms[atom][1]
                         if self._manual_charges[molname]:
-                            bead.charge += atoms[atom][0]
-                        else:
-                            warnstring = "WARNING: Charges assigned in mapping for molecule {0}, ignoring itp charges."
+                            warnstring = "Charges assigned in mapping for molecule {0}, ignoring itp charges."
                             warnings.warn(warnstring, RuntimeWarning)
+                            print(bead.charge)
+                        else:
+                            bead.charge += atoms[atom][0]
 
     def __len__(self):
         return len(self._mappings)
@@ -132,6 +136,44 @@ class Mapping:
 
     def __iter__(self):
         return iter(self._mappings)
+
+    def _guess_atom_masses(self):
+        """
+        Guess atom masses from names
+        """
+        dist_dat_dir = os.path.join(dir_up(os.path.realpath(__file__), 2), "data")
+        mass_file = os.path.join(dist_dat_dir, "atom_masses.json")
+        # mass_file = "/home/james/projects/pycgtool/data/atom_masses.json"
+        with open(mass_file) as f:
+            mass_dict = json.load(f)
+
+        for mol_mapping in self._mappings.values():
+            for bead in mol_mapping:
+                if bead.mass == 0:
+                    mass_array = np.zeros((len(bead.atoms), 1), dtype=np.float32)
+                    for i, atom in enumerate(bead.atoms):
+                        mass = 0
+                        try:
+                            mass = mass_dict[atom[:2]]
+                        except KeyError:
+                            try:
+                                mass = mass_dict[atom[0]]
+                            except KeyError:
+                                pass
+                                # print("Couldn't guess mass for atom \"{0}\"".format(atom))
+                        # print("Atom {2} {0} mass {1}".format(atom, mass, i))
+                        mass_array[i] = mass
+                    bead.mass += sum(mass_array)
+                    bead.weights["mass"] = mass_array
+
+                    if np.count_nonzero(mass_array) == 0:
+                        raise RuntimeError("No atom masses could be assigned automatically in bead {0}.".format(bead.name))
+                    elif np.count_nonzero(mass_array) != len(bead.atoms):
+                        warnstring = "Some atom masses could not be assigned automatically in bead {0}.".format(bead.name)
+                        warnings.warn(warnstring, RuntimeWarning)
+                    # print(mass_array)
+
+        self._masses_are_set = True
 
     def _cg_frame_setup(self, aa_residues, name=None):
         """
@@ -169,6 +211,9 @@ class Mapping:
         """
         select_predicate = lambda res: res.name in self._mappings and not (exclude is not None and res.name in exclude)
         aa_residues = (aares for aares in frame if select_predicate(aares))
+
+        if self._map_center == "mass" and not self._masses_are_set:
+            self._guess_atom_masses()
 
         if cgframe is None:
             # Frame needs initialising
