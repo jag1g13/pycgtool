@@ -47,7 +47,7 @@ class MappingTest(unittest.TestCase):
 
     def test_mapping_weights_geom(self):
         frame = Frame("test/data/two.gro")
-        mapping = Mapping("test/data/two.map", DummyOptions, itp="test/data/two.itp")
+        mapping = Mapping("test/data/two.map", DummyOptions)
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([1.5, 1.5, 1.5]), cg[0][0].coords)
 

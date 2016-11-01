@@ -12,7 +12,7 @@ import os
 
 from .frame import Atom, Residue, Frame
 from .parsers.cfg import CFG
-from .util import dist_with_pbc, dir_up
+from .util import dir_up
 
 try:
     import numba
@@ -43,8 +43,8 @@ class BeadMap(Atom):
         Atom.__init__(self, name=name, type=type, charge=charge, mass=mass)
         self.atoms = atoms
         # NB: Mass weights are added in Mapping.__init__ if an itp file is provided
-        self.weights = {"geom": np.array([[1] for _ in self.atoms]),
-                        "first": np.array([[1]] + [[0] for _ in self.atoms[1:]], dtype=np.float32)}
+        self.weights = {"geom": np.array([[1. / len(atoms)] for _ in atoms], dtype=np.float32),
+                        "first": np.array([[1.]] + [[0.] for _ in atoms[1:]], dtype=np.float32)}
 
     def __iter__(self):
         """
@@ -115,9 +115,12 @@ class Mapping:
 
                 molname = itp["moleculetype"][0][0]
                 for bead in self._mappings[molname]:
-                    bead.weights["mass"] = np.array([[atoms[atom][1]] for atom in bead], dtype=np.float32)
+                    mass_array = np.array([[atoms[atom][1]] for atom in bead], dtype=np.float32)
+                    bead.mass = sum(mass_array)
+                    mass_array /= bead.mass
+                    bead.weights["mass"] = mass_array
+
                     for atom in bead:
-                        bead.mass += atoms[atom][1]
                         if self._manual_charges[molname]:
                             warnstring = "Charges assigned in mapping for molecule {0}, ignoring itp charges."
                             warnings.warn(warnstring, RuntimeWarning)
@@ -143,7 +146,6 @@ class Mapping:
         """
         dist_dat_dir = os.path.join(dir_up(os.path.realpath(__file__), 2), "data")
         mass_file = os.path.join(dist_dat_dir, "atom_masses.json")
-        # mass_file = "/home/james/projects/pycgtool/data/atom_masses.json"
         with open(mass_file) as f:
             mass_dict = json.load(f)
 
@@ -159,19 +161,17 @@ class Mapping:
                             try:
                                 mass = mass_dict[atom[0]]
                             except KeyError:
-                                pass
-                                # print("Couldn't guess mass for atom \"{0}\"".format(atom))
-                        # print("Atom {2} {0} mass {1}".format(atom, mass, i))
+                                msg = "Mass of atom {0} could not be automatically assigned, map_center=mass is not available."
+                                raise RuntimeError(msg.format(atom))
                         mass_array[i] = mass
-                    bead.mass += sum(mass_array)
-                    bead.weights["mass"] = mass_array
+                    bead.mass = sum(mass_array)
 
-                    if np.count_nonzero(mass_array) == 0:
-                        raise RuntimeError("No atom masses could be assigned automatically in bead {0}.".format(bead.name))
-                    elif np.count_nonzero(mass_array) != len(bead.atoms):
-                        warnstring = "Some atom masses could not be assigned automatically in bead {0}.".format(bead.name)
-                        warnings.warn(warnstring, RuntimeWarning)
-                    # print(mass_array)
+                    if not np.all(mass_array):
+                        msg = "Some atom masses could not be automatically assigned, map_center=mass is not available."
+                        raise RuntimeError(msg)
+
+                    mass_array /= bead.mass
+                    bead.weights["mass"] = mass_array
 
         self._masses_are_set = True
 
@@ -231,41 +231,35 @@ class Mapping:
                 ref_coords = aares[bmap[0]].coords
                 coords = np.array([aares[atom].coords for atom in bmap], dtype=np.float32)
 
-                if self._map_center == "geom":
-                    bead.coords = calc_coords(ref_coords, coords, cgframe.box)
-                else:
-                    try:
-                        weights = bmap.weights[self._map_center]
-                    except KeyError as e:
-                        if self._map_center == "mass":
-                            e.args = ("Error with mapping type 'mass', did you provide an itp file?",)
-                        else:
-                            e.args = ("Error with mapping type '{0}', unknown mapping type.".format(e.args[0]),)
-                        raise
-                    bead.coords = calc_coords_weight(ref_coords, coords, cgframe.box, weights)
+                try:
+                    weights = bmap.weights[self._map_center]
+                except KeyError as e:
+                    e.args = ("Unknown mapping type '{0}'.".format(e.args[0]),)
+                    raise
+
+                bead.coords = calc_coords_weight(ref_coords, coords, cgframe.box, weights)
 
         return cgframe
 
 
-@numba.jit
+@numba.jit(nopython=True)
 def calc_coords_weight(ref_coords, coords, box, weights):
-    coords = dist_with_pbc(ref_coords, coords, box)
-    coords = np.sum(weights * coords, axis=0)
-    coords /= sum(weights)
-    coords += ref_coords
-    return coords
+    """
+    Calculate the coordinates of a single CG bead from weighted component atom coordinates.
 
-
-@numba.jit
-def calc_coords(ref_coords, coords, box):
+    :param ref_coords: Coordinates of reference atom, usually first atom in bead
+    :param coords: Array of coordinates of component atoms
+    :param box: PBC box vectors
+    :param weights: Array of atom weights, must sum to 1
+    :return: Coordinates of CG bead
+    """
     n = len(coords)
-    running = np.zeros(3, dtype=np.float32)
+    result = np.zeros(3, dtype=np.float32)
     for i in range(n):
         tmp_coords = coords[i]
         tmp_coords -= ref_coords
         if box[0] * box[1] * box[2] != 0:
             tmp_coords -= box * np.rint(tmp_coords / box)
-        running += tmp_coords
-    running /= n
-    running += ref_coords
-    return running
+        result += weights[i] * tmp_coords
+    result += ref_coords
+    return result
