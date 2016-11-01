@@ -36,7 +36,8 @@ if __name__ == "__main__":
         ("default_fc", False),
         ("generate_angles", True),
         ("generate_dihedrals", False),
-        ("empirical_corr", False)
+        ("empirical_corr", False),
+        ("factor_two", 1)
     ], args)
 
     if not args.map and not args.bnd:

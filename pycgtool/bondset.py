@@ -50,20 +50,21 @@ class Bond:
     def __iter__(self):
         return iter(self.atoms)
 
-    def boltzmann_invert(self, temp=310, default_fc=True):
+    def boltzmann_invert(self, temp=310, default_fc=True, factor_two=1.):
         """
         Perform Boltzmann Inversion using measured values of bond to calculate equilibrium value and force constant.
 
         :param temp: Temperature at which the simulation was performed
         :param default_fc: Use default value of 1250 kJ mol-1 nm-2 for length fc and 25 kJ mol-1 for angle fc
+        :param factor_two: Include factor of 2 in fc denominator.  Value is 1 or 2
         """
         mean, var = stat_moments(self.values)
 
         rt = 8.314 * temp / 1000.
         rad2 = np.pi * np.pi / (180. * 180.)
-        conv = {2: lambda: 1250. if default_fc else rt / var,
-                3: lambda: 25. if default_fc else rt / (np.sin(np.radians(mean))**2 * var * rad2),
-                4: lambda: rt / (var * rad2)}
+        conv = {2: lambda: 1250. if default_fc else rt / (factor_two * var),
+                3: lambda: 25. if default_fc else rt / (factor_two * np.sin(np.radians(mean))**2 * var * rad2),
+                4: lambda: rt / (factor_two * var * rad2)}
 
         self.eqm = mean
         try:
@@ -118,6 +119,11 @@ class BondSet:
             self._default_fc = options.default_fc
         except AttributeError:
             self._default_fc = False
+
+        try:
+            self._factor_two = options.factor_two
+        except AttributeError:
+            self._factor_two = 1
 
         with CFG(filename) as cfg:
             for mol in cfg:
@@ -344,7 +350,8 @@ class BondSet:
 
         for bond in bond_iter_wrap:
             bond.boltzmann_invert(temp=self._temperature,
-                                  default_fc=self._default_fc)
+                                  default_fc=self._default_fc,
+                                  factor_two=self._factor_two)
 
     def dump_values(self, target_number=10000):
         """
