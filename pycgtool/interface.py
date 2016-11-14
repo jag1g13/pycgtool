@@ -6,11 +6,6 @@ import curses
 import curses.textpad
 import time
 
-try:
-    from tqdm import tqdm
-except ImportError:
-    pass
-
 
 class Options:
     """
@@ -275,15 +270,19 @@ class Progress:
 
         Use the tqdm library if it is present.
         """
-        if self._quiet:
+        no_tqdm = False
+        try:
+            from tqdm import tqdm
+        except ImportError:
+            no_tqdm = True
+
+        if self._quiet or no_tqdm:
             collections.deque(self, maxlen=0)
+
         else:
-            try:
-                self._quiet = True
-                collections.deque(tqdm(self, total=len(self)-1, ncols=80), maxlen=0)
-            except NameError:
-                self._quiet = False
-                collections.deque(self, maxlen=0)
+            self._quiet = True
+            collections.deque(tqdm(self, total=len(self)-1, ncols=80), maxlen=0)
+            self._quiet = False
 
         return self._its
 
