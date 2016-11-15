@@ -100,7 +100,7 @@ class Residue:
         self.name_to_num[atom.name] = len(self.atoms) - 1
 
 
-class IFrameReader(metaclass=abc.ABCMeta):
+class FrameReader(metaclass=abc.ABCMeta):
     def __init__(self, trajname, topname, exclude=None, frame_start=0):
         self._trajname = trajname
         self._topname = topname
@@ -122,7 +122,19 @@ class IFrameReader(metaclass=abc.ABCMeta):
 
     def read_frame_number(self, number, frame):
         try:
-            self._read_frame_number(number, frame)
+            time, coords, box = self._read_frame_number(number)
+            frame.time = time
+            frame.box = box
+
+            i = 0
+            for res in frame.residues:
+                if res.name in self._exclude:
+                    i += len(res.atoms)
+                    continue
+                for atom in res:
+                    atom.coords = coords[i]
+                    i += 1
+
         except (IndexError, AttributeError):
             # IndexError - run out of xtc frames
             # AttributeError - we didn't provide an xtc
@@ -130,11 +142,11 @@ class IFrameReader(metaclass=abc.ABCMeta):
         return True
 
     @abc.abstractmethod
-    def _read_frame_number(self, number, frame):
+    def _read_frame_number(self, number):
         pass
 
 
-class FrameReaderSimpleTraj(IFrameReader):
+class FrameReaderSimpleTraj(FrameReader):
     def __init__(self, trajname, topname=None, exclude=None, frame_start=0):
         """
         Open input XTC file from which to read coordinates using simpletraj library.
@@ -143,7 +155,7 @@ class FrameReaderSimpleTraj(IFrameReader):
         :param topname: MD topology file - not used
         :param frame_start: Frame number to start on, default 0
         """
-        IFrameReader.__init__(self, trajname, topname, exclude, frame_start)
+        FrameReader.__init__(self, trajname, topname, exclude, frame_start)
 
         from simpletraj import trajectory
 
@@ -158,28 +170,19 @@ class FrameReaderSimpleTraj(IFrameReader):
         self.num_atoms = self._traj.numatoms
         self.num_frames = self._traj.numframes
 
-    def _read_frame_number(self, number, frame):
+    def _read_frame_number(self, number):
         """
         Read next frame from XTC using simpletraj library.
-
-        :return: True if successful else False
         """
         self._traj.get_frame(number)
-        i = 0
-        # Do this first outside the loop - numpy is fast
-        self._traj.x /= 10.
-        for res in frame.residues:
-            if res.name in self._exclude:
-                continue
-            for atom in res:
-                atom.coords = self._traj.x[i]
-                i += 1
+        # SimpleTraj uses Angstrom, we want nanometers
+        xyz = self._traj.x / 10
+        box = np.diag(self._traj.box)[0:3] / 10
 
-        frame.time = self._traj.time
-        frame.box = np.diag(self._traj.box)[0:3] / 10
+        return self._traj.time, xyz, box
 
 
-class FrameReaderMDTraj(IFrameReader):
+class FrameReaderMDTraj(FrameReader):
     def __init__(self, trajname, topname, exclude=None, frame_start=0):
         """
         Open input XTC file from which to read coordinates using mdtraj library.
@@ -187,7 +190,7 @@ class FrameReaderMDTraj(IFrameReader):
         :param trajname: GROMACS XTC file to read subsequent frames
         :param topname: GROMACS GRO file from which to read topology
         """
-        IFrameReader.__init__(self, trajname, topname, exclude, frame_start)
+        FrameReader.__init__(self, trajname, topname, exclude, frame_start)
 
         try:
             import mdtraj
@@ -209,24 +212,13 @@ class FrameReaderMDTraj(IFrameReader):
         self.num_atoms = self._traj.n_atoms
         self.num_frames = self._traj.n_frames
 
-    def _read_frame_number(self, number, frame):
+    def _read_frame_number(self, number):
         """
         Read next frame from XTC using mdtraj library.
-
-        :return: True if successful else False
         """
-        i = 0
         # This returns a slice of length 1, properties still need to be indexed
-        xtc_frame = self._traj[number]
-        for res in frame.residues:
-            if res.name in self._exclude:
-                continue
-            for atom in res:
-                atom.coords = xtc_frame.xyz[0][i]
-                i += 1
-
-        frame.time = xtc_frame.time[0]
-        frame.box = xtc_frame.unitcell_lengths[0]
+        traj_frame = self._traj[number]
+        return traj_frame.time[0], traj_frame.xyz[0], traj_frame.unitcell_lengths[0]
 
 
 class Frame:
