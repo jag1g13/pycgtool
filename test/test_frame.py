@@ -1,6 +1,7 @@
 import unittest
 import filecmp
 import os
+import logging
 
 import numpy as np
 
@@ -69,7 +70,10 @@ class FrameTest(unittest.TestCase):
     @unittest.expectedFailure
     @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_frame_mdtraj_read_gro(self):
+        logging.disable(logging.WARNING)
         frame = Frame("test/data/water.gro", xtc_reader="mdtraj")
+        logging.disable(logging.NOTSET)
+
         self.assertEqual(221, len(frame.residues))
         self.assertEqual("SOL", frame.residues[0].name)
         self.assertEqual(3, len(frame.residues[0].atoms))
@@ -90,8 +94,10 @@ class FrameTest(unittest.TestCase):
 
     @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_frame_read_xtc_mdtraj_numframes(self):
+        logging.disable(logging.WARNING)
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="mdtraj")
+        logging.disable(logging.NOTSET)
         self.assertEqual(12, frame.numframes)
 
     def test_frame_simpletraj_read_xtc(self):
@@ -118,8 +124,11 @@ class FrameTest(unittest.TestCase):
 
     @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_frame_mdtraj_read_xtc(self):
+        logging.disable(logging.WARNING)
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="mdtraj")
+        logging.disable(logging.NOTSET)
+
         self.assertEqual(663, frame.natoms)
 
         # These are the coordinates from the gro file
@@ -146,8 +155,12 @@ class FrameTest(unittest.TestCase):
             os.remove("water_test2.xtc")
         except IOError:
             pass
+
+        logging.disable(logging.WARNING)
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="mdtraj")
+        logging.disable(logging.NOTSET)
+
         while frame.next_frame():
             frame.write_xtc("water_test2.xtc")
 

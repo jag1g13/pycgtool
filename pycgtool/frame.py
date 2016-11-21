@@ -390,7 +390,7 @@ class Frame:
                     e.msg = "XTC output requires the module MDTraj (and probably Scipy)"
                 raise
 
-            backup_file(filename, verbose=True)
+            backup_file(filename)
             self._xtc_buffer = mdtraj.formats.XTCTrajectoryFile(filename, mode="w")
 
         xyz = np.ndarray((1, self.natoms, 3), dtype=np.float32)
@@ -493,7 +493,7 @@ class Frame:
 
         :param filename: Name of GRO file to create
         """
-        backup_file(filename, verbose=True)
+        backup_file(filename)
 
         with open(filename, "w") as gro:
             print(self.name, file=gro)

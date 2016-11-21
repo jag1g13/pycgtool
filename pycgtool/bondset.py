@@ -241,7 +241,7 @@ class BondSet:
         :param exclude: Set of molecule names to be excluded from itp
         """
         self._populate_atom_numbers(mapping)
-        backup_file(filename, verbose=True)
+        backup_file(filename)
 
         def write_bond_angle_dih(bonds, section_header, itp, print_fconst=True, multiplicity=None):
             if bonds:

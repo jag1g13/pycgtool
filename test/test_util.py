@@ -1,5 +1,6 @@
 import unittest
 import os
+import logging
 
 import numpy as np
 import numpy.testing
@@ -64,6 +65,14 @@ class UtilTest(unittest.TestCase):
         self.assertEqual(os.path.dirname(os.path.dirname(path)), dir_up(path, 2))
 
     def test_backup_file(self):
+        try:
+            os.remove("testfile")
+            os.remove("#testfile.1#")
+            os.remove("#testfile.2#")
+        except OSError:
+            pass
+
+        logging.disable(logging.WARNING)
         open("testfile", "a").close()
         self.assertEqual("#testfile.1#", backup_file("testfile"))
         open("testfile", "a").close()
@@ -71,6 +80,8 @@ class UtilTest(unittest.TestCase):
         self.assertEqual("#testfile.2#", backup_file("testfile"))
         open("testfile", "a").close()
         self.assertTrue(os.path.exists("#testfile.2#"))
+        logging.disable(logging.NOTSET)
+
         os.remove("testfile")
         os.remove("#testfile.1#")
         os.remove("#testfile.2#")

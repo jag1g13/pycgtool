@@ -7,9 +7,12 @@ import itertools
 import random
 import math
 import filecmp
+import logging
 
 import numpy as np
 np.seterr(all="raise")
+
+logger = logging.getLogger(__name__)
 
 
 class NumbaDummy:
@@ -229,13 +232,12 @@ def dir_up(name, n=1):
     return name
 
 
-def backup_file(name, verbose=False):
+def backup_file(name):
     """
     Backup a file using the GROMACS backup naming scheme.
     name -> #name.x#
 
     :param name: File to backup
-    :param verbose: Print a message if file is backed up
     :return: New name of file after backup
     """
     if not os.path.exists(name):
@@ -249,8 +251,7 @@ def backup_file(name, verbose=False):
             break
 
     os.rename(name, new_name)
-    if verbose:
-        print("Existing file {0} backed up as {1}".format(name, new_name))
+    logger.warning("Existing file {0} backed up as {1}".format(name, new_name))
     return new_name
 
 

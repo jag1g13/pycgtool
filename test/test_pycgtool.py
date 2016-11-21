@@ -1,6 +1,7 @@
 import unittest
 import subprocess
 import os
+import logging
 
 import numpy as np
 
@@ -48,7 +49,9 @@ class PycgtoolTest(unittest.TestCase):
 
     @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_map_only(self):
+        logging.disable(logging.WARNING)
         map_only(Args("sugar"), self.config)
+        logging.disable(logging.NOTSET)
 
         xtc = XtcTrajectory("out.xtc")
         xtc_ref = XtcTrajectory("test/data/sugar_out.xtc")

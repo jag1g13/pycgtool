@@ -1,5 +1,7 @@
 import unittest
 
+import logging
+
 from pycgtool.bondset import BondSet
 from pycgtool.frame import Frame
 from pycgtool.mapping import Mapping
@@ -96,9 +98,12 @@ class BondSetTest(unittest.TestCase):
 
     @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_bondset_boltzmann_invert_mdtraj(self):
-        measure = BondSet("test/data/sugar.bnd", DummyOptions)
+        logging.disable(logging.WARNING)
         frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc",
                       xtc_reader="mdtraj")
+        logging.disable(logging.NOTSET)
+
+        measure = BondSet("test/data/sugar.bnd", DummyOptions)
         mapping = Mapping("test/data/sugar.map", DummyOptions)
 
         cgframe = mapping.apply(frame)
@@ -151,6 +156,9 @@ class BondSetTest(unittest.TestCase):
             measure.apply(cgframe)
 
         measure.boltzmann_invert()
+
+        logging.disable(logging.WARNING)
         measure.write_itp("sugar_out.itp", mapping, exclude={"SOL"})
+        logging.disable(logging.NOTSET)
 
         self.assertTrue(cmp_whitespace_float("sugar_out.itp", "test/data/sugar_out.itp", float_rel_error=0.001))
