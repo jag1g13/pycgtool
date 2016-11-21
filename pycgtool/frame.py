@@ -7,11 +7,14 @@ Both Frame and Residue are iterable. Residue is indexable with either atom numbe
 
 import os
 import abc
+import logging
 
 import numpy as np
 
 from .util import backup_file
 from .parsers.cfg import CFG
+
+logger = logging.getLogger(__name__)
 
 np.seterr(all="raise")
 
@@ -101,9 +104,9 @@ class Residue:
 
 
 class FrameReader(metaclass=abc.ABCMeta):
-    def __init__(self, trajname, topname, exclude=None, frame_start=0):
-        self._trajname = trajname
+    def __init__(self, topname, trajname=None, exclude=None, frame_start=0):
         self._topname = topname
+        self._trajname = trajname
         self._frame_number = frame_start
 
         if exclude is not None:
@@ -114,6 +117,10 @@ class FrameReader(metaclass=abc.ABCMeta):
         self.num_atoms = 0
         self.num_frames = 0
 
+    def initialise_frame(self, frame):
+        self._initialise_frame(frame)
+        self.read_next(frame)
+
     def read_next(self, frame):
         result = self.read_frame_number(self._frame_number, frame)
         if result:
@@ -121,6 +128,8 @@ class FrameReader(metaclass=abc.ABCMeta):
         return result
 
     def read_frame_number(self, number, frame):
+        if self._trajname is None:
+            return False
         try:
             time, coords, box = self._read_frame_number(number)
             frame.time = time
@@ -142,33 +151,76 @@ class FrameReader(metaclass=abc.ABCMeta):
         return True
 
     @abc.abstractmethod
+    def _initialise_frame(self, frame):
+        pass
+
+    @abc.abstractmethod
     def _read_frame_number(self, number):
         pass
 
 
 class FrameReaderSimpleTraj(FrameReader):
-    def __init__(self, trajname, topname=None, exclude=None, frame_start=0):
+    def __init__(self, topname, trajname=None, exclude=None, frame_start=0):
         """
         Open input XTC file from which to read coordinates using simpletraj library.
 
-        :param trajname: MD trajectory file to read subsequent frames
         :param topname: MD topology file - not used
+        :param trajname: MD trajectory file to read subsequent frames
         :param frame_start: Frame number to start on, default 0
         """
-        FrameReader.__init__(self, trajname, topname, exclude, frame_start)
+        FrameReader.__init__(self, topname, trajname, exclude, frame_start)
 
         from simpletraj import trajectory
 
-        try:
-            self._traj = trajectory.get_trajectory(trajname)
-        except OSError as e:
-            if not os.path.isfile(trajname):
-                raise FileNotFoundError(trajname) from e
-            e.args = ("Error opening file '{0}'".format(trajname),)
-            raise
+        if trajname is not None:
+            try:
+                self._traj = trajectory.get_trajectory(trajname)
+            except OSError as e:
+                if not os.path.isfile(trajname):
+                    raise FileNotFoundError(trajname) from e
+                e.args = ("Error opening file '{0}'".format(trajname),)
+                raise
 
-        self.num_atoms = self._traj.numatoms
-        self.num_frames = self._traj.numframes
+            self.num_atoms = self._traj.numatoms
+            self.num_frames = self._traj.numframes
+
+    def _initialise_frame(self, frame):
+        """
+        Parse a GROMACS GRO file and create Residues/Atoms
+        Required before reading coordinates from XTC file
+
+        :param filename: Filename of GROMACS GRO to read
+        """
+        with open(self._topname) as gro:
+            frame.name = gro.readline().strip()
+            self.num_atoms = int(gro.readline())
+            frame.natoms = self.num_atoms
+            i = 0
+            resnum_last = -1
+
+            for line in gro:
+                resnum = int(line[0:5])
+                resname = line[5:10].strip()
+                atomname = line[10:15].strip()
+                coords = np.array([float(line[20:28]), float(line[28:36]), float(line[36:44])],
+                                  dtype=np.float32)
+
+                if resnum != resnum_last:
+                    frame.residues.append(Residue(name=resname,
+                                                  num=resnum))
+                    resnum_last = resnum
+                    atnum = 0
+
+                atom = Atom(name=atomname, num=atnum, coords=coords)
+                frame.residues[-1].add_atom(atom)
+                if i >= frame.natoms - 1:
+                    break
+                i += 1
+                atnum += 1
+
+            line = gro.readline()
+            frame.box = np.array([float(x) for x in line.split()[0:3]], dtype=np.float32)
+            frame.number += 1
 
     def _read_frame_number(self, number):
         """
@@ -183,14 +235,14 @@ class FrameReaderSimpleTraj(FrameReader):
 
 
 class FrameReaderMDTraj(FrameReader):
-    def __init__(self, trajname, topname, exclude=None, frame_start=0):
+    def __init__(self, topname, trajname=None, exclude=None, frame_start=0):
         """
         Open input XTC file from which to read coordinates using mdtraj library.
 
-        :param trajname: GROMACS XTC file to read subsequent frames
         :param topname: GROMACS GRO file from which to read topology
+        :param trajname: GROMACS XTC file to read subsequent frames
         """
-        FrameReader.__init__(self, trajname, topname, exclude, frame_start)
+        FrameReader.__init__(self, topname, trajname, exclude, frame_start)
 
         try:
             import mdtraj
@@ -202,23 +254,51 @@ class FrameReaderMDTraj(FrameReader):
             raise
 
         try:
-            self._traj = mdtraj.load(trajname, top=topname)
+            if trajname is None:
+                self._traj = mdtraj.load(topname)
+            else:
+                self._traj = mdtraj.load(trajname, top=topname)
         except OSError as e:
+            if not os.path.isfile(topname):
+                raise FileNotFoundError(topname) from e
             if not os.path.isfile(trajname):
                 raise FileNotFoundError(trajname) from e
-            e.args = ("Error opening file '{0}'".format(trajname),)
+            e.args = ("Error opening file '{0}' or '{1}'".format(topname, trajname),)
             raise
 
         self.num_atoms = self._traj.n_atoms
         self.num_frames = self._traj.n_frames
 
+    def _initialise_frame(self, frame):
+        """
+        Parse a GROMACS GRO file and create Residues/Atoms
+        Required before reading coordinates from XTC file
+
+        :param filename: Filename of GROMACS GRO to read
+        """
+        logger.warning("WARNING: Using MDTraj which renames solvent molecules")
+
+        frame.name = ""
+        self.num_atoms = self._traj.n_atoms
+        frame.natoms = self._traj.n_atoms
+
+        for residue in self._traj.topology.residues:
+            frame.residues.append(Residue(name=residue.name,
+                                          num=residue.resSeq))
+
+        for atom in self._traj.topology.atoms:
+            new_atom = Atom(name=atom.name, num=atom.serial,
+                            coords=self._traj.xyz[0][atom.index])
+            frame.residues[atom.residue.index].add_atom(new_atom)
+
+        frame.box = self._traj.unitcell_lengths[0]
+        frame.number = 1
+
     def _read_frame_number(self, number):
         """
         Read next frame from XTC using mdtraj library.
         """
-        # This returns a slice of length 1, properties still need to be indexed
-        traj_frame = self._traj[number]
-        return traj_frame.time[0], traj_frame.xyz[0], traj_frame.unitcell_lengths[0]
+        return self._traj.time[number], self._traj.xyz[number], self._traj.unitcell_lengths[number]
 
 
 class Frame:
@@ -244,22 +324,23 @@ class Frame:
         self._xtc_buffer = None
 
         if gro is not None:
-            self._parse_gro(gro)
+            # self._parse_gro(gro)
             self.numframes += 1
 
-            if xtc is not None:
-                open_xtc = {"simpletraj": FrameReaderSimpleTraj,
-                            "mdtraj":     FrameReaderMDTraj}
-                try:
-                    self._trajreader = open_xtc[xtc_reader](xtc, gro, exclude=exclude,
-                                                            frame_start=frame_start)
-                except KeyError as e:
-                    e.args = ("XTC reader {0} is not a valid option.".format(xtc_reader))
-                    raise
+            open_xtc = {"simpletraj": FrameReaderSimpleTraj,
+                        "mdtraj":     FrameReaderMDTraj}
+            try:
+                self._trajreader = open_xtc[xtc_reader](gro, xtc, exclude=exclude,
+                                                        frame_start=frame_start)
+            except KeyError as e:
+                e.args = ("XTC reader {0} is not a valid option.".format(xtc_reader))
+                raise
 
-                if self._trajreader.num_atoms != self.natoms:
-                    raise AssertionError("Number of atoms does not match between gro and xtc files.")
-                self.numframes += self._trajreader.num_frames
+            self._trajreader.initialise_frame(self)
+
+            if self._trajreader.num_atoms != self.natoms:
+                raise AssertionError("Number of atoms does not match between gro and xtc files.")
+            self.numframes += self._trajreader.num_frames
 
             if itp is not None:
                 self._parse_itp(itp)

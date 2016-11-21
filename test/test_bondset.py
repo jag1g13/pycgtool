@@ -5,6 +5,12 @@ from pycgtool.frame import Frame
 from pycgtool.mapping import Mapping
 from pycgtool.util import cmp_whitespace_float
 
+try:
+    import mdtraj
+    mdtraj_present = True
+except ImportError:
+    mdtraj_present = False
+
 
 class DummyOptions:
     constr_threshold = 100000
@@ -15,6 +21,27 @@ class DummyOptions:
 
 
 class BondSetTest(unittest.TestCase):
+    invert_test_ref_data = [
+        (0.220474419132, 72658.18163),
+        (0.221844516963, 64300.01188),
+        (0.216313356504, 67934.93368),
+        (0.253166204438, 19545.27388),
+        (0.205958461836, 55359.06367),
+        (0.180550961226, 139643.66601),
+        (77.882969526805, 503.24211),
+        (116.081406627900, 837.76904),
+        (111.030514958715, 732.87969),
+        (83.284691301386, 945.32633),
+        (143.479514279933, 771.63691),
+        (99.293754667718, 799.82825),
+        (-82.852665692244, 253.75691),
+        (61.159604648237, 125.04591),
+        (-21.401629717440, 135.50927),
+        (53.161150086611, 51.13975),
+        (-96.548945531698, 59.38162),
+        (75.370211843364, 279.80889)
+    ]
+
     def test_bondset_create(self):
         measure = BondSet("test/data/sugar.bnd", DummyOptions)
         self.assertEqual(2, len(measure))
@@ -48,39 +75,47 @@ class BondSetTest(unittest.TestCase):
         self.assertEqual(0, len(angles))
 
     def test_bondset_boltzmann_invert(self):
-        ref = [(  0.222817161647,  19121439),
-               (  0.216766804211,  55860162),
-               (  0.223815134299,   6199228),
-               (  0.239439104442, 644589275),
-               (  0.215497208685,   7366663),
-               (  0.179544192953,  20520985),
-               ( 76.9617550012,    26096485),
-               (116.009786726,      1855239),
-               (109.247878273,       391799),
-               ( 84.4955293511,     1743982),
-               (149.557001531,       942548),
-               ( 99.0524708671,      201886),
-               (-89.5321545897,      182496),
-               ( 70.040930903,       338005),
-               (-21.1194544981,     1990619),
-               ( 48.3727747848,       71425),
-               (-85.923133935,       124789),
-               ( 70.3195444564,     1556778)]
-
         measure = BondSet("test/data/sugar.bnd", DummyOptions)
         frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
         mapping = Mapping("test/data/sugar.map", DummyOptions)
+
         cgframe = mapping.apply(frame)
-        measure.apply(cgframe)
-        frame.next_frame()
-        cgframe = mapping.apply(frame)
-        measure.apply(cgframe)
+        while frame.next_frame():
+            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            measure.apply(cgframe)
+
         measure.boltzmann_invert()
+        ref = self.invert_test_ref_data
         for i, bond in enumerate(measure["ALLA"]):
             # Require accuracy to 0.5%
             # Allows for slight modifications to code
-            self.assertAlmostEqual(ref[i][0], bond.eqm, delta=abs(ref[i][0] / 200))
-            self.assertAlmostEqual(ref[i][1], bond.fconst, delta=abs(ref[i][1] / 200))
+            self.assertAlmostEqual(ref[i][0], bond.eqm,
+                                   delta=abs(ref[i][0] / 200))
+            self.assertAlmostEqual(ref[i][1], bond.fconst,
+                                   delta=abs(ref[i][1] / 200))
+
+    @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
+    def test_bondset_boltzmann_invert_mdtraj(self):
+        measure = BondSet("test/data/sugar.bnd", DummyOptions)
+        frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc",
+                      xtc_reader="mdtraj")
+        mapping = Mapping("test/data/sugar.map", DummyOptions)
+
+        cgframe = mapping.apply(frame)
+        while frame.next_frame():
+            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            measure.apply(cgframe)
+
+        measure.boltzmann_invert()
+
+        ref = self.invert_test_ref_data
+        for i, bond in enumerate(measure["ALLA"]):
+            # Require accuracy to 0.5%
+            # Allows for slight modifications to code
+            self.assertAlmostEqual(ref[i][0], bond.eqm,
+                                   delta=abs(ref[i][0] / 200))
+            self.assertAlmostEqual(ref[i][1], bond.fconst,
+                                   delta=abs(ref[i][1] / 200))
 
     def test_bondset_polymer(self):
         bondset = BondSet("test/data/polyethene.bnd", DummyOptions)
