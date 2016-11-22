@@ -11,7 +11,7 @@ import logging
 
 import numpy as np
 
-from .util import backup_file
+from .util import backup_file, FixedFormatUnpacker
 from .parsers.cfg import CFG
 
 logger = logging.getLogger(__name__)
@@ -198,12 +198,11 @@ class FrameReaderSimpleTraj(FrameReader):
             i = 0
             resnum_last = -1
 
+            unpacker = FixedFormatUnpacker("%5d%5s%5s%5d%8f%8f%8f")
+
             for line in gro:
-                resnum = int(line[0:5])
-                resname = line[5:10].strip()
-                atomname = line[10:15].strip()
-                coords = np.array([float(line[20:28]), float(line[28:36]), float(line[36:44])],
-                                  dtype=np.float32)
+                resnum, resname, atomname, _, x, y, z, *_ = unpacker.unpack(line)
+                coords = np.array([x, y, z], dtype=np.float32)
 
                 if resnum != resnum_last:
                     frame.residues.append(Residue(name=resname,
@@ -408,43 +407,6 @@ class Frame:
             box[0][i][i] = self.box[i]
 
         self._xtc_buffer.write(xyz, time=time, step=step, box=box)
-
-    def _parse_gro(self, filename):
-        """
-        Parse a GROMACS GRO file and create Residues/Atoms
-        Required before reading coordinates from XTC file
-
-        :param filename: Filename of GROMACS GRO to read
-        """
-        with open(filename) as gro:
-            self.name = gro.readline().strip()
-            self.natoms = int(gro.readline())
-            i = 0
-            resnum_last = -1
-
-            for line in gro:
-                resnum = int(line[0:5])
-                resname = line[5:10].strip()
-                atomname = line[10:15].strip()
-                coords = np.array([float(line[20:28]), float(line[28:36]), float(line[36:44])],
-                                  dtype=np.float32)
-
-                if resnum != resnum_last:
-                    self.residues.append(Residue(name=resname,
-                                                 num=resnum))
-                    resnum_last = resnum
-                    atnum = 0
-
-                atom = Atom(name=atomname, num=atnum, coords=coords)
-                self.residues[-1].add_atom(atom)
-                if i >= self.natoms - 1:
-                    break
-                i += 1
-                atnum += 1
-
-            line = gro.readline()
-            self.box = np.array([float(x) for x in line.split()[0:3]], dtype=np.float32)
-            self.number += 1
 
     def _parse_itp(self, filename):
         """

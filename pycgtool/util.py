@@ -9,6 +9,8 @@ import math
 import filecmp
 import logging
 
+from collections import namedtuple
+
 import numpy as np
 np.seterr(all="raise")
 
@@ -349,3 +351,32 @@ def once_wrapper(func):
             return func(*args, **kwargs)
 
     return wrap
+
+
+# TODO testing
+class FixedFormatUnpacker(object):
+    """
+    Unpack strings printed in fixed format.
+    """
+    types = {"d": int, "s": str, "f": float}
+    FormatItem = namedtuple("FormatItem", ["type", "width"])
+
+    def __init__(self, format_string):
+        """
+        Does not support format strings containing spaces
+        """
+        self._format_string = format_string
+        self._format_items = []
+        for item in format_string.split("%")[1:]:
+            item_width = int(item[:-1])
+            item_type = self.types[item[-1]]
+            self._format_items.append(self.FormatItem(item_type, item_width))
+    
+    def unpack(self, string):
+        items = []
+        start = 0
+        for format_item in self._format_items:
+            string_part = string[start:start+format_item.width]
+            start += format_item.width
+            items.append(format_item.type(string_part.strip()))
+        return items
