@@ -353,30 +353,114 @@ def once_wrapper(func):
     return wrap
 
 
+class SimpleEnum(object):
+    class Enum(object):
+        def __iter__(self):
+            return iter(self.members)
+
+    class EnumValue(object):
+        def __init__(self, enum_name, value):
+            self.enum_name = enum_name
+            self.value = value
+
+        def __repr__(self):
+            return "<{0}: {1}>".format(self.enum_name, self.value)
+
+        def __hash__(self):
+            return hash(repr(self))
+
+        def __eq__(self, other):
+            if self.enum_name != other.enum_name:
+                raise TypeError("Cannot compare values from different enums")
+            elif self.value == other.value:
+                return True
+            return False
+
+    @classmethod
+    def enum(cls, name, key_list):
+        def returner(val):
+            return lambda _: val
+        enum_cls = type(name, (cls.Enum,), {})
+        for key in key_list:
+            prop = property(returner(cls.EnumValue(name, key)))
+            setattr(enum_cls, key, prop)
+        setattr(enum_cls, "members", property(returner(key_list)))
+        return enum_cls()
+
+
 # TODO testing
 class FixedFormatUnpacker(object):
     """
     Unpack strings printed in fixed format.
     """
-    types = {"d": int, "s": str, "f": float}
     FormatItem = namedtuple("FormatItem", ["type", "width"])
+    FormatStyle = SimpleEnum.enum("FormatStyle", ["C", "Fortran"])
 
-    def __init__(self, format_string):
+    def __init__(self, format_string, format_style=FormatStyle.C):
         """
         Does not support format strings containing spaces
         """
         self._format_string = format_string
-        self._format_items = []
+        format_parsers = {self.FormatStyle.C:       self._parse_c_format,
+                          self.FormatStyle.Fortran: self._parse_fortran_format}
+        clean_format_string = self._clean_format_string(format_string)
+        self._format_items = format_parsers[format_style](clean_format_string)
+
+    @staticmethod
+    def _clean_format_string(format_string):
+        cleaned = format_string.lower()
+        cleaned = cleaned.strip("-+#/")
+        return cleaned
+
+    @classmethod
+    def _parse_c_format(cls, format_string):
+        """
+        Parse a C format specifier string.
+
+        :param format_string: C format string
+        :return: List of FormatItems
+        """
+        items = []
+        types = {"d": int, "s": str, "f": float}
+        format_string = format_string.lower()
         for item in format_string.split("%")[1:]:
-            item_width = int(item[:-1])
-            item_type = self.types[item[-1]]
-            self._format_items.append(self.FormatItem(item_type, item_width))
-    
+            try:
+                item_width = int(item[:-1])
+            except ValueError:
+                # Probably a float format specifier, ignore precision, just use width
+                item_width = int(float(item[:-1]))
+
+            item_type = types[item[-1]]
+            items.append(cls.FormatItem(item_type, item_width))
+        return items
+
+    @classmethod
+    def _parse_fortran_format(cls, format_string):
+        """
+        Parse a Fortran format specifier string.
+
+        :param format_string: Fortran format string
+        :return: List of FormatItems
+        """
+        items = []
+        types = {"i": int, "a": str, "f": float, "x": None}
+        format_string = format_string.lower()
+        for item in format_string.split(","):
+            try:
+                item_width = int(item[1:])
+            except ValueError:
+                # Probably a float format specifier, ignore precision, just use width
+                item_width = int(float(item[1:]))
+            item_type = types[item[0]]
+            items.append(cls.FormatItem(item_type, item_width))
+        return items
+
     def unpack(self, string):
         items = []
         start = 0
         for format_item in self._format_items:
             string_part = string[start:start+format_item.width]
             start += format_item.width
-            items.append(format_item.type(string_part.strip()))
+            if format_item.type is not None:
+                items.append(format_item.type(string_part.strip()))
         return items

@@ -195,13 +195,13 @@ class FrameReaderSimpleTraj(FrameReader):
             frame.name = gro.readline().strip()
             self.num_atoms = int(gro.readline())
             frame.natoms = self.num_atoms
-            i = 0
-            resnum_last = -1
+            resnum_last = None
 
-            unpacker = FixedFormatUnpacker("%5d%5s%5s%5d%8f%8f%8f")
+            unpacker = FixedFormatUnpacker("I5,A5,A5,X5,F8,F8,F8",
+                                           FixedFormatUnpacker.FormatStyle.Fortran)
 
-            for line in gro:
-                resnum, resname, atomname, _, x, y, z, *_ = unpacker.unpack(line)
+            for _ in range(self.num_atoms):
+                resnum, resname, atomname, x, y, z = unpacker.unpack(gro.readline())
                 coords = np.array([x, y, z], dtype=np.float32)
 
                 if resnum != resnum_last:
@@ -212,9 +212,6 @@ class FrameReaderSimpleTraj(FrameReader):
 
                 atom = Atom(name=atomname, num=atnum, coords=coords)
                 frame.residues[-1].add_atom(atom)
-                if i >= frame.natoms - 1:
-                    break
-                i += 1
                 atnum += 1
 
             line = gro.readline()

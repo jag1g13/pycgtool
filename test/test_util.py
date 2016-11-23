@@ -7,6 +7,7 @@ import numpy.testing
 
 from pycgtool.util import tuple_equivalent, extend_graph_chain, stat_moments, transpose_and_sample
 from pycgtool.util import dir_up, backup_file, sliding, r_squared, dist_with_pbc
+from pycgtool.util import SimpleEnum, FixedFormatUnpacker
 
 
 class UtilTest(unittest.TestCase):
@@ -113,6 +114,60 @@ class UtilTest(unittest.TestCase):
         l_t_test = transpose_and_sample(l, n=1)
         self.assertEqual(1, len(l_t_test))
         self.assertIn(l_t_test[0], l_t)
+
+    def test_simple_enum(self):
+        enum = SimpleEnum.enum("enum", ["one", "two", "three"])
+        self.assertEqual(enum.one, enum.one)
+        self.assertNotEqual(enum.two, enum.three)
+
+        with self.assertRaises(AttributeError):
+            _ = enum.four
+        with self.assertRaises(AttributeError):
+            enum.one = 2
+
+        enum2 = SimpleEnum.enum("enum2", ["one", "two", "three"])
+        with self.assertRaises(TypeError):
+            enum2.one == enum.one
+
+        self.assertTrue("one" in enum)
+        self.assertFalse("four" in enum)
+
+    def test_fixed_format_unpacker_c(self):
+        unpacker = FixedFormatUnpacker("%4d%5s%4.1f")
+        toks = unpacker.unpack("1234hello12.3")
+        self.assertEqual(3, len(toks))
+        self.assertEqual(1234, toks[0])
+        self.assertEqual("hello", toks[1])
+        self.assertAlmostEqual(12.3, toks[2])
+
+    def test_fixed_format_unpacker_fortran(self):
+        unpacker = FixedFormatUnpacker("I4,A5,F4.1",
+                                       FixedFormatUnpacker.FormatStyle.Fortran)
+        toks = unpacker.unpack("1234hello12.3")
+        self.assertEqual(3, len(toks))
+        self.assertEqual(1234, toks[0])
+        self.assertEqual("hello", toks[1])
+        self.assertAlmostEqual(12.3, toks[2])
+
+    def test_fixed_format_unpacker_fortran_space(self):
+        unpacker = FixedFormatUnpacker("I4,X3,A5,X2,F4.1",
+                                       FixedFormatUnpacker.FormatStyle.Fortran)
+        toks = unpacker.unpack("1234 x hello x12.3")
+        self.assertEqual(3, len(toks))
+        self.assertEqual(1234, toks[0])
+        self.assertEqual("hello", toks[1])
+        self.assertAlmostEqual(12.3, toks[2])
+
+    @unittest.expectedFailure
+    def test_fixed_format_unpacker_fortran_repeat(self):
+        unpacker = FixedFormatUnpacker("2I2,X3,A5,X2,F4.1",
+                                       FixedFormatUnpacker.FormatStyle.Fortran)
+        toks = unpacker.unpack("1234 x hello x12.3")
+        self.assertEqual(4, len(toks))
+        self.assertEqual(12, toks[0])
+        self.assertEqual(34, toks[1])
+        self.assertEqual("hello", toks[2])
+        self.assertAlmostEqual(12.3, toks[3])
 
 
 if __name__ == '__main__':
