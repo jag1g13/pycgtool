@@ -90,7 +90,7 @@ class FrameTest(unittest.TestCase):
     def test_frame_read_xtc_simpletraj_numframes(self):
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="simpletraj")
-        self.assertEqual(12, frame.numframes)
+        self.assertEqual(11, frame.numframes)
 
     @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_frame_read_xtc_mdtraj_numframes(self):
@@ -98,18 +98,18 @@ class FrameTest(unittest.TestCase):
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="mdtraj")
         logging.disable(logging.NOTSET)
-        self.assertEqual(12, frame.numframes)
+        self.assertEqual(11, frame.numframes)
 
     def test_frame_simpletraj_read_xtc(self):
         frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
                       xtc_reader="simpletraj")
         self.assertEqual(663, frame.natoms)
         # These are the coordinates from the gro file
-        # np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),
-        #                            frame.residues[0].atoms[0].coords)
-        # np.testing.assert_allclose(np.array([1.89868, 1.89868, 1.89868]),
-        #                            frame.box)
-        # frame.next_frame()
+        np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),
+                                   frame.residues[0].atoms[0].coords)
+        np.testing.assert_allclose(np.array([1.89868, 1.89868, 1.89868]),
+                                   frame.box)
+        frame.next_frame()
 
         # These coordinates are from the xtc file
         np.testing.assert_allclose(np.array([1.176, 1.152, 1.586]),
@@ -132,11 +132,11 @@ class FrameTest(unittest.TestCase):
         self.assertEqual(663, frame.natoms)
 
         # These are the coordinates from the gro file
-        # np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),
-        #                            frame.residues[0].atoms[0].coords)
-        # np.testing.assert_allclose(np.array([1.89868, 1.89868, 1.89868]),
-        #                            frame.box)
-        # frame.next_frame()
+        np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),
+                                   frame.residues[0].atoms[0].coords)
+        np.testing.assert_allclose(np.array([1.89868, 1.89868, 1.89868]),
+                                   frame.box)
+        frame.next_frame()
 
         # These coordinates are from the xtc file
         np.testing.assert_allclose(np.array([1.176, 1.152, 1.586]),

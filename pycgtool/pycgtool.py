@@ -21,18 +21,19 @@ def main(args, config):
     frame = Frame(gro=args.gro, xtc=args.xtc, itp=args.itp, frame_start=args.begin, exclude={"SOL"})
 
     if args.bnd:
-        bonds = BondSet(args.bnd, config)
         logger.info("Bond measurements will be made")
+        bonds = BondSet(args.bnd, config)
     else:
         logger.info("Bond measurements will not be made")
 
     if args.map:
+        logger.info("Mapping will be performed")
         mapping = Mapping(args.map, config, itp=args.itp)
         cgframe = mapping.apply(frame, exclude={"SOL"})
-        logger.info("Mapping will be performed")
+        cgframe.output(config.output_name + ".gro", format=config.output)
     else:
-        cgframe = frame
         logger.info("Mapping will not be performed")
+        cgframe = frame
 
     # Only measure bonds from GRO frame if no XTC is provided
     # Allows the user to get a topology from a single snapshot
@@ -42,6 +43,8 @@ def main(args, config):
     # Main loop - perform mapping and measurement on every frame in XTC
     def main_loop():
         nonlocal cgframe
+        if not frame.next_frame():
+            return False
         if args.map:
             cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
             if config.output_xtc:
@@ -50,16 +53,11 @@ def main(args, config):
             cgframe = frame
         if args.bnd:
             bonds.apply(cgframe)
-        if not frame.next_frame():
-            return False
         return True
 
     numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
     logger.info("Beginning analysis of {0} frames".format(numframes))
     Progress(numframes, dowhile=main_loop, quiet=args.quiet).run()
-
-    if args.map:
-        cgframe.output(config.output_name + ".gro", format=config.output)
 
     if args.bnd:
         if args.map:
@@ -87,19 +85,19 @@ def map_only(args, config):
     frame = Frame(gro=args.gro, xtc=args.xtc)
     mapping = Mapping(args.map, config)
     cgframe = mapping.apply(frame, exclude={"SOL"})
+    cgframe.output(config.output_name + ".gro", format=config.output)
 
     if args.xtc and (config.output_xtc or args.outputxtc):
         # Main loop - perform mapping and measurement on every frame in XTC
         def main_loop():
             nonlocal cgframe
-            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
-            cgframe.write_xtc(config.output_name + ".xtc")
             if not frame.next_frame():
                 return False
+            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            cgframe.write_xtc(config.output_name + ".xtc")
             return True
 
         numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
         logger.info("Beginning analysis of {0} frames".format(numframes))
-        Progress(numframes, dowhile=main_loop, quiet=args.quiet).run()
+        its = Progress(numframes, dowhile=main_loop, quiet=args.quiet).run()
 
-    cgframe.output(config.output_name + ".gro", format=config.output)

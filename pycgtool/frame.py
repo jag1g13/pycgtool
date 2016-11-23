@@ -119,7 +119,6 @@ class FrameReader(metaclass=abc.ABCMeta):
 
     def initialise_frame(self, frame):
         self._initialise_frame(frame)
-        self.read_next(frame)
 
     def read_next(self, frame):
         result = self.read_frame_number(self._frame_number, frame)
@@ -216,7 +215,6 @@ class FrameReaderSimpleTraj(FrameReader):
 
             line = gro.readline()
             frame.box = np.array([float(x) for x in line.split()[0:3]], dtype=np.float32)
-            frame.number += 1
 
     def _read_frame_number(self, number):
         """
@@ -272,23 +270,31 @@ class FrameReaderMDTraj(FrameReader):
 
         :param filename: Filename of GROMACS GRO to read
         """
+        try:
+            import mdtraj
+        except ImportError as e:
+            if "scipy" in e.msg:
+                e.msg = "The MDTraj FrameReader also requires Scipy"
+            else:
+                e.msg = "The MDTraj FrameReader requires the module MDTraj (and probably Scipy)"
+            raise
         logger.warning("WARNING: Using MDTraj which renames solvent molecules")
+        top = mdtraj.load(self._topname)
 
         frame.name = ""
-        self.num_atoms = self._traj.n_atoms
-        frame.natoms = self._traj.n_atoms
+        self.num_atoms = top.n_atoms
+        frame.natoms = top.n_atoms
 
-        for residue in self._traj.topology.residues:
+        for residue in top.topology.residues:
             frame.residues.append(Residue(name=residue.name,
                                           num=residue.resSeq))
 
-        for atom in self._traj.topology.atoms:
+        for atom in top.topology.atoms:
             new_atom = Atom(name=atom.name, num=atom.serial,
-                            coords=self._traj.xyz[0][atom.index])
+                            coords=top.xyz[0][atom.index])
             frame.residues[atom.residue.index].add_atom(new_atom)
 
-        frame.box = self._traj.unitcell_lengths[0]
-        frame.number = 1
+        frame.box = top.unitcell_lengths[0]
 
     def _read_frame_number(self, number):
         """
@@ -320,9 +326,6 @@ class Frame:
         self._xtc_buffer = None
 
         if gro is not None:
-            # self._parse_gro(gro)
-            self.numframes += 1
-
             open_xtc = {"simpletraj": FrameReaderSimpleTraj,
                         "mdtraj":     FrameReaderMDTraj}
             try:

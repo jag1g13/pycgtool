@@ -223,7 +223,7 @@ class Progress:
         self._length = length
         self._dowhile = dowhile
         self._quiet = quiet
-        self._its = 0
+        self._its = -1
         self._start_time = time.clock()
 
     def __len__(self):
@@ -247,20 +247,20 @@ class Progress:
 
         :return: Iteration number
         """
+        self._its += 1
+
         try:
             if self._dowhile is not None and self._its > 0 and not self._dowhile():
                 self._stop()
-
         except KeyboardInterrupt:
             print(end="\r")
             self._stop()
 
-        self._its += 1
-        if self._its % 1 == 0 and not self._quiet:
-            self._display()
-
         if self._its >= self._maxits:
             self._stop()
+
+        if not self._quiet:
+            self._display()
 
         return self._its
 
