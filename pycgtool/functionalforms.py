@@ -13,15 +13,15 @@ class FunctionalForms(object):
         for subclass in FunctionalForm.__subclasses__():
             name = subclass.__name__
             if name not in cls.FormsEnum:
-                enum_dict[name] = subclass
+                enum_dict[name] = subclass()
 
         cls.FormsEnum = SimpleEnum.enum_from_dict("FormsEnum", enum_dict)
 
-    def __init__(self, temp):
-        self._temp = temp
+    def __init__(self, **kwargs):
+        self._kwargs = kwargs
 
     def __getattr__(self, item):
-        return type(self).FormsEnum[item].value.boltzmann_inversion
+        return type(self).FormsEnum[item].value
 
     def __repr__(self):
         return "<FunctionalForms: {0} defined>".format(len(self))
@@ -36,20 +36,20 @@ class FunctionalForms(object):
 class FunctionalForm(object, metaclass=abc.ABCMeta):
     @staticmethod
     @abc.abstractstaticmethod
-    def boltzmann_inversion(mean, var, temp):
+    def __call__(mean, var, temp):
         pass
 
 
 class Harmonic(FunctionalForm):
     @staticmethod
-    def boltzmann_inversion(mean, var, temp):
+    def __call__(mean, var, temp):
         rt = 8.314 * temp / 1000.
         return rt / var
 
 
 class CosHarmonic(FunctionalForm):
     @staticmethod
-    def boltzmann_inversion(mean, var, temp):
+    def __call__(mean, var, temp):
         rt = 8.314 * temp / 1000.
         rad2 = math.pi * math.pi / (180. * 180.)
         return rt / (math.sin(math.radians(mean))**2 * var * rad2)
@@ -57,13 +57,13 @@ class CosHarmonic(FunctionalForm):
 
 class MartiniDefaultLength(FunctionalForm):
     @staticmethod
-    def boltzmann_inversion(mean, var, temp):
+    def __call__(mean, var, temp):
         return 1250.
 
 
 class MartiniDefaultAngle(FunctionalForm):
     @staticmethod
-    def boltzmann_inversion(mean, var, temp):
+    def __call__(mean, var, temp):
         return 25.
 
 FunctionalForms.refresh()

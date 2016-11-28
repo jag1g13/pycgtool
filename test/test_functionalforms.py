@@ -5,7 +5,7 @@ from pycgtool.functionalforms import FunctionalForms, FunctionalForm
 
 class FunctionalFormTest(unittest.TestCase):
     def test_functional_form(self):
-        funcs = FunctionalForms(None)
+        funcs = FunctionalForms()
         harmonic_form = funcs.Harmonic
         self.assertIsNotNone(harmonic_form)
         cos_harmonic_form = funcs.CosHarmonic
@@ -14,11 +14,11 @@ class FunctionalFormTest(unittest.TestCase):
     def test_functional_form_new(self):
         class TestFunc(FunctionalForm):
             @staticmethod
-            def boltzmann_inversion(mean, var, temp):
+            def __call__(mean, var, temp):
                 return "TestResult"
         FunctionalForms.refresh()
 
-        funcs = FunctionalForms(None)
+        funcs = FunctionalForms()
         self.assertIn("TestFunc", funcs)
         self.assertEqual("TestResult", funcs.TestFunc(None, None, None))
 
