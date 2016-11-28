@@ -117,8 +117,11 @@ class UtilTest(unittest.TestCase):
 
     def test_simple_enum(self):
         enum = SimpleEnum.enum("enum", ["one", "two", "three"])
-        self.assertEqual(enum.one, enum.one)
-        self.assertNotEqual(enum.two, enum.three)
+        self.assertTrue(enum.one == enum.one)
+        self.assertTrue(enum.one.compare_value(enum.one))
+
+        self.assertFalse(enum.two == enum.three)
+        self.assertFalse(enum.two.compare_value(enum.three))
 
         with self.assertRaises(AttributeError):
             _ = enum.four
@@ -127,9 +130,36 @@ class UtilTest(unittest.TestCase):
 
         enum2 = SimpleEnum.enum("enum2", ["one", "two", "three"])
         with self.assertRaises(TypeError):
-            enum2.one == enum.one
+            tmp = enum2.one == enum.one
 
         self.assertTrue("one" in enum)
+        self.assertFalse("four" in enum)
+
+    def test_simple_enum_values(self):
+        enum = SimpleEnum.enum_from_dict("enum", {"one": 111,
+                                                  "two": 111,
+                                                  "three": 333})
+        self.assertTrue(enum.one == enum.one)
+        self.assertTrue(enum.one.compare_value(enum.one))
+
+        self.assertFalse(enum.one == enum.two)
+        self.assertTrue(enum.one.compare_value(enum.two))
+
+        self.assertFalse(enum.two == enum.three)
+        self.assertFalse(enum.two.compare_value(enum.three))
+
+        with self.assertRaises(AttributeError):
+            _ = enum.four
+        with self.assertRaises(AttributeError):
+            enum.one = 2
+
+        enum2 = SimpleEnum.enum("enum2", ["one", "two", "three"])
+        with self.assertRaises(TypeError):
+            tmp = enum2.one == enum.one
+
+        self.assertTrue("one" in enum)
+        self.assertEqual(111, enum.one.value)
+
         self.assertFalse("four" in enum)
 
     def test_fixed_format_unpacker_c(self):
