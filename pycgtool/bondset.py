@@ -18,6 +18,7 @@ from .util import stat_moments, sliding, dist_with_pbc, transpose_and_sample
 from .util import extend_graph_chain, backup_file
 from .util import vector_len, vector_cross, vector_angle, vector_angle_signed
 from .parsers.cfg import CFG
+from .functionalforms import FunctionalForms
 
 np.seterr(all="raise")
 
@@ -28,9 +29,9 @@ class Bond:
 
     Bond lengths, angles and dihedrals are all equivalent, distinguished by the number of atoms present.
     """
-    __slots__ = ["atoms", "atom_numbers", "values", "eqm", "fconst"]
+    __slots__ = ["atoms", "atom_numbers", "values", "eqm", "fconst", "_func_form"]
 
-    def __init__(self, atoms=None, atom_numbers=None):
+    def __init__(self, atoms=None, atom_numbers=None, func_form=None):
         """
         Create a single bond definition.
 
@@ -44,37 +45,34 @@ class Bond:
         self.eqm = None
         self.fconst = None
 
+        self._func_form = func_form
+
     def __len__(self):
         return len(self.atoms)
 
     def __iter__(self):
         return iter(self.atoms)
 
-    def boltzmann_invert(self, temp=310, default_fc=True, factor_two=1.):
+    def boltzmann_invert(self, temp=310):
         """
         Perform Boltzmann Inversion using measured values of bond to calculate equilibrium value and force constant.
 
         :param temp: Temperature at which the simulation was performed
-        :param default_fc: Use default value of 1250 kJ mol-1 nm-2 for length fc and 25 kJ mol-1 for angle fc
-        :param factor_two: Include factor of 2 in fc denominator.  Value is 1 or 2
         """
         mean, var = stat_moments(self.values)
 
-        rt = 8.314 * temp / 1000.
-        rad2 = np.pi * np.pi / (180. * 180.)
-        conv = {2: lambda: 1250. if default_fc else rt / (factor_two * var),
-                3: lambda: 25. if default_fc else rt / (factor_two * np.sin(np.radians(mean))**2 * var * rad2),
-                4: lambda: rt / (factor_two * var * rad2)}
+        if len(self.atoms) > 2:
+            mean_tmp = math.radians(mean)
+            var *= (math.pi * math.pi) / (180. * 180.)
+        else:
+            mean_tmp = mean
 
         self.eqm = mean
         try:
-            self.fconst = conv[len(self.atoms)]()
+            self.fconst = self._func_form(mean_tmp, var, temp)
         except FloatingPointError:
             # Happens when variance is 0, i.e. infinitely sharp peak
             self.fconst = float("inf")
-
-    def r_squared(self):
-        raise NotImplementedError("Bond r-squared is not yet implemented")
 
     def __repr__(self):
         try:
@@ -125,6 +123,32 @@ class BondSet:
         except AttributeError:
             self._factor_two = 1
 
+        functional_forms = FunctionalForms()
+        self._functional_forms = {}
+        try:
+            self._functional_forms[2] = functional_forms[options.length_form]
+        except AttributeError:
+            if self._default_fc:
+                self._functional_forms[2] = functional_forms.MartiniDefaultLength
+            else:
+                self._functional_forms[2] = functional_forms.Harmonic
+
+        try:
+            self._functional_forms[3] = functional_forms[options.angle_form]
+        except AttributeError:
+            if self._default_fc:
+                self._functional_forms[3] = functional_forms.MartiniDefaultAngle
+            else:
+                self._functional_forms[3] = functional_forms.CosHarmonic
+
+        try:
+            self._functional_forms[4] = functional_forms[options.dihedral_form]
+        except AttributeError:
+            if self._default_fc:
+                self._functional_forms[4] = functional_forms.MartiniDefaultDihedral
+            else:
+                self._functional_forms[4] = functional_forms.Harmonic
+
         with CFG(filename) as cfg:
             for mol in cfg:
                 self._molecules[mol.name] = []
@@ -132,11 +156,17 @@ class BondSet:
 
                 angles_defined = False
                 for atomlist in mol:
-                    molbnds.append(Bond(atoms=atomlist))
+                    try:
+                        func_form = functional_forms[atomlist[-1]]
+                    except AttributeError:
+                        func_form = self._functional_forms[len(atomlist)]
+                    molbnds.append(Bond(atoms=atomlist, func_form=func_form))
                     if len(atomlist) > 2:
                         angles_defined = True
 
                 if not angles_defined and options.generate_angles:
+                    # TODO get this to return a list of atom names which we append here
+                    # Will allow setting functional forms
                     self._create_angles(mol.name, options.generate_dihedrals)
 
     def get_bond_lengths(self, mol, with_constr=False):
@@ -349,9 +379,7 @@ class BondSet:
                 pass
 
         for bond in bond_iter_wrap:
-            bond.boltzmann_invert(temp=self._temperature,
-                                  default_fc=self._default_fc,
-                                  factor_two=self._factor_two)
+            bond.boltzmann_invert(temp=self._temperature)
 
     def dump_values(self, target_number=10000):
         """

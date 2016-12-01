@@ -23,25 +23,26 @@ class DummyOptions:
 
 
 class BondSetTest(unittest.TestCase):
+    # Columns are: eqm value, standard fc, defaults fc, mixed fc
     invert_test_ref_data = [
-        (0.220474419132, 72658.18163),
-        (0.221844516963, 64300.01188),
-        (0.216313356504, 67934.93368),
-        (0.253166204438, 19545.27388),
-        (0.205958461836, 55359.06367),
-        (0.180550961226, 139643.66601),
-        (77.882969526805, 503.24211),
-        (116.081406627900, 837.76904),
-        (111.030514958715, 732.87969),
-        (83.284691301386, 945.32633),
-        (143.479514279933, 771.63691),
-        (99.293754667718, 799.82825),
-        (-82.852665692244, 253.75691),
-        (61.159604648237, 125.04591),
-        (-21.401629717440, 135.50927),
-        (53.161150086611, 51.13975),
-        (-96.548945531698, 59.38162),
-        (75.370211843364, 279.80889)
+        (  0.220474419132,  72658.18163, 1250, 1520530.416),
+        (  0.221844516963,  64300.01188, 1250, 1328761.015),
+        (  0.216313356504,  67934.93368, 1250, 1474281.672),
+        (  0.253166204438,  19545.27388, 1250,  311446.690),
+        (  0.205958461836,  55359.06367, 1250, 1322605.992),
+        (  0.180550961226, 139643.66601, 1250, 4334538.941),
+        ( 77.882969526805,    503.24211,   25,     481.527),
+        (116.081406627900,    837.76904,   25,     676.511),
+        (111.030514958715,    732.87969,   25,     639.007),
+        ( 83.284691301386,    945.32633,   25,     933.199),
+        (143.479514279933,    771.63691,   25,     273.207),
+        ( 99.293754667718,    799.82825,   25,     779.747),
+        (-82.852665692244,    253.75691,   50,    1250),
+        ( 61.159604648237,    125.04591,   50,    1250),
+        (-21.401629717440,    135.50927,   50,    1250),
+        ( 53.161150086611,     51.13975,   50,    1250),
+        (-96.548945531698,     59.38162,   50,    1250),
+        ( 75.370211843364,    279.80889,   50,    1250)
     ]
 
     def test_bondset_create(self):
@@ -76,6 +77,18 @@ class BondSetTest(unittest.TestCase):
         angles = bondset.get_bond_angles("TRI", exclude_triangle=True)
         self.assertEqual(0, len(angles))
 
+    def support_check_mean_fc(self, mol_bonds, fc_column_number):
+        # Require accuracy to 0.5%
+        # Allows for slight modifications to code
+        accuracy = 0.005
+
+        for i, bond in enumerate(mol_bonds):
+            ref = self.invert_test_ref_data
+            self.assertAlmostEqual(ref[i][0], bond.eqm,
+                                   delta=abs(ref[i][0] * accuracy))
+            self.assertAlmostEqual(ref[i][fc_column_number], bond.fconst,
+                                   delta=abs(ref[i][fc_column_number] * accuracy))
+
     def test_bondset_boltzmann_invert(self):
         measure = BondSet("test/data/sugar.bnd", DummyOptions)
         frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
@@ -87,14 +100,41 @@ class BondSetTest(unittest.TestCase):
             measure.apply(cgframe)
 
         measure.boltzmann_invert()
-        ref = self.invert_test_ref_data
-        for i, bond in enumerate(measure["ALLA"]):
-            # Require accuracy to 0.5%
-            # Allows for slight modifications to code
-            self.assertAlmostEqual(ref[i][0], bond.eqm,
-                                   delta=abs(ref[i][0] / 200))
-            self.assertAlmostEqual(ref[i][1], bond.fconst,
-                                   delta=abs(ref[i][1] / 200))
+        self.support_check_mean_fc(measure["ALLA"], 1)
+
+    def test_bondset_boltzmann_invert_default_fc(self):
+        class DefaultOptions(DummyOptions):
+            default_fc = True
+
+        measure = BondSet("test/data/sugar.bnd", DefaultOptions)
+        frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
+        mapping = Mapping("test/data/sugar.map", DefaultOptions)
+
+        cgframe = mapping.apply(frame)
+        while frame.next_frame():
+            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            measure.apply(cgframe)
+
+        measure.boltzmann_invert()
+        self.support_check_mean_fc(measure["ALLA"], 2)
+
+    def test_bondset_boltzmann_invert_func_forms(self):
+        class FuncFormOptions(DummyOptions):
+            length_form = "CosHarmonic"
+            angle_form = "Harmonic"
+            dihedral_form = "MartiniDefaultLength"
+
+        measure = BondSet("test/data/sugar.bnd", FuncFormOptions)
+        frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
+        mapping = Mapping("test/data/sugar.map", DummyOptions)
+
+        cgframe = mapping.apply(frame)
+        while frame.next_frame():
+            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            measure.apply(cgframe)
+
+        measure.boltzmann_invert()
+        self.support_check_mean_fc(measure["ALLA"], 3)
 
     @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_bondset_boltzmann_invert_mdtraj(self):
@@ -112,15 +152,7 @@ class BondSetTest(unittest.TestCase):
             measure.apply(cgframe)
 
         measure.boltzmann_invert()
-
-        ref = self.invert_test_ref_data
-        for i, bond in enumerate(measure["ALLA"]):
-            # Require accuracy to 0.5%
-            # Allows for slight modifications to code
-            self.assertAlmostEqual(ref[i][0], bond.eqm,
-                                   delta=abs(ref[i][0] / 200))
-            self.assertAlmostEqual(ref[i][1], bond.fconst,
-                                   delta=abs(ref[i][1] / 200))
+        self.support_check_mean_fc(measure["ALLA"], 1)
 
     def test_bondset_polymer(self):
         bondset = BondSet("test/data/polyethene.bnd", DummyOptions)

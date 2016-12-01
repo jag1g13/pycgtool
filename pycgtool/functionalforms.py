@@ -23,6 +23,9 @@ class FunctionalForms(object):
     def __getattr__(self, item):
         return type(self).FormsEnum[item].value
 
+    def __getitem__(self, item):
+        return getattr(self, item)
+
     def __repr__(self):
         return "<FunctionalForms: {0} defined>".format(len(self))
 
@@ -51,8 +54,7 @@ class CosHarmonic(FunctionalForm):
     @staticmethod
     def __call__(mean, var, temp):
         rt = 8.314 * temp / 1000.
-        rad2 = math.pi * math.pi / (180. * 180.)
-        return rt / (math.sin(math.radians(mean))**2 * var * rad2)
+        return rt / (math.sin(mean)**2 * var)
 
 
 class MartiniDefaultLength(FunctionalForm):
@@ -65,6 +67,12 @@ class MartiniDefaultAngle(FunctionalForm):
     @staticmethod
     def __call__(mean, var, temp):
         return 25.
+
+
+class MartiniDefaultDihedral(FunctionalForm):
+    @staticmethod
+    def __call__(mean, var, temp):
+        return 50.
 
 FunctionalForms.refresh()
 
