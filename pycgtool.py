@@ -5,6 +5,7 @@ import sys
 
 from pycgtool.pycgtool import main, map_only
 from pycgtool.interface import Options
+from pycgtool.functionalforms import FunctionalForms
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Perform coarse-grain mapping of atomistic trajectory")
@@ -20,6 +21,8 @@ if __name__ == "__main__":
     parser.add_argument('--quiet', default=False, action='store_true')
     input_files.add_argument('--begin', type=int, default=0, help="Frame number to begin")
     input_files.add_argument('--end', type=int, default=-1, help="Frame number to end")
+
+    func_forms = FunctionalForms()
 
     args = parser.parse_args()
     config = Options([
@@ -37,7 +40,10 @@ if __name__ == "__main__":
         ("generate_angles", True),
         ("generate_dihedrals", False),
         ("empirical_corr", False),
-        ("factor_two", 1)
+        ("factor_two", 1),
+        ("length_form", "harmonic"),
+        ("angle_form", "cosharmonic"),
+        ("dihedral_form", "harmonic")
     ], args)
 
     if not args.map and not args.bnd:

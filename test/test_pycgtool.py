@@ -14,6 +14,7 @@ except ImportError:
     mdtraj_present = False
 
 from pycgtool.interface import Options
+from pycgtool.util import cmp_whitespace_float
 from pycgtool.pycgtool import main, map_only
 
 
@@ -43,7 +44,7 @@ class PycgtoolTest(unittest.TestCase):
                       ("generate_angles", True),
                       ("generate_dihedrals", False)])
 
-    def test_run(self):
+    def test_run_help(self):
         path = os.path.dirname(os.path.dirname(__file__))
         self.assertEqual(0, subprocess.check_call([os.path.join(path, "pycgtool.py"), "-h"], stdout=subprocess.PIPE))
 
@@ -63,6 +64,16 @@ class PycgtoolTest(unittest.TestCase):
             np.testing.assert_array_almost_equal(xtc_ref.box, xtc.box, decimal=3)
             np.testing.assert_array_almost_equal(xtc_ref.x, xtc.x, decimal=3)
 
+    def test_full(self):
+        path = os.path.dirname(os.path.dirname(__file__))
+        self.assertEqual(0, subprocess.check_call([os.path.join(path, "pycgtool.py"),
+                                                   "-g", "test/data/sugar.gro",
+                                                   "-x", "test/data/sugar.xtc",
+                                                   "-m", "test/data/sugar_only.map",
+                                                   "-b", "test/data/sugar.bnd",
+                                                   ], stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+        self.assertTrue(cmp_whitespace_float("out.itp", "test/data/sugar_out.itp", float_rel_error=0.001))
+        self.assertTrue(cmp_whitespace_float("out.gro", "test/data/sugar_out.gro", float_rel_error=0.001))
     # TODO more tests
 
 

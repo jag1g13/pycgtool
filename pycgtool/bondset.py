@@ -251,7 +251,12 @@ class BondSet:
         :param mapping: AA->CG mapping used to collect atom/bead numbers
         """
         for mol in self._molecules:
-            molmap = mapping[mol]
+            try:
+                molmap = mapping[mol]
+            except KeyError:
+                # Molecule was not mapped, can't create itp
+                continue
+
             index = [bead.name for bead in molmap]
             for bond in self._molecules[mol]:
                 # TODO this causes issue #8
@@ -298,7 +303,7 @@ class BondSet:
             print(header, file=itp)
 
             # Print molecule
-            for mol in filter(lambda mol: mol not in exclude, self._molecules):
+            for mol in filter(lambda mol: mol not in exclude and mol in mapping, self._molecules):
                 print("\n[ moleculetype ]", file=itp)
                 print("{0:4s} {1:4d}".format(mol, 1), file=itp)
 
