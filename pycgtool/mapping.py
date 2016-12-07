@@ -6,7 +6,7 @@ Each list corresponds to a single molecule.
 """
 
 import numpy as np
-import warnings
+import logging
 import json
 import os
 
@@ -21,6 +21,8 @@ except ImportError:
     numba = NumbaDummy()
 
 np.seterr(all="raise")
+
+logger = logging.getLogger(__name__)
 
 
 class BeadMap(Atom):
@@ -107,7 +109,6 @@ class Mapping:
         # TODO this only works with one moleculetype in one itp - extend this
         if itp is not None:
             with CFG(itp) as itp:
-                warnings.simplefilter("once")
                 atoms = {}
                 for toks in itp["atoms"]:
                     # Store charge and mass
@@ -122,9 +123,7 @@ class Mapping:
 
                     for atom in bead:
                         if self._manual_charges[molname]:
-                            warnstring = "Charges assigned in mapping for molecule {0}, ignoring itp charges."
-                            warnings.warn(warnstring, RuntimeWarning)
-                            print(bead.charge)
+                            logger.warning("Charges assigned in mapping for molecule {0}, ignoring itp charges.".format(molname))
                         else:
                             bead.charge += atoms[atom][0]
 
@@ -185,8 +184,17 @@ class Mapping:
         cgframe = Frame()
         cgframe.name = name
 
+        missing_mappings = set()
+
         for aares in aa_residues:
-            molmap = self._mappings[aares.name]
+            try:
+                molmap = self._mappings[aares.name]
+            except KeyError:
+                if aares.name not in missing_mappings:
+                    missing_mappings.add(aares.name)
+                    logger.warning("A mapping has not been provided for '{0}' residues, they will not be mapped.".format(aares.name))
+                continue
+
             cgres = Residue(name=aares.name, num=aares.num)
             cgres.atoms = [Atom(name=bead.name, type=bead.type, charge=bead.charge, mass=bead.mass) for bead in molmap]
 
@@ -209,20 +217,19 @@ class Mapping:
         :param exclude: Set of molecule names to exclude from mapping - e.g. solvent
         :return: Frame instance containing the CG frame
         """
-        select_predicate = lambda res: res.name in self._mappings and not (exclude is not None and res.name in exclude)
-        aa_residues = (aares for aares in frame if select_predicate(aares))
-
         if self._map_center == "mass" and not self._masses_are_set:
             self._guess_atom_masses()
 
         if cgframe is None:
             # Frame needs initialising
-            aa_residues = list(aa_residues)
-            cgframe = self._cg_frame_setup(aa_residues, frame.name)
+            cgframe = self._cg_frame_setup(frame.residues, frame.name)
 
         cgframe.time = frame.time
         cgframe.number = frame.number
         cgframe.box = frame.box
+
+        select_predicate = lambda res: res.name in self._mappings and not (exclude is not None and res.name in exclude)
+        aa_residues = (aares for aares in frame if select_predicate(aares))
 
         for aares, cgres in zip(aa_residues, cgframe):
             molmap = self._mappings[aares.name]

@@ -16,8 +16,8 @@ if __name__ == "__main__":
     input_files.add_argument('-b', '--bnd', type=str, help="Bonds file")
     input_files.add_argument('-i', '--itp', type=str, help="GROMACS ITP file")
 
-    parser.add_argument('--interactive', default=False, action='store_true')
-    parser.add_argument('--outputxtc', default=False, action='store_true')
+    parser.add_argument('--interactive', default=False, action='store_true', help="Show advanced options")
+    parser.add_argument('--outputxtc', default=False, action='store_true', help="Output a pseudo-CG trajectory")
     parser.add_argument('--quiet', default=False, action='store_true')
     input_files.add_argument('--begin', type=int, default=0, help="Frame number to begin")
     input_files.add_argument('--end', type=int, default=-1, help="Frame number to end")
