@@ -300,5 +300,8 @@ class Progress:
         raise StopIteration
 
     def _display(self):
-        time_remain = int((time.clock() - self._start_time) * ((self._maxits - self._its) / self._its))
+        try:
+            time_remain = int((time.clock() - self._start_time) * ((self._maxits - self._its) / self._its))
+        except ZeroDivisionError:
+            time_remain = "-"
         print(self._bar + " {0}s left".format(time_remain), end="\r")
