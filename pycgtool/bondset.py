@@ -5,9 +5,10 @@ BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a sin
 """
 
 import itertools
+import math
+import logging
 
 import numpy as np
-import math
 
 try:
     from tqdm import tqdm
@@ -20,7 +21,7 @@ from .util import vector_len, vector_cross, vector_angle, vector_angle_signed
 from .parsers.cfg import CFG
 from .functionalforms import FunctionalForms
 
-np.seterr(all="raise")
+logger = logging.getLogger(__name__)
 
 
 class Bond:
@@ -59,6 +60,9 @@ class Bond:
 
         :param temp: Temperature at which the simulation was performed
         """
+        if not self.values:
+            raise ValueError("No bonds were measured between atoms {0}".format(self.atoms))
+
         mean, var = stat_moments(self.values)
 
         if len(self.atoms) > 2:
@@ -68,11 +72,12 @@ class Bond:
             mean_tmp = mean
 
         self.eqm = mean
-        try:
-            self.fconst = self._func_form(mean_tmp, var, temp)
-        except FloatingPointError:
-            # Happens when variance is 0, i.e. infinitely sharp peak
-            self.fconst = float("inf")
+        with np.errstate(divide="raise"):
+            try:
+                self.fconst = self._func_form(mean_tmp, var, temp)
+            except FloatingPointError:
+                # Happens when variance is 0, i.e. we only have one value
+                self.fconst = float("inf")
 
     def __repr__(self):
         try:
@@ -303,7 +308,17 @@ class BondSet:
             print(header, file=itp)
 
             # Print molecule
-            for mol in filter(lambda mol: mol not in exclude and mol in mapping, self._molecules):
+            not_calc = "  Parameters have not been calculated."
+            for mol in self._molecules:
+                if mol in exclude:
+                    continue
+                if mol not in mapping:
+                    logger.warning("Molecule '{0}' present in bonding file, but not in mapping.".format(mol) + not_calc)
+                    continue
+                if not all((bond.fconst is not None for bond in self._molecules[mol])):
+                    logger.warning("Molecule '{0}' has no measured bond values.".format(mol) + not_calc)
+                    continue
+
                 print("\n[ moleculetype ]", file=itp)
                 print("{0:4s} {1:4d}".format(mol, 1), file=itp)
 
@@ -384,7 +399,10 @@ class BondSet:
                 pass
 
         for bond in bond_iter_wrap:
-            bond.boltzmann_invert(temp=self._temperature)
+            try:
+                bond.boltzmann_invert(temp=self._temperature)
+            except ValueError:
+                pass
 
     def dump_values(self, target_number=10000):
         """
