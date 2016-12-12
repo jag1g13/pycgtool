@@ -157,22 +157,42 @@ class BondSet:
         with CFG(filename) as cfg:
             for mol in cfg:
                 self._molecules[mol.name] = []
-                molbnds = self._molecules[mol.name]
+                mol_bonds = self._molecules[mol.name]
 
                 angles_defined = False
                 for atomlist in mol:
                     try:
+                        # TODO consider best way to override default func form
                         func_form = functional_forms[atomlist[-1]]
                     except AttributeError:
                         func_form = self._functional_forms[len(atomlist)]
-                    molbnds.append(Bond(atoms=atomlist, func_form=func_form))
+                    mol_bonds.append(Bond(atoms=atomlist, func_form=func_form))
                     if len(atomlist) > 2:
                         angles_defined = True
 
-                if not angles_defined and options.generate_angles:
-                    # TODO get this to return a list of atom names which we append here
-                    # Will allow setting functional forms
-                    self._create_angles(mol.name, options.generate_dihedrals)
+                if not angles_defined:
+                    angles, dihedrals = self._create_angles(mol_bonds)
+
+                    if options.generate_angles:
+                        for atomlist in angles:
+                            mol_bonds.append(Bond(atoms=atomlist, func_form=self._functional_forms[3]))
+
+                    if options.generate_dihedrals:
+                        for atomlist in dihedrals:
+                            mol_bonds.append(Bond(atoms=atomlist, func_form=self._functional_forms[4]))
+
+    @staticmethod
+    def _create_angles(mol_bonds):
+        """
+        Create angles and dihedrals from bonded topology.
+
+        :param mol_bonds: List of bonds within a molecule to generate angles for
+        :return: List of angle and dihedral bond name tuples
+        """
+        bonds = [bond.atoms for bond in mol_bonds if len(bond.atoms) == 2]
+        angles = extend_graph_chain(bonds, bonds)
+        dihedrals = extend_graph_chain(angles, bonds)
+        return angles, dihedrals
 
     def get_bond_lengths(self, mol, with_constr=False):
         """
@@ -228,24 +248,6 @@ class BondSet:
         :return: List of bonds
         """
         return [bond for bond in self._molecules[mol] if len(bond.atoms) == 4]
-
-    def _create_angles(self, mol, gen_dihedrals=False):
-        """
-        Create angles (and dihedrals) from bonded topology.
-
-        :param mol: Molecule to generate angles for
-        :param gen_dihedrals: Also generate dihedrals?
-        """
-        bonds = [bond.atoms for bond in self._molecules[mol] if len(bond.atoms) == 2]
-
-        angles = extend_graph_chain(bonds, bonds)
-        for atomlist in angles:
-            self._molecules[mol].append(Bond(atoms=atomlist))
-
-        if gen_dihedrals:
-            dihedrals = extend_graph_chain(angles, bonds)
-            for atomlist in dihedrals:
-                self._molecules[mol].append(Bond(atoms=atomlist))
 
     def _populate_atom_numbers(self, mapping):
         """
@@ -420,13 +422,16 @@ class BondSet:
             if mol == "SOL":
                 continue
             bonds = self.get_bond_lengths(mol, with_constr=True)
-            write_bonds_to_file(bonds, "{0}_length.dat".format(mol))
+            if bonds:
+                write_bonds_to_file(bonds, "{0}_length.dat".format(mol))
 
             bonds = self.get_bond_angles(mol)
-            write_bonds_to_file(bonds, "{0}_angle.dat".format(mol))
+            if bonds:
+                write_bonds_to_file(bonds, "{0}_angle.dat".format(mol))
 
             bonds = self.get_bond_dihedrals(mol)
-            write_bonds_to_file(bonds, "{0}_dihedral.dat".format(mol))
+            if bonds:
+                write_bonds_to_file(bonds, "{0}_dihedral.dat".format(mol))
 
     def __len__(self):
         return len(self._molecules)
