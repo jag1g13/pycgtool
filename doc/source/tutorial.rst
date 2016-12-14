@@ -132,3 +132,17 @@ These samples were compared in the paper using an R script to generate a series 
 If the automatically generated parameters provide an accurate representation of the reference structure, the percentage error between the two samples will be small.
 
 Validation of the more general molecular conformation may be performed by comparison of the radius of gyration of the reference and CG models.
+This may be performed using the standard GROMACS too `gmx gyrate`::
+
+    gmx gyrate -f ref.xtc -s ref-for-rgyr.tpr -o ref-gyr.xvg
+    gmx gyrate -f md.xtc -s md.tpr -o cg-gyr.xvg
+
+These commands will calculate the radius of gyration for each trajectory frame for both the reference and CG simulations.
+The resulting `.xvg` files may be visualised using a graphing program such as `xmgrace` or compared in the same way as the bonded samples, using::
+
+    average_columns.py ref-gyr.xvg cg-gyr.xvg
+
+As before, a small percentage difference in each of the columns suggests good replication of gross conformation.
+
+In addition to these simple forms of validation, it is recommended that further validation, relevant to the class of molecule, is performed.
+In the case of membane lipids, for instance, this may take the form of an assessment of membrane thickness and surface area per lipid.
