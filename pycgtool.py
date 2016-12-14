@@ -16,9 +16,9 @@ if __name__ == "__main__":
     input_files.add_argument('-b', '--bnd', type=str, help="Bonds file")
     input_files.add_argument('-i', '--itp', type=str, help="GROMACS ITP file")
 
-    parser.add_argument('--interactive', default=False, action='store_true', help="Show advanced options")
+    parser.add_argument('--advanced', default=False, action='store_true', help="Show advanced options menu")
     parser.add_argument('--outputxtc', default=False, action='store_true', help="Output a pseudo-CG trajectory")
-    parser.add_argument('--quiet', default=False, action='store_true')
+    parser.add_argument('--quiet', default=False, action='store_true', help="Hide progress bars")
     input_files.add_argument('--begin', type=int, default=0, help="Frame number to begin")
     input_files.add_argument('--end', type=int, default=-1, help="Frame number to end")
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     if not args.map and not args.bnd:
         parser.error("One or both of -m and -b is required.")
 
-    if args.interactive:
+    if args.advanced:
         try:
             config.interactive()
         except KeyboardInterrupt:

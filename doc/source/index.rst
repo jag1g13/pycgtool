@@ -90,7 +90,7 @@ An example bond definition file for the monosaccharide allose taken from ``test/
 
 As in the mapping definition file, molecule names are used as section headers inside square brackets.  The following lines define bonds lengths, angles and dihedrals between coarse-grained beads.  Each line is a list of bead names, using the names defined in the mapping file.  Two bead names on a line defines a bond length, three defines an angle, and four defines a dihedral.
 
-If no angles are defined for a molecule, PyCGTOOL will construct all angles from the list of bonds.  This may also be enabled for dihedrals via the ``--interactive`` flag, but is not recommended as in most cases coarse-grained models do not require dihedrals.  Additionally, any angles inside a triangle of bond lengths are excluded from the output as they often cause simulation stability issues when used in conjunction with LINCS. ::
+If no angles are defined for a molecule, PyCGTOOL will construct all angles from the list of bonds.  This may also be enabled for dihedrals via the ``--advanced`` flag, but is not recommended as in most cases coarse-grained models do not require dihedrals.  Additionally, any angles inside a triangle of bond lengths are excluded from the output as they often cause simulation stability issues when used in conjunction with LINCS. ::
 
    ; comments begin with a semicolon
    [ALLA]
@@ -131,9 +131,9 @@ Measure-only mode may be used to aid in the testing of a coarse-grained model by
 
    pycgtool.py -g <GRO file> -x <XTC file> -b <BND file>
 
-Options
-~~~~~~~
-By passing the flag ``--interactive`` to PyCGTOOL several advanced options are accessible.  The arrow keys may be used to navigate through the menu.  Enter selects an option to be edited, or if the option is boolean toggles it.  Once you have edited an option press enter again.  When all options are satisfactory, press q to proceed.
+Advanced Options
+~~~~~~~~~~~~~~~~
+By passing the flag ``--advanced`` to PyCGTOOL several advanced options are accessible.  The arrow keys may be used to navigate through the menu.  Enter selects an option to be edited, or if the option is boolean toggles it.  Once you have edited an option press enter again.  When all options are satisfactory, press q to proceed.
 
 ==================   ==========================================   =======================
 Option               Description                                  Values

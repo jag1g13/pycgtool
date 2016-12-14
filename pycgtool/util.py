@@ -172,6 +172,7 @@ def extend_graph_chain(extend, pairs):
                     append_if_not_in(ret, spare + (node1, node2, pair2[0]))
 
             try:
+                # Support GROMACS RTP + to link to next residue
                 if node2.startswith("+"):
                     for pair2 in pairs:
                         if node2.strip("+") == pair2[0] and "+" + pair2[1] not in chain:
