@@ -1,0 +1,10 @@
+; Include forcefield parameters
+#include "../../data/martini_v2.2.itp"
+#include "../../data/w.itp"
+#include "out.itp"
+
+[ system ]
+36KB
+
+[ molecules ]
+36KB		1
