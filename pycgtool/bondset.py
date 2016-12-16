@@ -115,31 +115,29 @@ class BondSet:
         except AttributeError:
             self._default_fc = False
 
+        # Setup default functional forms
         functional_forms = FunctionalForms()
-        self._functional_forms = {}
+        if self._default_fc:
+            default_forms = ["MartiniDefaultLength", "MartiniDefaultAngle", "MartiniDefaultDihedral"]
+        else:
+            default_forms = ["Harmonic", "CosHarmonic", "Harmonic"]
+        self._functional_forms = [None, None]
+        self._functional_forms.extend(map(lambda x: functional_forms[x], default_forms))
+
         try:
             self._functional_forms[2] = functional_forms[options.length_form]
         except AttributeError:
-            if self._default_fc:
-                self._functional_forms[2] = functional_forms.MartiniDefaultLength
-            else:
-                self._functional_forms[2] = functional_forms.Harmonic
+            pass
 
         try:
             self._functional_forms[3] = functional_forms[options.angle_form]
         except AttributeError:
-            if self._default_fc:
-                self._functional_forms[3] = functional_forms.MartiniDefaultAngle
-            else:
-                self._functional_forms[3] = functional_forms.CosHarmonic
+            pass
 
         try:
             self._functional_forms[4] = functional_forms[options.dihedral_form]
         except AttributeError:
-            if self._default_fc:
-                self._functional_forms[4] = functional_forms.MartiniDefaultDihedral
-            else:
-                self._functional_forms[4] = functional_forms.Harmonic
+            pass
 
         with CFG(filename) as cfg:
             for mol in cfg:
@@ -150,6 +148,7 @@ class BondSet:
                 for atomlist in mol:
                     try:
                         # TODO consider best way to override default func form
+                        # On per bond, or per type basis
                         func_form = functional_forms[atomlist[-1]]
                     except AttributeError:
                         func_form = self._functional_forms[len(atomlist)]

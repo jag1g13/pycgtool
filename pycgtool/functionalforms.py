@@ -5,10 +5,20 @@ from pycgtool.util import SimpleEnum
 
 
 class FunctionalForms(object):
+    """
+    Class holding list of all defined functional forms for Boltzmann Inversion.
+
+    Creating an instance causes the Enum of functional forms to be updated with
+    all new subclasses of FunctionalForm.  These may then be accessed by name,
+    either as attributes or using square brackets.
+    """
     FormsEnum = SimpleEnum.enum("FormsEnum")
 
     @classmethod
-    def refresh(cls):
+    def _refresh(cls):
+        """
+        Update the functional forms Enum to include all new subclasses of FunctionalForm.
+        """
         enum_dict = cls.FormsEnum.as_dict()
         for subclass in FunctionalForm.__subclasses__():
             name = subclass.__name__
@@ -19,6 +29,7 @@ class FunctionalForms(object):
 
     def __init__(self, **kwargs):
         self._kwargs = kwargs
+        type(self)._refresh()
 
     def __getattr__(self, item):
         return type(self).FormsEnum[item].value
@@ -37,9 +48,23 @@ class FunctionalForms(object):
 
 
 class FunctionalForm(object, metaclass=abc.ABCMeta):
+    """
+    Parent class of any functional form used in Boltzmann Inversion to convert variance to a force constant.
+
+    New functional forms must define a static __call__ method.
+    """
     @staticmethod
     @abc.abstractstaticmethod
     def __call__(mean, var, temp):
+        """
+        Calculate force constant.
+        Abstract static method to be defined by all functional forms.
+
+        :param mean: Mean of internal coordinate distribution
+        :param var: Variance of internal coordinate distribution
+        :param temp: Temperature of simulation
+        :return: Calculated force constant
+        """
         pass
 
 
@@ -73,7 +98,3 @@ class MartiniDefaultDihedral(FunctionalForm):
     @staticmethod
     def __call__(mean, var, temp):
         return 50.
-
-FunctionalForms.refresh()
-
-

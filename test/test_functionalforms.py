@@ -16,7 +16,6 @@ class FunctionalFormTest(unittest.TestCase):
             @staticmethod
             def __call__(mean, var, temp):
                 return "TestResult"
-        FunctionalForms.refresh()
 
         funcs = FunctionalForms()
         self.assertIn("TestFunc", funcs)
