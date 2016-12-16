@@ -2,7 +2,7 @@ PyCGTOOL Tutorial
 =================
 
 This tutorial follows the complete process of parametrising a new molecule within the MARTINI forcefield, covering aspects of mapping design, model generation and model validation.
-PyCGTOOL is used at multiple stages, showing its use in several different situations
+PyCGTOOL is used at multiple stages, showing its use in several different situations.
 All files required to follow this tutorial are present in the ``doc/tutorial_files`` directory.
 
 The molecule chosen as a target for this parametrisation is the :math:`\beta_1` antagonist atenolol.

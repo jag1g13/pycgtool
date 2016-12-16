@@ -84,7 +84,6 @@ class Mapping:
         :return: Instance of Mapping
         """
         self._mappings = {}
-
         self._map_center = options.map_center
         self._masses_are_set = False
 
@@ -127,6 +126,8 @@ class Mapping:
                         else:
                             bead.charge += atoms[atom][0]
 
+                self._masses_are_set = True
+
     def __len__(self):
         return len(self._mappings)
 
@@ -153,7 +154,6 @@ class Mapping:
                 if bead.mass == 0:
                     mass_array = np.zeros((len(bead.atoms), 1), dtype=np.float32)
                     for i, atom in enumerate(bead.atoms):
-                        mass = 0
                         try:
                             mass = mass_dict[atom[:2]]
                         except KeyError:
@@ -185,6 +185,7 @@ class Mapping:
         cgframe.name = name
 
         missing_mappings = set()
+        cg_bead_num = 1
 
         for aares in aa_residues:
             try:
@@ -196,12 +197,15 @@ class Mapping:
                 continue
 
             cgres = Residue(name=aares.name, num=aares.num)
-            cgres.atoms = [Atom(name=bead.name, type=bead.type, charge=bead.charge, mass=bead.mass) for bead in molmap]
+            cgres.atoms = [Atom(name=bmap.name, type=bmap.type, charge=bmap.charge, mass=bmap.mass, coords=np.zeros(3)) for bmap in molmap]
 
             for i, (bead, bmap) in enumerate(zip(cgres, molmap)):
                 cgres.name_to_num[bead.name] = i
                 bead.charge = bmap.charge
                 bead.mass = bmap.mass
+                bead.num = cg_bead_num
+
+                cg_bead_num += 1
 
             cgframe.add_residue(cgres)
             cgframe.natoms += len(cgres)
@@ -229,7 +233,7 @@ class Mapping:
         cgframe.box = frame.box
 
         select_predicate = lambda res: res.name in self._mappings and not (exclude is not None and res.name in exclude)
-        aa_residues = (aares for aares in frame if select_predicate(aares))
+        aa_residues = filter(select_predicate, frame)
 
         for aares, cgres in zip(aa_residues, cgframe):
             molmap = self._mappings[aares.name]
@@ -249,7 +253,7 @@ class Mapping:
         return cgframe
 
 
-@numba.jit(nopython=True)
+@numba.jit
 def calc_coords_weight(ref_coords, coords, box, weights):
     """
     Calculate the coordinates of a single CG bead from weighted component atom coordinates.

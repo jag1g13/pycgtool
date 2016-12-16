@@ -5,6 +5,8 @@ Format is based upon GROMACS .itp files but does not support nesting of sections
 """
 import os
 
+from collections import OrderedDict
+
 
 class Section:
     """
@@ -48,7 +50,7 @@ class CFG:
 
     Contains a dictionary of Sections.
     """
-    __slots__ = ["filename", "_sections", "_section_names", "_iter_section"]
+    __slots__ = ["filename", "_sections"]
 
     def __init__(self, filename=None, allow_duplicate=False):
         """
@@ -59,13 +61,12 @@ class CFG:
         :return: Instance of CFG
         """
         self.filename = filename
-        self._sections = {}
-        self._section_names = []
+        self._sections = OrderedDict()
 
         with open(self.filename) as f:
             curr_section = None
             for line in f:
-                line = line.strip(" \t\n")
+                line = line.strip()
                 if not line or line.startswith(";"):
                     continue
 
@@ -73,14 +74,12 @@ class CFG:
                     cfg2 = CFG(os.path.join(os.path.dirname(self.filename),
                                             line.split()[1]))
                     self._sections.update(cfg2._sections)
-                    self._section_names += cfg2._section_names
                     continue
 
                 elif line.startswith("["):
                     curr_section = line.strip("[ ]")
                     if curr_section in self._sections and not allow_duplicate:
                         raise DuplicateSectionError(curr_section, self.filename)
-                    self._section_names.append(curr_section)
                     self._sections[curr_section] = Section(name=curr_section)
                     continue
 
@@ -94,21 +93,13 @@ class CFG:
         pass
 
     def __len__(self):
-        return len(self._section_names)
+        return len(self._sections)
 
     def __iter__(self):
-        self._iter_section = -1
-        return self
-
-    def __next__(self):
-        self._iter_section += 1
-        if self._iter_section >= len(self._section_names):
-            raise StopIteration
-        sec = self._section_names[self._iter_section]
-        return self._sections[sec]
+        return iter(self._sections.values())
 
     def __contains__(self, item):
-        return item in self._section_names
+        return item in self._sections
 
     def __getitem__(self, item):
         return self._sections[item]

@@ -358,7 +358,7 @@ class Frame:
         atoms = []
         for res in self.residues:
             for atom in res:
-                atoms.append(repr(atom.coords))
+                atoms.append(repr(atom))
         rep += "\n".join(atoms)
         return rep
 
