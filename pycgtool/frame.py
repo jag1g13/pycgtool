@@ -8,6 +8,7 @@ Both Frame and Residue are iterable. Residue is indexable with either atom numbe
 import os
 import abc
 import logging
+import itertools
 
 import numpy as np
 
@@ -104,15 +105,10 @@ class Residue:
 
 
 class FrameReader(metaclass=abc.ABCMeta):
-    def __init__(self, topname, trajname=None, exclude=None, frame_start=0):
+    def __init__(self, topname, trajname=None, frame_start=0):
         self._topname = topname
         self._trajname = trajname
         self._frame_number = frame_start
-
-        if exclude is not None:
-            self._exclude = exclude
-        else:
-            self._exclude = set()
 
         self.num_atoms = 0
         self.num_frames = 0
@@ -127,21 +123,13 @@ class FrameReader(metaclass=abc.ABCMeta):
         return result
 
     def read_frame_number(self, number, frame):
-        if self._trajname is None:
-            return False
         try:
             time, coords, box = self._read_frame_number(number)
             frame.time = time
             frame.box = box
 
-            i = 0
-            for res in frame.residues:
-                if res.name in self._exclude:
-                    i += len(res.atoms)
-                    continue
-                for atom in res:
-                    atom.coords = coords[i]
-                    i += 1
+            for atom, coord_line in zip(itertools.chain.from_iterable(frame.residues), coords):
+                atom.coords = coord_line
 
         except (IndexError, AttributeError):
             # IndexError - run out of xtc frames
@@ -159,7 +147,7 @@ class FrameReader(metaclass=abc.ABCMeta):
 
 
 class FrameReaderSimpleTraj(FrameReader):
-    def __init__(self, topname, trajname=None, exclude=None, frame_start=0):
+    def __init__(self, topname, trajname=None, frame_start=0):
         """
         Open input XTC file from which to read coordinates using simpletraj library.
 
@@ -167,7 +155,7 @@ class FrameReaderSimpleTraj(FrameReader):
         :param trajname: MD trajectory file to read subsequent frames
         :param frame_start: Frame number to start on, default 0
         """
-        FrameReader.__init__(self, topname, trajname, exclude, frame_start)
+        FrameReader.__init__(self, topname, trajname, frame_start)
 
         from simpletraj import trajectory
 
@@ -229,14 +217,14 @@ class FrameReaderSimpleTraj(FrameReader):
 
 
 class FrameReaderMDTraj(FrameReader):
-    def __init__(self, topname, trajname=None, exclude=None, frame_start=0):
+    def __init__(self, topname, trajname=None, frame_start=0):
         """
         Open input XTC file from which to read coordinates using mdtraj library.
 
         :param topname: GROMACS GRO file from which to read topology
         :param trajname: GROMACS XTC file to read subsequent frames
         """
-        FrameReader.__init__(self, topname, trajname, exclude, frame_start)
+        FrameReader.__init__(self, topname, trajname, frame_start)
 
         try:
             import mdtraj
@@ -307,7 +295,7 @@ class Frame:
     """
     Hold Atom data separated into Residues
     """
-    def __init__(self, gro=None, xtc=None, itp=None, exclude=None, frame_start=0, xtc_reader="simpletraj"):
+    def __init__(self, gro=None, xtc=None, itp=None, frame_start=0, xtc_reader="simpletraj"):
         """
         Return Frame instance having read Residues and Atoms from GRO if provided
 
@@ -329,8 +317,7 @@ class Frame:
             open_xtc = {"simpletraj": FrameReaderSimpleTraj,
                         "mdtraj":     FrameReaderMDTraj}
             try:
-                self._trajreader = open_xtc[xtc_reader](gro, xtc, exclude=exclude,
-                                                        frame_start=frame_start)
+                self._trajreader = open_xtc[xtc_reader](gro, xtc, frame_start=frame_start)
             except KeyError as e:
                 e.args = ("XTC reader {0} is not a valid option.".format(xtc_reader))
                 raise
@@ -361,6 +348,11 @@ class Frame:
                 atoms.append(repr(atom))
         rep += "\n".join(atoms)
         return rep
+
+    def yield_resname_in(self, container):
+        for res in self:
+            if res.name in container:
+                yield res
 
     def next_frame(self):
         """

@@ -18,7 +18,7 @@ def main(args, config):
     :param args: Arguments from argparse
     :param config: Configuration dictionary
     """
-    frame = Frame(gro=args.gro, xtc=args.xtc, itp=args.itp, frame_start=args.begin, exclude={"SOL"})
+    frame = Frame(gro=args.gro, xtc=args.xtc, itp=args.itp, frame_start=args.begin)
 
     if args.bnd:
         logger.info("Bond measurements will be made")
@@ -29,7 +29,7 @@ def main(args, config):
     if args.map:
         logger.info("Mapping will be performed")
         mapping = Mapping(args.map, config, itp=args.itp)
-        cgframe = mapping.apply(frame, exclude={"SOL"})
+        cgframe = mapping.apply(frame)
         cgframe.output(config.output_name + ".gro", format=config.output)
     else:
         logger.info("Mapping will not be performed")
@@ -46,7 +46,7 @@ def main(args, config):
         if not frame.next_frame():
             return False
         if args.map:
-            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            cgframe = mapping.apply(frame, cgframe=cgframe)
             if config.output_xtc:
                 cgframe.write_xtc(config.output_name + ".xtc")
         else:
@@ -84,7 +84,7 @@ def map_only(args, config):
     """
     frame = Frame(gro=args.gro, xtc=args.xtc)
     mapping = Mapping(args.map, config)
-    cgframe = mapping.apply(frame, exclude={"SOL"})
+    cgframe = mapping.apply(frame)
     cgframe.output(config.output_name + ".gro", format=config.output)
 
     if args.xtc and (config.output_xtc or args.outputxtc):
@@ -93,7 +93,7 @@ def map_only(args, config):
             nonlocal cgframe
             if not frame.next_frame():
                 return False
-            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            cgframe = mapping.apply(frame, cgframe=cgframe)
             cgframe.write_xtc(config.output_name + ".xtc")
             return True
 

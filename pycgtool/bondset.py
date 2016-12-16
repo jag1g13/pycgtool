@@ -260,13 +260,12 @@ class BondSet:
                     e.args = ("Bead(s) {0} do(es) not exist in residue {1}".format(missing, mol),)
                     raise
 
-    def write_itp(self, filename, mapping, exclude=set()):
+    def write_itp(self, filename, mapping):
         """
         Output a GROMACS .itp file containing atoms/beads and bonded terms.
 
         :param filename: Name of output file
         :param mapping: AA->CG Mapping from which to collect bead properties
-        :param exclude: Set of molecule names to be excluded from itp
         """
         self._populate_atom_numbers(mapping)
         backup_file(filename)
@@ -296,8 +295,6 @@ class BondSet:
             # Print molecule
             not_calc = "  Parameters have not been calculated."
             for mol in self._molecules:
-                if mol in exclude:
-                    continue
                 if mol not in mapping:
                     logger.warning("Molecule '{0}' present in bonding file, but not in mapping.".format(mol) + not_calc)
                     continue

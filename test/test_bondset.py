@@ -47,10 +47,8 @@ class BondSetTest(unittest.TestCase):
 
     def test_bondset_create(self):
         measure = BondSet("test/data/sugar.bnd", DummyOptions)
-        self.assertEqual(2, len(measure))
-        self.assertTrue("SOL" in measure)
+        self.assertEqual(1, len(measure))
         self.assertTrue("ALLA" in measure)
-        self.assertEqual(0, len(measure["SOL"]))
         self.assertEqual(18, len(measure["ALLA"]))
 
     def test_bondset_apply(self):
@@ -96,7 +94,7 @@ class BondSetTest(unittest.TestCase):
 
         cgframe = mapping.apply(frame)
         while frame.next_frame():
-            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            cgframe = mapping.apply(frame, cgframe=cgframe)
             measure.apply(cgframe)
 
         measure.boltzmann_invert()
@@ -112,7 +110,7 @@ class BondSetTest(unittest.TestCase):
 
         cgframe = mapping.apply(frame)
         while frame.next_frame():
-            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            cgframe = mapping.apply(frame, cgframe=cgframe)
             measure.apply(cgframe)
 
         measure.boltzmann_invert()
@@ -130,7 +128,7 @@ class BondSetTest(unittest.TestCase):
 
         cgframe = mapping.apply(frame)
         while frame.next_frame():
-            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            cgframe = mapping.apply(frame, cgframe=cgframe)
             measure.apply(cgframe)
 
         measure.boltzmann_invert()
@@ -148,7 +146,7 @@ class BondSetTest(unittest.TestCase):
 
         cgframe = mapping.apply(frame)
         while frame.next_frame():
-            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            cgframe = mapping.apply(frame, cgframe=cgframe)
             measure.apply(cgframe)
 
         measure.boltzmann_invert()
@@ -184,13 +182,13 @@ class BondSetTest(unittest.TestCase):
         cgframe = mapping.apply(frame)
 
         while frame.next_frame():
-            cgframe = mapping.apply(frame, cgframe=cgframe, exclude={"SOL"})
+            cgframe = mapping.apply(frame, cgframe=cgframe)
             measure.apply(cgframe)
 
         measure.boltzmann_invert()
 
         logging.disable(logging.WARNING)
-        measure.write_itp("sugar_out.itp", mapping, exclude={"SOL"})
+        measure.write_itp("sugar_out.itp", mapping)
         logging.disable(logging.NOTSET)
 
         self.assertTrue(cmp_whitespace_float("sugar_out.itp", "test/data/sugar_out.itp", float_rel_error=0.001))

@@ -212,13 +212,12 @@ class Mapping:
 
         return cgframe
 
-    def apply(self, frame, cgframe=None, exclude=None):
+    def apply(self, frame, cgframe=None):
         """
         Apply the AA->CG mapping to an atomistic Frame.
 
         :param frame: Frame to which mapping will be applied
         :param cgframe: CG Frame to remap - optional
-        :param exclude: Set of molecule names to exclude from mapping - e.g. solvent
         :return: Frame instance containing the CG frame
         """
         if self._map_center == "mass" and not self._masses_are_set:
@@ -226,16 +225,13 @@ class Mapping:
 
         if cgframe is None:
             # Frame needs initialising
-            cgframe = self._cg_frame_setup(frame.residues, frame.name)
+            cgframe = self._cg_frame_setup(frame.yield_resname_in(self._mappings), frame.name)
 
         cgframe.time = frame.time
         cgframe.number = frame.number
         cgframe.box = frame.box
 
-        select_predicate = lambda res: res.name in self._mappings and not (exclude is not None and res.name in exclude)
-        aa_residues = filter(select_predicate, frame)
-
-        for aares, cgres in zip(aa_residues, cgframe):
+        for aares, cgres in zip(frame.yield_resname_in(self._mappings), cgframe):
             molmap = self._mappings[aares.name]
 
             for i, (bead, bmap) in enumerate(zip(cgres, molmap)):
