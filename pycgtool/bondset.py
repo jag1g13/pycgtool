@@ -105,14 +105,6 @@ class BondSet:
 
         self._fconst_constr_threshold = options.constr_threshold
 
-        self._empirical_correction_factor = 1.
-        try:
-            self._empirical_correction = options.empirical_corr
-            if self._empirical_correction:
-                self._empirical_correction_factor = 1.05
-        except AttributeError:
-            self._empirical_correction = False
-
         try:
             self._temperature = options.temperature
         except AttributeError:
@@ -122,11 +114,6 @@ class BondSet:
             self._default_fc = options.default_fc
         except AttributeError:
             self._default_fc = False
-
-        try:
-            self._factor_two = options.factor_two
-        except AttributeError:
-            self._factor_two = 1
 
         functional_forms = FunctionalForms()
         self._functional_forms = {}
@@ -290,12 +277,10 @@ class BondSet:
                 print("\n[ {0:s} ]".format(section_header), file=itp)
             for bond in bonds:
                 # Factor is usually 1, unless doing correction
-                eqm = bond.eqm * self._empirical_correction_factor
-                fconst = bond.fconst * self._empirical_correction_factor
                 line = " ".join(["{0:4d}".format(atnum + 1) for atnum in bond.atom_numbers])
-                line += " {0:4d} {1:12.5f}".format(1, eqm)
+                line += " {0:4d} {1:12.5f}".format(1, bond.eqm)
                 if print_fconst:
-                    line += " {0:12.5f}".format(fconst)
+                    line += " {0:12.5f}".format(bond.fconst)
                 if multiplicity is not None:
                     line += " {0:4d}".format(multiplicity)
                 print(line, file=itp)

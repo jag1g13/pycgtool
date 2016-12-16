@@ -29,7 +29,6 @@ nstxout-compressed       = 1000
 compressed-x-precision   = 100
 compressed-x-grps        = System
 energygrps               = System
-imd-group                = Other
 
 ; NEIGHBOURLIST and MARTINI 
 ; To achieve faster simulations in combination with the Verlet-neighborlist

@@ -39,8 +39,6 @@ if __name__ == "__main__":
         ("default_fc", False),
         ("generate_angles", True),
         ("generate_dihedrals", False),
-        ("empirical_corr", False),
-        ("factor_two", 1),
         ("length_form", "harmonic"),
         ("angle_form", "cosharmonic"),
         ("dihedral_form", "harmonic")
