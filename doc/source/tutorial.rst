@@ -86,7 +86,8 @@ The output coordinates ``out.gro`` must be solvated using the GROMACS tool `gmx 
     gmx solvate -cp out.gro -cs ../../data/water.gro -o solv.gro -radius 0.21
 
 Since MARTINI water cannot be automatically added to the `.top` file, this must be done manually.
-Add the line "W 251" to the bottom of the `.top` file, since 251 should be the number of water molecules added by `gmx solvate`.
+A template file, ``template.top``, is provided. 
+Copy this to ``topol.top`` and add the line "W 251" to the bottom, since 251 should be the number of water molecules added by `gmx solvate`.
 
 The three stages of simulation: minimisation, equilibration, and production may then be run::
 
