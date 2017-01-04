@@ -138,7 +138,7 @@ This may be performed using the standard GROMACS too `gmx gyrate`::
     gmx gyrate -f ref.xtc -s ref-for-rgyr.tpr -o ref-gyr.xvg
     gmx gyrate -f md.xtc -s md.tpr -o cg-gyr.xvg
 
-In both cases select the 36KB group as the one on which to perform teh calculation.
+In both cases select the 36KB group as the one on which to perform the calculation.
 These commands will calculate the radius of gyration for each trajectory frame for both the reference and CG simulations.
 The resulting `.xvg` files may be visualised using a graphing program such as `xmgrace` or compared in the same way as the bonded samples, using::
 
