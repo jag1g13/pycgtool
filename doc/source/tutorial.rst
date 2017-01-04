@@ -12,7 +12,7 @@ Atomistic Simulation
 --------------------
 The reference simulation for the parametrisation of atenolol was performed using the GROMOS 54A7 united atom forcefield with a topology from the `ATB database <https://atb.uq.edu.au/molecule.py?molid=23433>`_.
 A single molecule of atenolol was solvated and equilibrated, before collecting a 50 ns trajectory using the GROMACS molecular dynamics simulator.
-A reduced copy of this trajectory is provided in the tutorial files since the original is prohibitively large.
+A reduced copy of this trajectory is provided in the tutorial files (as ``ref.xtc``, ``ref.gro`` contains the initial structure) since the original is prohibitively large.
 
 Mapping Design
 --------------
@@ -72,7 +72,7 @@ Model Generation
 The process of model generation after having created the mapping and bond definition files is automated by PyCGTOOL.
 In the simplest case, a parameter set may be generated simply by passing the four input files to PyCGTOOL::
 
-    pycgtool.py -g atenolol.gro -x atenolol.xtc -m atenolol.map -b atenolol.bnd
+    pycgtool.py -g ref.gro -x ref.xtc -m atenolol.map -b atenolol.bnd
 
 This will create two output files ``out.gro``, the mapped CG coordinates, and ``out.itp``, the calculated CG model parameters.
 
@@ -86,7 +86,8 @@ The output coordinates ``out.gro`` must be solvated using the GROMACS tool `gmx 
     gmx solvate -cp out.gro -cs ../../data/water.gro -o solv.gro -radius 0.21
 
 Since MARTINI water cannot be automatically added to the `.top` file, this must be done manually.
-Add the line "W 251" to the bottom of the `.top` file, since 251 should be the number of water molecules added by `gmx solvate`.
+A template file, ``template.top``, is provided. 
+Copy this to ``topol.top`` and add the line "W 251" to the bottom, since 251 should be the number of water molecules added by `gmx solvate`.
 
 The three stages of simulation: minimisation, equilibration, and production may then be run::
 
@@ -110,7 +111,7 @@ Additionally, other methods of validation should be applied relevant to the clas
 To compare the distribution of bonded terms, we must first rerun PyCGTOOL to generate samples of the bonded measurements.
 For the atomistic reference simulation, this can be done by running::
 
-    pycgtool.py -g atenolol.gro -x atenolol.xtc -m atenolol.map -b atenolol.bnd --advanced
+    pycgtool.py -g ref.gro -x ref.xtc -m atenolol.map -b atenolol.bnd --advanced
 
 In the menu, set the advanced option `dump_measurements` to `True` by selecting it with the arrow keys and toggling with the enter key.
 Once this option has been set, continue by pressing the q key.
@@ -126,8 +127,8 @@ Again, the files created will be called ``36KB_length.dat`` and ``36KB_angle.dat
 
 These samples were compared in the paper using an R script to generate a series of boxplots, but a simpler Python script is provided which may be used to compare the mean and standard deviations of the samples::
 
-    average_columns.py ref_length.dat 36KB_length.dat
-    average_columns.py ref_angle.dat 36KB_angle.dat
+    ./average_columns.py ref_length.dat 36KB_length.dat
+    ./average_columns.py ref_angle.dat 36KB_angle.dat
 
 If the automatically generated parameters provide an accurate representation of the reference structure, the percentage error between the two samples will be small.
 
@@ -137,10 +138,11 @@ This may be performed using the standard GROMACS too `gmx gyrate`::
     gmx gyrate -f ref.xtc -s ref-for-rgyr.tpr -o ref-gyr.xvg
     gmx gyrate -f md.xtc -s md.tpr -o cg-gyr.xvg
 
+In both cases select the 36KB group as the one on which to perform the calculation.
 These commands will calculate the radius of gyration for each trajectory frame for both the reference and CG simulations.
 The resulting `.xvg` files may be visualised using a graphing program such as `xmgrace` or compared in the same way as the bonded samples, using::
 
-    average_columns.py ref-gyr.xvg cg-gyr.xvg
+    ./average_columns.py ref-gyr.xvg cg-gyr.xvg
 
 As before, a small percentage difference in each of the columns suggests good replication of gross conformation.
 
