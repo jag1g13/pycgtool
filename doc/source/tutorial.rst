@@ -12,7 +12,7 @@ Atomistic Simulation
 --------------------
 The reference simulation for the parametrisation of atenolol was performed using the GROMOS 54A7 united atom forcefield with a topology from the `ATB database <https://atb.uq.edu.au/molecule.py?molid=23433>`_.
 A single molecule of atenolol was solvated and equilibrated, before collecting a 50 ns trajectory using the GROMACS molecular dynamics simulator.
-A reduced copy of this trajectory is provided in the tutorial files (as ref.xtc, ref.gro contains the initial structure) since the original is prohibitively large.
+A reduced copy of this trajectory is provided in the tutorial files (as ``ref.xtc``, ``ref.gro`` contains the initial structure) since the original is prohibitively large.
 
 Mapping Design
 --------------
