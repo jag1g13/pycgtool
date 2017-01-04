@@ -12,7 +12,7 @@ Atomistic Simulation
 --------------------
 The reference simulation for the parametrisation of atenolol was performed using the GROMOS 54A7 united atom forcefield with a topology from the `ATB database <https://atb.uq.edu.au/molecule.py?molid=23433>`_.
 A single molecule of atenolol was solvated and equilibrated, before collecting a 50 ns trajectory using the GROMACS molecular dynamics simulator.
-A reduced copy of this trajectory is provided in the tutorial files since the original is prohibitively large.
+A reduced copy of this trajectory is provided in the tutorial files (as ref.xtc, ref.gro contains the initial structure) since the original is prohibitively large.
 
 Mapping Design
 --------------
@@ -72,7 +72,7 @@ Model Generation
 The process of model generation after having created the mapping and bond definition files is automated by PyCGTOOL.
 In the simplest case, a parameter set may be generated simply by passing the four input files to PyCGTOOL::
 
-    pycgtool.py -g atenolol.gro -x atenolol.xtc -m atenolol.map -b atenolol.bnd
+    pycgtool.py -g ref.gro -x ref.xtc -m atenolol.map -b atenolol.bnd
 
 This will create two output files ``out.gro``, the mapped CG coordinates, and ``out.itp``, the calculated CG model parameters.
 
