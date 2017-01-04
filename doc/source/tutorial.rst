@@ -127,8 +127,8 @@ Again, the files created will be called ``36KB_length.dat`` and ``36KB_angle.dat
 
 These samples were compared in the paper using an R script to generate a series of boxplots, but a simpler Python script is provided which may be used to compare the mean and standard deviations of the samples::
 
-    average_columns.py ref_length.dat 36KB_length.dat
-    average_columns.py ref_angle.dat 36KB_angle.dat
+    ./average_columns.py ref_length.dat 36KB_length.dat
+    ./average_columns.py ref_angle.dat 36KB_angle.dat
 
 If the automatically generated parameters provide an accurate representation of the reference structure, the percentage error between the two samples will be small.
 
@@ -141,7 +141,7 @@ This may be performed using the standard GROMACS too `gmx gyrate`::
 These commands will calculate the radius of gyration for each trajectory frame for both the reference and CG simulations.
 The resulting `.xvg` files may be visualised using a graphing program such as `xmgrace` or compared in the same way as the bonded samples, using::
 
-    average_columns.py ref-gyr.xvg cg-gyr.xvg
+    ./average_columns.py ref-gyr.xvg cg-gyr.xvg
 
 As before, a small percentage difference in each of the columns suggests good replication of gross conformation.
 
