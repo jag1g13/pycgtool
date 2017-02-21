@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/jag1g13/pycgtool.svg?branch=master)](https://travis-ci.org/jag1g13/pycgtool) [![Documentation Status](https://readthedocs.org/projects/pycgtool/badge/?version=master)](http://pycgtool.readthedocs.io/en/master/?badge=master)
+[![Build Status](https://travis-ci.org/jag1g13/pycgtool.svg?branch=master)](https://travis-ci.org/jag1g13/pycgtool) [![Documentation Status](https://readthedocs.org/projects/pycgtool/badge/?version=master)](http://pycgtool.readthedocs.io/en/master/?badge=master) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.259330.svg)](https://doi.org/10.5281/zenodo.259330)
+
 
 # PyCGTOOL
 Please see http://pycgtool.readthedocs.io/en/master/ for full documentation.
@@ -20,6 +21,8 @@ This version has several advantages over the original C++ implementation CGTOOL:
 * Much more automated testing ensures that regressions will be identified quickly
 
 If you experience problems or wish to see a new feature added please [file an issue](https://github.com/jag1g13/pycgtool/issues).
+
+If you find this useful, please cite as : `Graham, J. (2017). PyCGTOOL, https://doi.org/10.5281/zenodo.259330`
 
 ## Usage
 Input to PyCGTOOL is GROMACS GRO and XTC files, along with two custom files: MAP and BND.  These files provide the atomistic-to-CG mapping and bonded topology respectively.  Example files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/master/test/data) directory.  The format of these files is described in the [full documentation] (http://pycgtool.readthedocs.io/en/master/).
