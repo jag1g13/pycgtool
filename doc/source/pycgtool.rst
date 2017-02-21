@@ -16,6 +16,7 @@ Submodules
    pycgtool.bondset
    pycgtool.forcefield
    pycgtool.frame
+   pycgtool.functionalforms
    pycgtool.interface
    pycgtool.mapping
    pycgtool.pycgtool

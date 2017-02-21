@@ -11,12 +11,14 @@ Welcome to PyCGTOOL's documentation!
 
    self
    tutorial
+   mapping-only
    Module Documentation <modules>
 
 
 .. toctree::
    :maxdepth: 2
 
+:doc:`tutorial`
 
 Features
 --------
@@ -121,15 +123,29 @@ Advanced Usage
 
 Modes
 ~~~~~
+
 PyCGTOOL performs several other functions which may be useful in the testing and use of coarse-grained models.
 
-Mapping-only mode performs a coarse-grain mapping on a single frame and may be used to generate initial coordinates for a coarse-grain simulation, whether the model being used was created by PyCGTOOL or not.  In this respect it functions similarly to the MARTINI tool MARTINIZE.  This mode may be invoked by::
+Mapping Only
+............
+
+Mapping-only mode simply converts an input atomistic coordinate file into its coarse-grained representation.
+For full detail see: :doc:`mapping-only`.
+
+This mode may be invoked by::
 
    pycgtool.py -g <GRO file> -m <MAP file>
 
-Measure-only mode may be used to aid in the testing of a coarse-grained model by making measurements of bonds from a true coarse-grained simulation trajectory.  These bond measurements may be compared directly to those collected from the pseudo-coarse-grained trajectory used to generate the model.  This mode may be invoked by::
+
+Measure Only
+............
+
+Measure-only mode may be used to aid in the testing of a coarse-grained model by making measurements of bonds from a true coarse-grained simulation trajectory.
+These bond measurements may be compared directly to those collected from the pseudo-coarse-grained trajectory used to generate the model.
+This mode may be invoked by::
 
    pycgtool.py -g <GRO file> -x <XTC file> -b <BND file>
+
 
 Advanced Options
 ~~~~~~~~~~~~~~~~
