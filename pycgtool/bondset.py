@@ -365,6 +365,9 @@ class BondSet:
                 except (NotImplementedError, TypeError):
                     # TypeError is raised when residues on end of chain calc bond to next
                     pass
+                except ZeroDivisionError as e:
+                    e.args = ("Zero division in calculation of <{0}>".format(" ".join(bond.atoms)),)
+                    raise e
 
     def boltzmann_invert(self, progress=False):
         """

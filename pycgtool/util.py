@@ -93,6 +93,8 @@ def vector_angle(a, b):
     :return: Angle in radians
     """
     mag = vector_len(a) * vector_len(b)
+    if mag == 0:
+        raise ZeroDivisionError("One or more bonds in angle calculation has length zero")
     dot = vector_dot(a, b) / mag
     # Previously checked to within 1%, but this prevented numba optimisation
     ang = math.acos(max(-1, min(1, dot)))
