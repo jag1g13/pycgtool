@@ -14,12 +14,17 @@ class FunctionalFormTest(unittest.TestCase):
     def test_functional_form_new(self):
         class TestFunc(FunctionalForm):
             @staticmethod
-            def __call__(mean, var, temp):
-                return "TestResult"
+            def eqm(values, temp):
+                return "TestResultEqm"
+
+            @staticmethod
+            def fconst(values, temp):
+                return "TestResultFconst"
 
         funcs = FunctionalForms()
         self.assertIn("TestFunc", funcs)
-        self.assertEqual("TestResult", funcs.TestFunc(None, None, None))
+        self.assertEqual("TestResultEqm", funcs.TestFunc.eqm(None, None))
+        self.assertEqual("TestResultFconst", funcs.TestFunc.fconst(None, None))
 
 if __name__ == '__main__':
     unittest.main()

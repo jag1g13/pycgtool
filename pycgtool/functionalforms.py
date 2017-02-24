@@ -1,6 +1,8 @@
 import abc
 import math
 
+import numpy as np
+
 from pycgtool.util import SimpleEnum
 
 
@@ -54,14 +56,25 @@ class FunctionalForm(object, metaclass=abc.ABCMeta):
     New functional forms must define a static __call__ method.
     """
     @staticmethod
+    def eqm(values, temp):
+        """
+        Calculate equilibrium value.
+        May be overridden by functional forms.
+
+        :param values: Measured internal coordinate values from which to calculate equilibrium value
+        :param temp: Temperature of simulation
+        :return: Calculated equilibrium value
+        """
+        return np.nanmean(values)
+
+    @staticmethod
     @abc.abstractstaticmethod
-    def __call__(mean, var, temp):
+    def fconst(values, temp):
         """
         Calculate force constant.
         Abstract static method to be defined by all functional forms.
 
-        :param mean: Mean of internal coordinate distribution
-        :param var: Variance of internal coordinate distribution
+        :param values: Measured internal coordinate values from which to calculate force constant
         :param temp: Temperature of simulation
         :return: Calculated force constant
         """
@@ -70,31 +83,34 @@ class FunctionalForm(object, metaclass=abc.ABCMeta):
 
 class Harmonic(FunctionalForm):
     @staticmethod
-    def __call__(mean, var, temp):
+    def fconst(values, temp):
         rt = 8.314 * temp / 1000.
+        var = np.nanvar(values)
         return rt / var
 
 
 class CosHarmonic(FunctionalForm):
     @staticmethod
-    def __call__(mean, var, temp):
+    def fconst(values, temp):
         rt = 8.314 * temp / 1000.
+        mean = CosHarmonic.eqm(values, temp)
+        var = np.nanvar(values)
         return rt / (math.sin(mean)**2 * var)
 
 
 class MartiniDefaultLength(FunctionalForm):
     @staticmethod
-    def __call__(mean, var, temp):
+    def fconst(values, temp):
         return 1250.
 
 
 class MartiniDefaultAngle(FunctionalForm):
     @staticmethod
-    def __call__(mean, var, temp):
+    def fconst(values, temp):
         return 25.
 
 
 class MartiniDefaultDihedral(FunctionalForm):
     @staticmethod
-    def __call__(mean, var, temp):
+    def fconst(values, temp):
         return 50.

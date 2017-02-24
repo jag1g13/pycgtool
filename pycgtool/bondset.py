@@ -63,21 +63,20 @@ class Bond:
         if not self.values:
             raise ValueError("No bonds were measured between atoms {0}".format(self.atoms))
 
-        mean, var = stat_moments(self.values)
-
+        values = np.array(self.values)
         if len(self.atoms) > 2:
-            mean_tmp = math.radians(mean)
-            var *= (math.pi * math.pi) / (180. * 180.)
-        else:
-            mean_tmp = mean
+            values = np.radians(values)
 
-        self.eqm = mean
         with np.errstate(divide="raise"):
+            self.eqm = self._func_form.eqm(values, temp)
             try:
-                self.fconst = self._func_form(mean_tmp, var, temp)
+                self.fconst = self._func_form.fconst(values, temp)
             except FloatingPointError:
                 # Happens when variance is 0, i.e. we only have one value
                 self.fconst = float("inf")
+
+        if len(self.atoms) > 2:
+            self.eqm = math.degrees(self.eqm)
 
     def __repr__(self):
         try:
