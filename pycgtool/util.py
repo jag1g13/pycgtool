@@ -8,6 +8,7 @@ import random
 import math
 import filecmp
 import logging
+import re
 
 from collections import namedtuple
 
@@ -470,18 +471,9 @@ class FixedFormatUnpacker(object):
         :param format_string: C format string
         :return: List of FormatItems
         """
-        items = []
         types = {"d": int, "s": str, "f": float}
-        format_string = format_string.lower()
-        for item in format_string.split("%")[1:]:
-            try:
-                item_width = int(item[:-1])
-            except ValueError:
-                # Probably a float format specifier, ignore precision, just use width
-                item_width = int(float(item[:-1]))
-
-            item_type = types[item[-1]]
-            items.append(cls.FormatItem(item_type, item_width))
+        p = re.compile(r'%-?(?P<width>[0-9]+)[.0-9]*(?P<type>[dsfDSF])')
+        items = [cls.FormatItem(types[match.group("type")], int(match.group("width"))) for match in p.finditer(format_string)]
         return items
 
     @classmethod
@@ -494,15 +486,12 @@ class FixedFormatUnpacker(object):
         """
         items = []
         types = {"i": int, "a": str, "f": float, "x": None}
-        format_string = format_string.lower()
-        for item in format_string.split(","):
-            try:
-                item_width = int(item[1:])
-            except ValueError:
-                # Probably a float format specifier, ignore precision, just use width
-                item_width = int(float(item[1:]))
-            item_type = types[item[0]]
-            items.append(cls.FormatItem(item_type, item_width))
+        p = re.compile(r'\s*(?P<repeat>[0-9]*)(?P<type>[ixafIXAF])(?P<width>[0-9]*)\s*')
+        for match in p.finditer(format_string):
+            repeat = int(match.group("repeat")) if match.group("repeat") else 1
+            width = int(match.group("width")) if match.group("width") else 1
+            for _ in range(repeat):
+                items.append(cls.FormatItem(types[match.group("type")], width))
         return items
 
     def unpack(self, string):

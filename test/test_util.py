@@ -163,7 +163,7 @@ class UtilTest(unittest.TestCase):
         self.assertFalse("four" in enum)
 
     def test_fixed_format_unpacker_c(self):
-        unpacker = FixedFormatUnpacker("%4d%5s%4.1f")
+        unpacker = FixedFormatUnpacker("%-4d%5s%4.1f")
         toks = unpacker.unpack("1234hello12.3")
         self.assertEqual(3, len(toks))
         self.assertEqual(1234, toks[0])
@@ -188,9 +188,8 @@ class UtilTest(unittest.TestCase):
         self.assertEqual("hello", toks[1])
         self.assertAlmostEqual(12.3, toks[2])
 
-    @unittest.expectedFailure
     def test_fixed_format_unpacker_fortran_repeat(self):
-        unpacker = FixedFormatUnpacker("2I2,X3,A5,X2,F4.1",
+        unpacker = FixedFormatUnpacker("2I2,X3,A5,2X,F4.1",
                                        FixedFormatUnpacker.FormatStyle.Fortran)
         toks = unpacker.unpack("1234 x hello x12.3")
         self.assertEqual(4, len(toks))
