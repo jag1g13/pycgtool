@@ -15,7 +15,7 @@ try:
 except ImportError:
     pass
 
-from .util import stat_moments, sliding, dist_with_pbc, transpose_and_sample
+from .util import sliding, dist_with_pbc, transpose_and_sample
 from .util import extend_graph_chain, backup_file
 from .util import vector_len, vector_cross, vector_angle, vector_angle_signed
 from .parsers.cfg import CFG
@@ -64,8 +64,6 @@ class Bond:
             raise ValueError("No bonds were measured between atoms {0}".format(self.atoms))
 
         values = np.array(self.values)
-        if len(self.atoms) > 2:
-            values = np.radians(values)
 
         with np.errstate(divide="raise"):
             self.eqm = self._func_form.eqm(values, temp)
@@ -74,9 +72,6 @@ class Bond:
             except FloatingPointError:
                 # Happens when variance is 0, i.e. we only have one value
                 self.fconst = float("inf")
-
-        if len(self.atoms) > 2:
-            self.eqm = math.degrees(self.eqm)
 
     def __repr__(self):
         try:
@@ -269,13 +264,14 @@ class BondSet:
         self._populate_atom_numbers(mapping)
         backup_file(filename)
 
-        def write_bond_angle_dih(bonds, section_header, itp, print_fconst=True, multiplicity=None):
+        def write_bond_angle_dih(bonds, section_header, itp, print_fconst=True, multiplicity=None, rad2deg=False):
             if bonds:
                 print("\n[ {0:s} ]".format(section_header), file=itp)
             for bond in bonds:
                 # Factor is usually 1, unless doing correction
                 line = " ".join(["{0:4d}".format(atnum + 1) for atnum in bond.atom_numbers])
-                line += " {0:4d} {1:12.5f}".format(1, bond.eqm)
+                eqm = math.degrees(bond.eqm) if rad2deg else bond.eqm
+                line += " {0:4d} {1:12.5f}".format(1, eqm)
                 if print_fconst:
                     line += " {0:12.5f}".format(bond.fconst)
                 if multiplicity is not None:
@@ -312,8 +308,8 @@ class BondSet:
                           ), file=itp)
 
                 write_bond_angle_dih(self.get_bond_lengths(mol), "bonds", itp)
-                write_bond_angle_dih(self.get_bond_angles(mol), "angles", itp)
-                write_bond_angle_dih(self.get_bond_dihedrals(mol), "dihedrals", itp, multiplicity=1)
+                write_bond_angle_dih(self.get_bond_angles(mol), "angles", itp, rad2deg=True)
+                write_bond_angle_dih(self.get_bond_dihedrals(mol), "dihedrals", itp, multiplicity=1, rad2deg=True)
                 write_bond_angle_dih(self.get_bond_length_constraints(mol), "constraints", itp, print_fconst=False)
 
     def apply(self, frame):
@@ -329,7 +325,7 @@ class BondSet:
         def calc_angle(atoms):
             veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
             vecb = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.box)
-            return math.degrees(math.pi - vector_angle(veca, vecb))
+            return math.pi - vector_angle(veca, vecb)
 
         def calc_dihedral(atoms):
             veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
@@ -339,7 +335,7 @@ class BondSet:
             c1 = vector_cross(veca, vecb)
             c2 = vector_cross(vecb, vecc)
 
-            return math.degrees(vector_angle_signed(c1, c2, vecb))
+            return vector_angle_signed(c1, c2, vecb)
 
         calc = {2: calc_length,
                 3: calc_angle,
@@ -389,6 +385,7 @@ class BondSet:
             except ValueError:
                 pass
 
+    # TODO add test
     def dump_values(self, target_number=10000):
         """
         Output measured bond values to files for length, angles and dihedrals.
@@ -396,9 +393,11 @@ class BondSet:
         :param target_number: Approx number of sample measurements to output.  If None, all samples will be output
         """
 
-        def write_bonds_to_file(bonds, filename):
+        def write_bonds_to_file(bonds, filename, rad2deg=False):
             with open(filename, "w") as f:
                 for row in transpose_and_sample((bond.values for bond in bonds), n=target_number):
+                    if rad2deg:
+                        row = [math.degrees(val) for val in row]
                     print((len(row) * "{:12.5f}").format(*row), file=f)
 
         for mol in self._molecules:
@@ -410,11 +409,11 @@ class BondSet:
 
             bonds = self.get_bond_angles(mol)
             if bonds:
-                write_bonds_to_file(bonds, "{0}_angle.dat".format(mol))
+                write_bonds_to_file(bonds, "{0}_angle.dat".format(mol), rad2deg=True)
 
             bonds = self.get_bond_dihedrals(mol)
             if bonds:
-                write_bonds_to_file(bonds, "{0}_dihedral.dat".format(mol))
+                write_bonds_to_file(bonds, "{0}_dihedral.dat".format(mol), rad2deg=True)
 
     def __len__(self):
         return len(self._molecules)
