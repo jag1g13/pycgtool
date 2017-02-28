@@ -130,7 +130,7 @@ class UtilTest(unittest.TestCase):
 
         enum2 = SimpleEnum.enum("enum2", ["one", "two", "three"])
         with self.assertRaises(TypeError):
-            tmp = enum2.one == enum.one
+            assert enum2.one == enum.one
 
         self.assertTrue("one" in enum)
         self.assertFalse("four" in enum)
@@ -155,7 +155,7 @@ class UtilTest(unittest.TestCase):
 
         enum2 = SimpleEnum.enum("enum2", ["one", "two", "three"])
         with self.assertRaises(TypeError):
-            tmp = enum2.one == enum.one
+            assert enum2.one == enum.one
 
         self.assertTrue("one" in enum)
         self.assertEqual(111, enum.one.value)

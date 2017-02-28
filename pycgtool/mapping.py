@@ -20,8 +20,6 @@ except ImportError:
     from .util import NumbaDummy
     numba = NumbaDummy()
 
-np.seterr(all="raise")
-
 logger = logging.getLogger(__name__)
 
 
@@ -29,7 +27,7 @@ class BeadMap(Atom):
     """
     POD class holding values relating to the AA->CG transformation for a single bead.
     """
-    __slots__ = ["name", "type", "atoms", "charge", "mass", "weights"]
+    __slots__ = ["name", "type", "atoms", "charge", "mass", "weights", "weights_dict"]
 
     def __init__(self, name=None, type=None, atoms=None, charge=0, mass=0):
         """
@@ -45,8 +43,9 @@ class BeadMap(Atom):
         Atom.__init__(self, name=name, type=type, charge=charge, mass=mass)
         self.atoms = atoms
         # NB: Mass weights are added in Mapping.__init__ if an itp file is provided
-        self.weights = {"geom": np.array([[1. / len(atoms)] for _ in atoms], dtype=np.float32),
-                        "first": np.array([[1.]] + [[0.] for _ in atoms[1:]], dtype=np.float32)}
+        self.weights_dict = {"geom": np.array([[1. / len(atoms)] for _ in atoms], dtype=np.float32),
+                             "first": np.array([[1.]] + [[0.] for _ in atoms[1:]], dtype=np.float32)}
+        self.weights = self.weights_dict["geom"]
 
     def __iter__(self):
         """
@@ -118,7 +117,7 @@ class Mapping:
                     mass_array = np.array([[atoms[atom][1]] for atom in bead], dtype=np.float32)
                     bead.mass = sum(mass_array)
                     mass_array /= bead.mass
-                    bead.weights["mass"] = mass_array
+                    bead.weights_dict["mass"] = mass_array
 
                     for atom in bead:
                         if self._manual_charges[molname]:
@@ -127,6 +126,12 @@ class Mapping:
                             bead.charge += atoms[atom][0]
 
                 self._masses_are_set = True
+
+        if self._map_center == "mass" and not self._masses_are_set:
+            self._guess_atom_masses()
+        for molname, mapping in self._mappings.items():
+            for bmap in mapping:
+                bmap.weights = bmap.weights_dict[self._map_center]
 
     def __len__(self):
         return len(self._mappings)
@@ -170,7 +175,7 @@ class Mapping:
                         raise RuntimeError(msg)
 
                     mass_array /= bead.mass
-                    bead.weights["mass"] = mass_array
+                    bead.weights_dict["mass"] = mass_array
 
         self._masses_are_set = True
 
@@ -220,9 +225,6 @@ class Mapping:
         :param cgframe: CG Frame to remap - optional
         :return: Frame instance containing the CG frame
         """
-        if self._map_center == "mass" and not self._masses_are_set:
-            self._guess_atom_masses()
-
         if cgframe is None:
             # Frame needs initialising
             cgframe = self._cg_frame_setup(frame.yield_resname_in(self._mappings), frame.name)
@@ -231,20 +233,19 @@ class Mapping:
         cgframe.number = frame.number
         cgframe.box = frame.box
 
+        coord_func = calc_coords_weight if frame.box[0] * frame.box[1] * frame.box[2] else calc_coords_weight_nobox
+
         for aares, cgres in zip(frame.yield_resname_in(self._mappings), cgframe):
             molmap = self._mappings[aares.name]
 
             for i, (bead, bmap) in enumerate(zip(cgres, molmap)):
                 ref_coords = aares[bmap[0]].coords
-                coords = np.array([aares[atom].coords for atom in bmap], dtype=np.float32)
+                if len(bmap) == 1:
+                    bead.coords = ref_coords
+                    continue
 
-                try:
-                    weights = bmap.weights[self._map_center]
-                except KeyError as e:
-                    e.args = ("Unknown mapping type '{0}'.".format(e.args[0]),)
-                    raise
-
-                bead.coords = calc_coords_weight(ref_coords, coords, cgframe.box, weights)
+                coords = np.asarray([aares[atom].coords for atom in bmap], dtype=np.float32)
+                bead.coords = coord_func(ref_coords, coords, cgframe.box, bmap.weights)
 
         return cgframe
 
@@ -260,13 +261,25 @@ def calc_coords_weight(ref_coords, coords, box, weights):
     :param weights: Array of atom weights, must sum to 1
     :return: Coordinates of CG bead
     """
-    n = len(coords)
-    result = np.zeros(3, dtype=np.float32)
-    for i in range(n):
-        tmp_coords = coords[i]
-        tmp_coords -= ref_coords
-        if box[0] * box[1] * box[2] != 0:
-            tmp_coords -= box * np.rint(tmp_coords / box)
-        result += weights[i] * tmp_coords
+    vectors = coords - ref_coords
+    vectors -= box * np.rint(vectors / box)
+    result = np.sum(weights * vectors, axis=0)
+    result += ref_coords
+    return result
+
+
+@numba.jit
+def calc_coords_weight_nobox(ref_coords, coords, box, weights):
+    """
+    Calculate the coordinates of a single CG bead from weighted component atom coordinates.
+
+    :param ref_coords: Coordinates of reference atom, usually first atom in bead
+    :param coords: Array of coordinates of component atoms
+    :param box: PBC box vectors
+    :param weights: Array of atom weights, must sum to 1
+    :return: Coordinates of CG bead
+    """
+    vectors = coords - ref_coords
+    result = np.sum(weights * vectors, axis=0)
     result += ref_coords
     return result

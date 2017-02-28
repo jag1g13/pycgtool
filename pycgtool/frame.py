@@ -176,20 +176,21 @@ class FrameReaderSimpleTraj(FrameReader):
         Parse a GROMACS GRO file and create Residues/Atoms
         Required before reading coordinates from XTC file
 
-        :param filename: Filename of GROMACS GRO to read
+        :param frame: Frame instance to initialise from GRO file
         """
         with open(self._topname) as gro:
             frame.name = gro.readline().strip()
             self.num_atoms = int(gro.readline())
             frame.natoms = self.num_atoms
             resnum_last = None
+            atnum = 0
 
-            unpacker = FixedFormatUnpacker("I5,A5,A5,X5,F8,F8,F8",
+            unpacker = FixedFormatUnpacker("I5,2A5,5X,3F8",
                                            FixedFormatUnpacker.FormatStyle.Fortran)
 
             for _ in range(self.num_atoms):
-                resnum, resname, atomname, x, y, z = unpacker.unpack(gro.readline())
-                coords = np.array([x, y, z], dtype=np.float32)
+                resnum, resname, atomname, *coords = unpacker.unpack(gro.readline())
+                coords = np.array(coords, dtype=np.float32)
 
                 if resnum != resnum_last:
                     frame.residues.append(Residue(name=resname,
@@ -201,8 +202,7 @@ class FrameReaderSimpleTraj(FrameReader):
                 frame.residues[-1].add_atom(atom)
                 atnum += 1
 
-            line = gro.readline()
-            frame.box = np.array([float(x) for x in line.split()[0:3]], dtype=np.float32)
+            frame.box = np.array([float(x) for x in gro.readline().split()[0:3]], dtype=np.float32)
 
     def _read_frame_number(self, number):
         """
@@ -234,6 +234,7 @@ class FrameReaderMDTraj(FrameReader):
             else:
                 e.msg = "The MDTraj FrameReader requires the module MDTraj (and probably Scipy)"
             raise
+        logger.warning("WARNING: Using MDTraj which renames solvent molecules")
 
         try:
             if trajname is None:
@@ -256,26 +257,16 @@ class FrameReaderMDTraj(FrameReader):
         Parse a GROMACS GRO file and create Residues/Atoms
         Required before reading coordinates from XTC file
 
-        :param filename: Filename of GROMACS GRO to read
+        :param frame: Frame instance to initialise from GRO file
         """
-        try:
-            import mdtraj
-        except ImportError as e:
-            if "scipy" in e.msg:
-                e.msg = "The MDTraj FrameReader also requires Scipy"
-            else:
-                e.msg = "The MDTraj FrameReader requires the module MDTraj (and probably Scipy)"
-            raise
-        logger.warning("WARNING: Using MDTraj which renames solvent molecules")
+        import mdtraj
         top = mdtraj.load(self._topname)
 
         frame.name = ""
         self.num_atoms = top.n_atoms
         frame.natoms = top.n_atoms
 
-        for residue in top.topology.residues:
-            frame.residues.append(Residue(name=residue.name,
-                                          num=residue.resSeq))
+        frame.residues = [Residue(name=res.name, num=res.resSeq) for res in top.topology.residues]
 
         for atom in top.topology.atoms:
             new_atom = Atom(name=atom.name, num=atom.serial,
@@ -304,6 +295,7 @@ class Frame:
         :param itp: GROMACS ITP file to read masses and charges
         :return: Frame instance
         """
+        self.name = ""
         self.residues = []
         self.number = frame_start - 1
         self.time = 0

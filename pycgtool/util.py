@@ -13,7 +13,6 @@ import re
 from collections import namedtuple
 
 import numpy as np
-np.seterr(all="raise")
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +23,7 @@ class NumbaDummy:
     """
     def __getattr__(self, item):
         if item == "jit":
-            return self.jit
+            return NumbaDummy.jit
         return self
 
     def __getitem__(self, item):
@@ -33,7 +32,8 @@ class NumbaDummy:
     def __call__(self, *args, **kwargs):
         return None
 
-    def jit(self, *args, **kwargs):
+    @staticmethod
+    def jit(*args, **kwargs):
         """
         Dummy version of numba.jit decorator, does nothing
         """
@@ -144,7 +144,7 @@ def dist_with_pbc(pos1, pos2, box):
     :return: Vector between two points
     """
     d = pos2 - pos1
-    if box[0] * box[1] * box[2] != 0:
+    if box[0] * box[1] * box[2]:
         d -= box * np.rint(d / box)
     return d
 
@@ -417,11 +417,13 @@ class SimpleEnum(object):
             return self.value == other.value
 
     @classmethod
-    def enum(cls, name, keys=list(), values=None):
+    def enum(cls, name, keys=None, values=None):
         def returner(val):
             return lambda _: val
         enum_cls = type(name, (cls.Enum,), {})
 
+        if keys is None:
+            keys = []
         if values is None:
             for key in keys:
                 prop = property(returner(cls.EnumItem(name, key)))
@@ -439,7 +441,6 @@ class SimpleEnum(object):
         return cls.enum(name, key_val_dict.keys(), key_val_dict.values())
 
 
-# TODO testing
 class FixedFormatUnpacker(object):
     """
     Unpack strings printed in fixed format.
@@ -503,3 +504,7 @@ class FixedFormatUnpacker(object):
             if format_item.type is not None:
                 items.append(format_item.type(string_part.strip()))
         return items
+
+
+def tqdm_dummy(iterable, **kwargs):
+    return iterable

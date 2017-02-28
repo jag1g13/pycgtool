@@ -10,10 +10,11 @@ import logging
 
 import numpy as np
 
+
 try:
     from tqdm import tqdm
 except ImportError:
-    pass
+    from .util import tqdm_dummy as tqdm
 
 from .util import sliding, dist_with_pbc, transpose_and_sample
 from .util import extend_graph_chain, backup_file
@@ -373,11 +374,8 @@ class BondSet:
         bond_iter = itertools.chain(*self._molecules.values())
         bond_iter_wrap = bond_iter
         if progress:
-            try:
-                total = sum(map(len, self._molecules.values()))
-                bond_iter_wrap = tqdm(bond_iter, total=total, ncols=80)
-            except NameError:
-                pass
+            total = sum(map(len, self._molecules.values()))
+            bond_iter_wrap = tqdm(bond_iter, total=total, ncols=80)
 
         for bond in bond_iter_wrap:
             try:
