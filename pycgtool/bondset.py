@@ -135,12 +135,12 @@ class BondSet:
             pass
 
         with CFG(filename) as cfg:
-            for mol in cfg:
-                self._molecules[mol.name] = []
-                mol_bonds = self._molecules[mol.name]
+            for mol_name, mol_section in cfg.items():
+                self._molecules[mol_name] = []
+                mol_bonds = self._molecules[mol_name]
 
                 angles_defined = False
-                for atomlist in mol:
+                for atomlist in mol_section:
                     try:
                         # TODO consider best way to override default func form
                         # On per bond, or per type basis

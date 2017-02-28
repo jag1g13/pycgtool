@@ -1,6 +1,7 @@
 import unittest
 
-from pycgtool.parsers.cfg import CFG, DuplicateSectionError
+from pycgtool.parsers.cfg import DuplicateSectionError
+from pycgtool.parsers import CFG
 
 
 class TestParsersCFG(unittest.TestCase):
@@ -12,13 +13,13 @@ class TestParsersCFG(unittest.TestCase):
 
     def test_cfg_iterate_sections(self):
         with CFG("test/data/water.map") as cfg:
-            for section in cfg:
-                self.assertEqual("SOL", section.name)
+            for name in cfg:
+                self.assertEqual("SOL", name)
 
     def test_cfg_iterate_lines(self):
         with CFG("test/data/water.map") as cfg:
-            for section in cfg:
-                self.assertEqual("SOL", section.name)
+            for name, section in cfg.items():
+                self.assertEqual("SOL", name)
                 for line in section:
                     self.assertEqual(self.watline, line)
 

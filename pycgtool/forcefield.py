@@ -7,7 +7,7 @@ import shutil
 import functools
 
 from .util import dir_up
-from .parsers.cfg import CFG
+from .parsers import ITP
 
 
 class ForceField:
@@ -29,8 +29,8 @@ class ForceField:
 
         dist_dat_dir = os.path.join(dir_up(os.path.realpath(__file__), 2), "data")
         # Copy main MARTINI itp
-        shutil.copyfile(os.path.join(dist_dat_dir, "martini_v2.2.itp"),
-                        os.path.join(self.dirname, "martini_v2.2.itp"))
+        martini_itp = os.path.join(dist_dat_dir, "martini_v2.2.itp")
+        shutil.copyfile(martini_itp, os.path.join(self.dirname, "martini_v2.2.itp"))
         # Copy water models
         shutil.copyfile(os.path.join(dist_dat_dir, "watermodels.dat"),
                         os.path.join(self.dirname, "watermodels.dat"))
@@ -38,9 +38,9 @@ class ForceField:
                         os.path.join(self.dirname, "w.itp"))
 
         # Create atomtypes.atp required for correct masses with pdb2gmx
-        with CFG(os.path.join(dist_dat_dir, "martini_v2.2.itp"), allow_duplicate=True) as cfg,\
-                open(os.path.join(self.dirname, "atomtypes.atp"), 'w') as atomtypes:
-            for toks in cfg["atomtypes"]:
+        atomtypes_atp = os.path.join(self.dirname, "atomtypes.atp")
+        with ITP(martini_itp) as itp, open(atomtypes_atp, 'w') as atomtypes:
+            for toks in itp["atomtypes"]:
                 print(" ".join(toks), file=atomtypes)
 
         with open(os.path.join(self.dirname, "forcefield.doc"), "w") as doc:

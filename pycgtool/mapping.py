@@ -88,16 +88,16 @@ class Mapping:
 
         with CFG(filename) as cfg:
             self._manual_charges = {}
-            for mol in cfg:
-                self._mappings[mol.name] = []
-                self._manual_charges[mol.name] = False
-                molmap = self._mappings[mol.name]
-                for name, typ, first, *atoms in mol:
+            for mol_name, mol_section in cfg.items():
+                self._mappings[mol_name] = []
+                self._manual_charges[mol_name] = False
+                molmap = self._mappings[mol_name]
+                for name, typ, first, *atoms in mol_section:
                     charge = 0
                     try:
                         # Allow optional charge in mapping file
                         charge = float(first)
-                        self._manual_charges[mol.name] = True
+                        self._manual_charges[mol_name] = True
                     except ValueError:
                         atoms.insert(0, first)
                     assert atoms, "Bead {0} specification contains no atoms".format(name)
