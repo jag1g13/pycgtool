@@ -25,7 +25,7 @@ If you experience problems or wish to see a new feature added please [file an is
 If you find this useful, please cite as : `Graham, J. (2017). PyCGTOOL, https://doi.org/10.5281/zenodo.259330`
 
 ## Usage
-Input to PyCGTOOL is GROMACS GRO and XTC files, along with two custom files: MAP and BND.  These files provide the atomistic-to-CG mapping and bonded topology respectively.  Example files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/master/test/data) directory.  The format of these files is described in the [full documentation] (http://pycgtool.readthedocs.io/en/master/).
+Input to PyCGTOOL is GROMACS GRO and XTC files, along with two custom files: MAP and BND.  These files provide the atomistic-to-CG mapping and bonded topology respectively.  Example files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/master/test/data) directory.  The format of these files is described in the [full documentation](http://pycgtool.readthedocs.io/en/master/).
 
 To run PyCGTOOL:
 `pycgtool.py -g <GRO file> -x <XTC file> -m <MAP file> -b <BND file>`
@@ -35,6 +35,9 @@ To run PyCGTOOL in map-only mode:
 
 To see the help text:
 `pycgtool.py -h`
+
+For more information, see [the tutorial](https://pycgtool.readthedocs.io/en/master/tutorial.html).
+It is important to perform validation of any new parameter set; a brief example is present at the end of the tutorial.
 
 ## Requirements
 PyCGTOOL requires:

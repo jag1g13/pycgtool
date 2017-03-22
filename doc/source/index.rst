@@ -62,6 +62,10 @@ Example mapping and bond definition files are present in the ``test/data`` direc
 
 After running PyCGTOOL two files, ``out.gro`` and ``out.itp`` will be created.  The gro file contains the mapped coarse-grain coordinates with every molecule for which a mapping was provided.  The itp file contains the parameters for each molecule type.
 
+It is important to perform validation of any new parameter set.
+This is typically done by comparing properties between the reference simulation and simulations using the new CG model.
+In the tutorial we use the radius of gyration, but there are many other suitable properties, depending on the class of molecule being parametrised.
+
 Mapping / Bond Definition Files
 -------------------------------
 The mapping and bond definition input files use a format similar to the GROMACS itp/top format.
