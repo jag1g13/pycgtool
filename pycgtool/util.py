@@ -508,3 +508,22 @@ class FixedFormatUnpacker(object):
 
 def tqdm_dummy(iterable, **kwargs):
     return iterable
+
+
+def file_write_lines(filename, lines=None, backup=True, append=False):
+    """
+    Open a file and write lines to it.
+
+    :param filename: Name of file to open
+    :param lines: Iterable of lines to write
+    :param backup: Should the file be backed up if it exists?  Disabled if appending
+    :param append: Should lines be appended to an existing file?
+    """
+    if backup and not append:
+        backup_file(filename)
+
+    mode = "a" if append else "w"
+    with open(filename, mode) as f:
+        if lines is not None:
+            for line in lines:
+                print(line, file=f)

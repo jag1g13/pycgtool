@@ -1,6 +1,8 @@
 import unittest
 import os
 import logging
+import tempfile
+import shutil
 
 import numpy as np
 import numpy.testing
@@ -8,6 +10,7 @@ import numpy.testing
 from pycgtool.util import tuple_equivalent, extend_graph_chain, stat_moments, transpose_and_sample
 from pycgtool.util import dir_up, backup_file, sliding, r_squared, dist_with_pbc
 from pycgtool.util import SimpleEnum, FixedFormatUnpacker
+from pycgtool.util import file_write_lines
 
 
 class UtilTest(unittest.TestCase):
@@ -197,6 +200,38 @@ class UtilTest(unittest.TestCase):
         self.assertEqual(34, toks[1])
         self.assertEqual("hello", toks[2])
         self.assertAlmostEqual(12.3, toks[3])
+
+
+# TODO test backing up
+class UtilFileWriteLinesTest(unittest.TestCase):
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.test_dir)
+
+    def test_file_write_lines_empty(self):
+        filename = os.path.join(self.test_dir, "empty")
+        file_write_lines(filename)
+        with open(filename) as f:
+            self.assertFalse(f.readlines())
+
+    def test_file_write_lines_list(self):
+        lines = ["a", "b c", "  ", "123 d", "", " %-+# "]
+
+        filename = os.path.join(self.test_dir, "list")
+        file_write_lines(filename, lines)
+        with open(filename) as f:
+            self.assertListEqual(lines, f.read().splitlines())
+
+    def test_file_write_lines_append(self):
+        lines = ["a", "b c", "d ", " ef"]
+
+        filename = os.path.join(self.test_dir, "append")
+        file_write_lines(filename, lines[:2])
+        file_write_lines(filename, lines[2:], append=True)
+        with open(filename) as f:
+            self.assertListEqual(lines, f.read().splitlines())
 
 
 if __name__ == '__main__':
