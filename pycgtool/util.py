@@ -9,6 +9,7 @@ import math
 import filecmp
 import logging
 import re
+import functools
 
 from collections import namedtuple
 
@@ -357,6 +358,7 @@ def once_wrapper(func):
     return wrap
 
 
+# TODO this gives code analysis warnings from PyCharm when committing changes
 class SimpleEnum(object):
     class Enum(object):
         def __iter__(self):
@@ -514,10 +516,10 @@ def file_write_lines(filename, lines=None, backup=True, append=False):
     """
     Open a file and write lines to it.
 
-    :param filename: Name of file to open
-    :param lines: Iterable of lines to write
-    :param backup: Should the file be backed up if it exists?  Disabled if appending
-    :param append: Should lines be appended to an existing file?
+    :param str filename: Name of file to open
+    :param iterable[str] lines: Iterable of lines to write
+    :param bool backup: Should the file be backed up if it exists?  Disabled if appending
+    :param bool append: Should lines be appended to an existing file?
     """
     if backup and not append:
         backup_file(filename)
@@ -527,3 +529,19 @@ def file_write_lines(filename, lines=None, backup=True, append=False):
         if lines is not None:
             for line in lines:
                 print(line, file=f)
+
+
+def any_starts_with(iterable, char):
+    """
+    Return True if any string(s) in nested iterable starts with 'char'.
+
+    :param iterable iterable: Nested iterable of strings to check
+    :param str char: Char to check each string
+    :return bool: True if any string in nested iterable starts with char, else False
+    """
+    recurse = functools.partial(any_starts_with, char=char)
+    if type(iterable) is str:
+        return iterable.startswith(char)
+    else:
+        return any(map(recurse, iterable))
+
