@@ -17,7 +17,7 @@ except ImportError:
     from .util import tqdm_dummy as tqdm
 
 from .util import sliding, dist_with_pbc, transpose_and_sample
-from .util import extend_graph_chain, backup_file
+from .util import extend_graph_chain, file_write_lines
 from .util import vector_len, vector_cross, vector_angle, vector_angle_signed
 from .parsers.cfg import CFG
 from .functionalforms import FunctionalForms
@@ -252,7 +252,6 @@ class BondSet:
 
             index = [bead.name for bead in molmap]
             for bond in self._molecules[mol]:
-                # TODO this causes issue #8
                 try:
                     bond.atom_numbers = [index.index(atom.lstrip("+-")) for atom in bond.atoms]
                 except ValueError as e:
@@ -268,11 +267,13 @@ class BondSet:
         :param mapping: AA->CG Mapping from which to collect bead properties
         """
         self._populate_atom_numbers(mapping)
-        backup_file(filename)
+        file_write_lines(filename, self.itp_text(mapping))
 
-        def write_bond_angle_dih(bonds, section_header, itp, print_fconst=True, multiplicity=None, rad2deg=False):
+    def itp_text(self, mapping):
+        def write_bond_angle_dih(bonds, section_header, print_fconst=True, multiplicity=None, rad2deg=False):
+            ret_lines = []
             if bonds:
-                print("\n[ {0:s} ]".format(section_header), file=itp)
+                ret_lines.append("\n[ {0:s} ]".format(section_header))
             for bond in bonds:
                 line = " ".join(["{0:4d}".format(atnum + 1) for atnum in bond.atom_numbers])
                 eqm = math.degrees(bond.eqm) if rad2deg else bond.eqm
@@ -281,41 +282,45 @@ class BondSet:
                     line += " {0:12.5f}".format(bond.fconst)
                 if multiplicity is not None:
                     line += " {0:4d}".format(multiplicity)
-                print(line, file=itp)
+                ret_lines.append(line)
 
-        with open(filename, "w") as itp:
-            header = ("; \n"
-                      "; Topology prepared automatically using PyCGTOOL \n"
-                      "; James Graham <J.A.Graham@soton.ac.uk> 2016 \n"
-                      "; University of Southampton \n"
-                      "; https://github.com/jag1g13/pycgtool \n"
-                      ";")
-            print(header, file=itp)
+            return ret_lines
 
-            # Print molecule
-            not_calc = "  Parameters have not been calculated."
-            for mol in self._molecules:
-                if mol not in mapping:
-                    logger.warning("Molecule '{0}' present in bonding file, but not in mapping.".format(mol) + not_calc)
-                    continue
-                if not all((bond.fconst is not None for bond in self._molecules[mol])):
-                    logger.warning("Molecule '{0}' has no measured bond values.".format(mol) + not_calc)
-                    continue
+        ret_lines = [
+            ";",
+            "; Topology prepared automatically using PyCGTOOL",
+            "; James Graham <J.A.Graham@soton.ac.uk> 2016",
+            "; University of Southampton",
+            "; https://github.com/jag1g13/pycgtool",
+            ";"
+        ]
 
-                print("\n[ moleculetype ]", file=itp)
-                print("{0:4s} {1:4d}".format(mol, 1), file=itp)
+        # Print molecule
+        not_calc = "  Parameters have not been calculated."
+        for mol in self._molecules:
+            if mol not in mapping:
+                logger.warning("Molecule '{0}' present in bonding file, but not in mapping.".format(mol) + not_calc)
+                continue
+            if not all((bond.fconst is not None for bond in self._molecules[mol])):
+                logger.warning("Molecule '{0}' has no measured bond values.".format(mol) + not_calc)
+                continue
 
-                print("\n[ atoms ]", file=itp)
-                for i, bead in enumerate(mapping[mol]):
-                    #      atnum  type  resnum resname atname c-group  charge (mass)
-                    print("{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f}".format(
-                          i + 1, bead.type, 1, mol, bead.name, i + 1, bead.charge
-                          ), file=itp)
+            ret_lines.append("\n[ moleculetype ]")
+            ret_lines.append("{0:4s} {1:4d}".format(mol, 1))
 
-                write_bond_angle_dih(self.get_bond_lengths(mol), "bonds", itp)
-                write_bond_angle_dih(self.get_bond_angles(mol), "angles", itp, rad2deg=True)
-                write_bond_angle_dih(self.get_bond_dihedrals(mol), "dihedrals", itp, multiplicity=1, rad2deg=True)
-                write_bond_angle_dih(self.get_bond_length_constraints(mol), "constraints", itp, print_fconst=False)
+            ret_lines.append("\n[ atoms ]")
+            for i, bead in enumerate(mapping[mol], start=1):
+                #                 atnum   type resnum resname atname c-group charge (mass)
+                ret_lines.append("{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f}".format(
+                    i, bead.type, 1, mol, bead.name, i, bead.charge
+                ))
+
+            ret_lines.extend(write_bond_angle_dih(self.get_bond_lengths(mol), "bonds"))
+            ret_lines.extend(write_bond_angle_dih(self.get_bond_angles(mol), "angles", rad2deg=True))
+            ret_lines.extend(write_bond_angle_dih(self.get_bond_dihedrals(mol), "dihedrals", multiplicity=1, rad2deg=True))
+            ret_lines.extend(write_bond_angle_dih(self.get_bond_length_constraints(mol), "constraints", print_fconst=False))
+
+        return ret_lines
 
     def apply(self, frame):
         """
@@ -387,7 +392,7 @@ class BondSet:
             except ValueError:
                 pass
 
-    # TODO add test
+    # TODO add unit test without file output
     def dump_values(self, target_number=10000):
         """
         Output measured bond values to files for length, angles and dihedrals.
@@ -395,27 +400,31 @@ class BondSet:
         :param target_number: Approx number of sample measurements to output.  If None, all samples will be output
         """
 
-        def write_bonds_to_file(bonds, filename, rad2deg=False):
-            with open(filename, "w") as f:
-                for row in transpose_and_sample((bond.values for bond in bonds), n=target_number):
-                    if rad2deg:
-                        row = [math.degrees(val) for val in row]
-                    print((len(row) * "{:12.5f}").format(*row), file=f)
+        def get_lines_bonds_to_file(bonds, rad2deg=False):
+            ret_lines = []
+            for row in transpose_and_sample((bond.values for bond in bonds), n=target_number):
+                if rad2deg:
+                    row = [math.degrees(val) for val in row]
+                ret_lines.append((len(row) * "{:12.5f}").format(*row))
+            return ret_lines
 
         for mol in self._molecules:
             if mol == "SOL":
                 continue
             bonds = self.get_bond_lengths(mol, with_constr=True)
             if bonds:
-                write_bonds_to_file(bonds, "{0}_length.dat".format(mol))
+                lines = get_lines_bonds_to_file(bonds)
+                file_write_lines("{0}_length.dat".format(mol), lines)
 
             bonds = self.get_bond_angles(mol)
             if bonds:
-                write_bonds_to_file(bonds, "{0}_angle.dat".format(mol), rad2deg=True)
+                lines = get_lines_bonds_to_file(bonds, rad2deg=True)
+                file_write_lines("{0}_angle.dat".format(mol), lines)
 
             bonds = self.get_bond_dihedrals(mol)
             if bonds:
-                write_bonds_to_file(bonds, "{0}_dihedral.dat".format(mol), rad2deg=True)
+                lines = get_lines_bonds_to_file(bonds, rad2deg=True)
+                file_write_lines("{0}_dihedral.dat".format(mol), lines)
 
     def __len__(self):
         return len(self._molecules)

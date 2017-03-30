@@ -199,3 +199,21 @@ class BondSetTest(unittest.TestCase):
     def test_duplicate_atoms_in_bond(self):
         with self.assertRaises(ValueError):
             bondset = BondSet("test/data/duplicate_atoms.bnd", DummyOptions)
+
+    def test_dump_bonds(self):
+        measure = BondSet("test/data/sugar.bnd", DummyOptions)
+        frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
+        mapping = Mapping("test/data/sugar.map", DummyOptions)
+        cgframe = mapping.apply(frame)
+
+        while frame.next_frame():
+            cgframe = mapping.apply(frame, cgframe=cgframe)
+            measure.apply(cgframe)
+
+        measure.boltzmann_invert()
+
+        measure.dump_values()
+
+        filenames = ("ALLA_length.dat", "ALLA_angle.dat", "ALLA_dihedral.dat")
+        for filename in filenames:
+            self.assertTrue(cmp_whitespace_float(filename, os.path.join("test/data", filename), float_rel_error=0.001))
