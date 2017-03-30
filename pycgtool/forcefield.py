@@ -140,7 +140,8 @@ class ForceField:
             if mol not in bonds:
                 continue
 
-            needs_terminal_entry = write_residue(mol)
+            lines, needs_terminal_entry = write_residue(mol)
+            rtp_lines.extend(lines)
             if needs_terminal_entry[0]:
                 rtp_lines.extend(write_residue(mol, strip="-", prepend="N")[0])
                 n_terms.add(mol)
