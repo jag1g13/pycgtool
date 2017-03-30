@@ -4,7 +4,6 @@ This module contains a single class ForceField used to output a GROMACS .ff forc
 
 import os
 import shutil
-import functools
 
 from .util import dir_up, any_starts_with, file_write_lines
 from .parsers import ITP
@@ -54,10 +53,10 @@ class ForceField:
         :param Mapping mapping: CG Mapping object
         :param Iterable[Bond] bonds: CG Bonds object
         """
-        lines, nterms, cterms, bothterms = ForceField.write_rtp(mapping, bonds)
+        lines, nterms, cterms = ForceField.write_rtp(mapping, bonds)
         file_write_lines(os.path.join(self.dirname, filename + ".rtp"), lines)
 
-        lines = ForceField.write_r2b(nterms, cterms, bothterms)
+        lines = ForceField.write_r2b(nterms, cterms)
         file_write_lines(os.path.join(self.dirname, filename + ".r2b"), lines)
 
     @staticmethod
@@ -82,6 +81,11 @@ class ForceField:
         return ret_lines
 
     @staticmethod
+    def needs_terminal_entries(mol_name, bondset):
+        bonds = bondset.get_bonds(mol_name, natoms=-1)
+        return any_starts_with(bonds, "-"), any_starts_with(bonds, "+")
+
+    @staticmethod
     def write_rtp(mapping, bonds):
         """
         Return lines of a GROMACS RTP file.
@@ -94,68 +98,62 @@ class ForceField:
                 List of lines for RTP file,
                 Set of residues requiring N terminal records,
                 Set of residues requiring C terminal records,
-                Set of residues requiring N and C terminal records
         """
 
-        def write_residue(name, strip=None, prepend=""):
+        def write_residue(mol_name, mol_mapping, strip=None, prepend=""):
             ret_lines = [
-                "[ {0} ]".format(prepend + name),
+                "[ {0} ]".format(prepend + mol_name),
                 "  [ atoms ]"
             ]
 
-            for bead in mapping[name]:
+            for bead in mol_mapping:
                 #                      name   type  charge  chg-group
                 ret_lines.append("    {:>4s} {:>4s} {:3.6f} {:4d}".format(
                     bead.name, bead.type, bead.charge, 0
                 ))
 
-            needs_terminal_entry = [False, False]
+            for natoms, (section, multiplicity) in enumerate((("bonds", None),
+                                                              ("angles", None),
+                                                              ("dihedrals", 1)), start=2):
+                if strip is None:
+                    bond_list = bonds.get_bonds(mol_name, natoms)
+                else:
+                    bond_list = bonds.get_bonds(mol_name, natoms, select=lambda bond: not any_starts_with(bond, strip))
 
-            get_bond_functions = [("bonds", functools.partial(bonds.get_bond_lengths, with_constr=True)),
-                                  ("angles", bonds.get_bond_angles),
-                                  ("dihedrals", bonds.get_bond_dihedrals)]
+                ret_lines.extend(ForceField.bond_section(bond_list, section, multiplicity))
 
-            for get_bond in get_bond_functions:
-                bond_tmp = get_bond[1](name)
-                if strip is not None:
-                    bond_tmp = [bond for bond in bond_tmp if not any_starts_with(bond, strip)]
-                ret_lines.extend(ForceField.bond_section(bond_tmp, get_bond[0],
-                                                         multiplicity=1 if get_bond[0] == "dihedrals" else None))
-                needs_terminal_entry[0] |= any_starts_with(bond_tmp, "-")
-                needs_terminal_entry[1] |= any_starts_with(bond_tmp, "+")
-
-            return ret_lines, needs_terminal_entry
+            return ret_lines
 
         n_terms = set()
         c_terms = set()
-        both_terms = set()
 
         rtp_lines = [
             "[ bondedtypes ]",
             ("{:4d}" * 8).format(1, 1, 1, 1, 1, 1, 0, 0)
         ]
 
-        for mol in mapping:
-            # Skip molecules not listed in bonds
-            if mol not in bonds:
+        for mol_name, mol_mapping in mapping.items():
+            try:
+                rtp_lines.extend(write_residue(mol_name, mol_mapping))
+            except KeyError:
                 continue
 
-            lines, needs_terminal_entry = write_residue(mol)
-            rtp_lines.extend(lines)
-            if needs_terminal_entry[0]:
-                rtp_lines.extend(write_residue(mol, strip="-", prepend="N")[0])
-                n_terms.add(mol)
-            if needs_terminal_entry[1]:
-                rtp_lines.extend(write_residue(mol, strip="+", prepend="C")[0])
-                c_terms.add(mol)
-            if all(needs_terminal_entry):
-                rtp_lines.extend(write_residue(mol, strip=("-", "+"), prepend="2")[0])
-                both_terms.add(mol)
+            needs_terminal_entry = ForceField.needs_terminal_entries(mol_name, bonds)
 
-        return rtp_lines, n_terms, c_terms, both_terms
+            if needs_terminal_entry[0]:
+                rtp_lines.extend(write_residue(mol_name, mol_mapping, strip="-", prepend="N"))
+                n_terms.add(mol_name)
+
+            if needs_terminal_entry[1]:
+                rtp_lines.extend(write_residue(mol_name, mol_mapping, strip="+", prepend="C"))
+                c_terms.add(mol_name)
+                if needs_terminal_entry[0]:
+                    rtp_lines.extend(write_residue(mol_name, mol_mapping, strip=("-", "+"), prepend="2"))
+
+        return rtp_lines, n_terms, c_terms
 
     @staticmethod
-    def write_r2b(n_terms, c_terms, both_terms):
+    def write_r2b(n_terms, c_terms):
         """
         Return lines of a GROMACS R2B file.
 
@@ -163,7 +161,6 @@ class ForceField:
 
         :param Iterable[str] n_terms: Set of molecule names requiring N terminal records
         :param Iterable[str] c_terms: Set of molecule names requiring C terminal records
-        :param Iterable[str] both_terms: Set of molecule names requiring both terminal records
         :return List[str]: Lines of R2B file
         """
         ret_lines = [
@@ -171,10 +168,10 @@ class ForceField:
             ";     main  N-ter C-ter 2-ter"
         ]
 
-        for resname in sorted(set.union(n_terms, c_terms, both_terms)):
+        for resname in sorted(n_terms | c_terms):
             nter_str = ("N" + resname) if resname in n_terms else "-"
             cter_str = ("C" + resname) if resname in c_terms else "-"
-            both_ter_str = ("2" + resname) if resname in both_terms else "-"
+            both_ter_str = ("2" + resname) if resname in (n_terms & c_terms) else "-"
             ret_lines.append("{0:5s} {0:5s} {1:5s} {2:5s} {3:5s}".format(resname, nter_str, cter_str, both_ter_str))
 
         return ret_lines

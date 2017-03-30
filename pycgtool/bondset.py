@@ -180,6 +180,19 @@ class BondSet:
         dihedrals = extend_graph_chain(angles, bonds)
         return angles, dihedrals
 
+    def get_bonds(self, mol, natoms, select=lambda x: True):
+        """
+        Return list of bonds from molecule containing natoms atoms.
+
+        :param str mol: Molecule name
+        :param int natoms: Number of atoms in bond, i.e. 2 for bond length, 3 for angle, 4 for dihedral
+        :param function select: Optional lambda, return only bonds for which this is True
+        :return List[Bond]: List of bonds
+        """
+        if natoms == -1:
+            return [bond for bond in self._molecules[mol] if select(bond)]
+        return [bond for bond in self._molecules[mol] if len(bond.atoms) == natoms and select(bond)]
+
     def get_bond_lengths(self, mol, with_constr=False):
         """
         Return list of all bond lengths in molecule.  May include constraints.

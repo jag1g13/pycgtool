@@ -25,17 +25,19 @@ class DummyBondSet:
     def __contains__(self, item):
         return self.name == item
 
-    def bonds_with_natoms(self, n):
-        return [bond for bond in self.bonds if len(bond.atoms) == n]
+    def get_bonds(self, mol, natoms, select=lambda x: True):
+        if natoms == -1:
+            return [bond for bond in self.bonds if select(bond)]
+        return [bond for bond in self.bonds if len(bond.atoms) == natoms and select(bond)]
 
     def get_bond_lengths(self, *args, **kwargs):
-        return self.bonds_with_natoms(2)
+        return self.get_bonds(None, 2)
 
     def get_bond_angles(self, *args, **kwargs):
-        return self.bonds_with_natoms(3)
+        return self.get_bonds(None, 3)
 
     def get_bond_dihedrals(self, *args, **kwargs):
-        return self.bonds_with_natoms(4)
+        return self.get_bonds(None, 4)
 
 
 class ForceFieldTest(unittest.TestCase):
@@ -74,9 +76,8 @@ class ForceFieldTest(unittest.TestCase):
         self.assertListEqual(expected, ForceField.bond_section(self.bonds, "section"))
 
     def test_r2b(self):
-        nter = {"a", "b"}
-        cter = {"a", "c"}
-        bter = {"a", "d"}
+        nter = {"a", "b", "d"}
+        cter = {"a", "c", "d"}
 
         expected = [
             "; rtp residue to rtp building block table",
@@ -84,10 +85,10 @@ class ForceFieldTest(unittest.TestCase):
             "a     a     Na    Ca    2a   ",
             "b     b     Nb    -     -    ",
             "c     c     -     Cc    -    ",
-            "d     d     -     -     2d   "
+            "d     d     Nd    Cd    2d   "
         ]
 
-        output = ForceField.write_r2b(nter, cter, bter)
+        output = ForceField.write_r2b(nter, cter)
         self.assertListEqual(expected, output)
 
     def test_rtp(self):
@@ -113,14 +114,19 @@ class ForceFieldTest(unittest.TestCase):
             "       b    c      2.00000     50.00000"
         ]
 
-        output, nter, cter, bter = ForceField.write_rtp(self.mapping, self.bondset)
+        output, nter, cter = ForceField.write_rtp(self.mapping, self.bondset)
 
         self.maxDiff = None
         self.assertListEqual(expected, output)
 
         self.assertFalse(nter)
         self.assertEqual({"Dummy"}, cter)
-        self.assertFalse(bter)
+
+    def test_needs_terminal_entries(self):
+        nter, cter = ForceField.needs_terminal_entries(self.mapping, self.bondset)
+
+        self.assertFalse(nter)
+        self.assertTrue(cter)
 
 
 if __name__ == '__main__':
