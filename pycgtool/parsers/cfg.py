@@ -8,12 +8,22 @@ import os
 import collections
 
 
-class DuplicateSectionError(Exception):
+class DuplicateSectionError(KeyError):
     """
     Exception used to indicate that a section has appeared twice in a file.
     """
-    def __repr__(self):
-        return "Section {0} appears twice in file {1}.".format(*self.args)
+    def __init__(self, section, filename):
+        msg = "Section '{0}' appears twice in file '{1}'.".format(section, filename)
+        super(DuplicateSectionError, self).__init__(msg)
+
+
+class NoSectionError(KeyError):
+    """
+    Exception used to indicate that a file contains no sections.
+    """
+    def __init__(self, filename):
+        msg = "File '{0}' contains no '[]' section headers.".format(filename)
+        super(NoSectionError, self).__init__(msg)
 
 
 class CFG(collections.OrderedDict):
@@ -55,7 +65,10 @@ class CFG(collections.OrderedDict):
                     continue
 
                 toks = tuple(line.split())
-                self[curr_section].append(toks)
+                try:
+                    self[curr_section].append(toks)
+                except KeyError as e:
+                    raise NoSectionError(self.filename) from e
 
     def __enter__(self):
         return self

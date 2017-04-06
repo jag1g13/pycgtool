@@ -1,6 +1,6 @@
 import unittest
 
-from pycgtool.parsers.cfg import DuplicateSectionError
+from pycgtool.parsers.cfg import DuplicateSectionError, NoSectionError
 from pycgtool.parsers import CFG
 
 
@@ -37,6 +37,10 @@ class TestParsersCFG(unittest.TestCase):
         with CFG("test/data/martini.map") as cfg:
             self.assertTrue("DOPC" in cfg)
             self.assertTrue("GLY" in cfg)
+
+    def test_error_no_sections(self):
+        with self.assertRaises(NoSectionError):
+            CFG("test/data/nosections.cfg")
 
 
 if __name__ == '__main__':
