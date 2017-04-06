@@ -195,3 +195,7 @@ class BondSetTest(unittest.TestCase):
         logging.disable(logging.NOTSET)
 
         self.assertTrue(cmp_whitespace_float("sugar_out.itp", "test/data/sugar_out.itp", float_rel_error=0.001))
+
+    def test_duplicate_atoms_in_bond(self):
+        with self.assertRaises(ValueError):
+            bondset = BondSet("test/data/duplicate_atoms.bnd", DummyOptions)

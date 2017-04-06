@@ -147,6 +147,10 @@ class BondSet:
                         func_form = functional_forms[atomlist[-1]]
                     except AttributeError:
                         func_form = self._functional_forms[len(atomlist)]
+
+                    if {x for x in atomlist if atomlist.count(x) > 1}:
+                        raise ValueError("Defined bond '{0}' contains duplicate atoms".format(atomlist))
+
                     mol_bonds.append(Bond(atoms=atomlist, func_form=func_form))
                     if len(atomlist) > 2:
                         angles_defined = True
