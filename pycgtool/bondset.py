@@ -394,49 +394,56 @@ class BondSet:
         :param progress: Display a progress bar using tqdm if available
         """
         bond_iter = itertools.chain(*self._molecules.values())
-        bond_iter_wrap = bond_iter
         if progress:
             total = sum(map(len, self._molecules.values()))
-            bond_iter_wrap = tqdm(bond_iter, total=total, ncols=80)
+            bond_iter = tqdm(bond_iter, total=total, ncols=80)
 
-        for bond in bond_iter_wrap:
+        for bond in bond_iter:
             try:
                 bond.boltzmann_invert(temp=self._temperature)
             except ValueError:
                 pass
 
-    # TODO add unit test without file output
+    @staticmethod
+    def _get_lines_for_bond_dump(bonds, target_number=None, rad2deg=False):
+        """
+        Return a dump of bond measurements as a list of lines of text.
+        
+        :param bonds: Iterable of bonds
+        :param int target_number: Sample size of bonds to dump - None will dump all bonds
+        :param bool rad2deg: Should bond measurements be converted from radians to degrees?
+        :return List[str]: Lines of bond measurements dump
+        """
+        ret_lines = []
+        for row in transpose_and_sample((bond.values for bond in bonds), n=target_number):
+            if rad2deg:
+                row = [math.degrees(val) for val in row]
+            ret_lines.append((len(row) * "{:12.5f}").format(*row))
+        return ret_lines
+
     def dump_values(self, target_number=10000):
         """
         Output measured bond values to files for length, angles and dihedrals.
 
-        :param target_number: Approx number of sample measurements to output.  If None, all samples will be output
+        :param int target_number: Approx number of sample measurements to output.  If None, all samples will be output
         """
-
-        def get_lines_bonds_to_file(bonds, rad2deg=False):
-            ret_lines = []
-            for row in transpose_and_sample((bond.values for bond in bonds), n=target_number):
-                if rad2deg:
-                    row = [math.degrees(val) for val in row]
-                ret_lines.append((len(row) * "{:12.5f}").format(*row))
-            return ret_lines
 
         for mol in self._molecules:
             if mol == "SOL":
                 continue
             bonds = self.get_bond_lengths(mol, with_constr=True)
             if bonds:
-                lines = get_lines_bonds_to_file(bonds)
+                lines = BondSet._get_lines_for_bond_dump(bonds, target_number)
                 file_write_lines("{0}_length.dat".format(mol), lines)
 
             bonds = self.get_bond_angles(mol)
             if bonds:
-                lines = get_lines_bonds_to_file(bonds, rad2deg=True)
+                lines = BondSet._get_lines_for_bond_dump(bonds, target_number, rad2deg=True)
                 file_write_lines("{0}_angle.dat".format(mol), lines)
 
             bonds = self.get_bond_dihedrals(mol)
             if bonds:
-                lines = get_lines_bonds_to_file(bonds, rad2deg=True)
+                lines = BondSet._get_lines_for_bond_dump(bonds, target_number, rad2deg=True)
                 file_write_lines("{0}_dihedral.dat".format(mol), lines)
 
     def __len__(self):
