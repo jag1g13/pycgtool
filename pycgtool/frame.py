@@ -37,7 +37,17 @@ class Atom:
     """
     __slots__ = ["name", "num", "type", "mass", "charge", "coords"]
 
-    def __init__(self, name=None, num=None, type=None, mass=None, charge=None, coords=None):
+    def __init__(self, name, num, type=None, mass=None, charge=None, coords=None):
+        """
+        Create an atom.
+        
+        :param str name: The name of the atom
+        :param int num: The atom number
+        :param str type: The atom type
+        :param float mass: The mass of the atom
+        :param float charge: The charge of the atom
+        :param coords: The coordinates of the atom
+        """
         self.name = name
         self.num = num
         self.type = type

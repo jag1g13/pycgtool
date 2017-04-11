@@ -29,18 +29,18 @@ class BeadMap(Atom):
     """
     __slots__ = ["name", "type", "atoms", "charge", "mass", "weights", "weights_dict"]
 
-    def __init__(self, name=None, type=None, atoms=None, charge=0, mass=0):
+    def __init__(self, name, num, type=None, atoms=None, charge=0, mass=0):
         """
-        Create a single bead mapping
+        Create a single bead mapping.
 
-        :param name: The name of the bead
-        :param type: The bead type
-        :param atoms: The atom names from which the bead is made up
-        :param charge: The net charge on the bead
-        :param mass: The total bead mass
-        :return: Instance of BeadMap
+        :param str name: The name of the bead
+        :param int num: The number of the bead
+        :param str type: The bead type
+        :param List[str] atoms: The atom names from which the bead is made up
+        :param float charge: The net charge on the bead
+        :param float mass: The total bead mass
         """
-        Atom.__init__(self, name=name, type=type, charge=charge, mass=mass)
+        Atom.__init__(self, name, num, type=type, charge=charge, mass=mass)
         self.atoms = atoms
         # NB: Mass weights are added in Mapping.__init__ if an itp file is provided
         self.weights_dict = {"geom": np.array([[1. / len(atoms)] for _ in atoms], dtype=np.float32),
@@ -92,7 +92,7 @@ class Mapping:
                 self._mappings[mol_name] = []
                 self._manual_charges[mol_name] = False
                 molmap = self._mappings[mol_name]
-                for name, typ, first, *atoms in mol_section:
+                for i, (name, typ, first, *atoms) in enumerate(mol_section):
                     charge = 0
                     try:
                         # Allow optional charge in mapping file
@@ -101,7 +101,7 @@ class Mapping:
                     except ValueError:
                         atoms.insert(0, first)
                     assert atoms, "Bead {0} specification contains no atoms".format(name)
-                    newbead = BeadMap(name=name, type=typ, atoms=atoms, charge=charge)
+                    newbead = BeadMap(name, i, type=typ, atoms=atoms, charge=charge)
                     molmap.append(newbead)
 
         # TODO this only works with one moleculetype in one itp - extend this
@@ -202,7 +202,7 @@ class Mapping:
                 continue
 
             cgres = Residue(name=aares.name, num=aares.num)
-            cgres.atoms = [Atom(name=bmap.name, type=bmap.type, charge=bmap.charge, mass=bmap.mass, coords=np.zeros(3)) for bmap in molmap]
+            cgres.atoms = [Atom(bmap.name, bmap.num, type=bmap.type, charge=bmap.charge, mass=bmap.mass, coords=np.zeros(3)) for bmap in molmap]
 
             for i, (bead, bmap) in enumerate(zip(cgres, molmap)):
                 cgres.name_to_num[bead.name] = i

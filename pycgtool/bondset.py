@@ -33,13 +33,13 @@ class Bond:
     """
     __slots__ = ["atoms", "atom_numbers", "values", "eqm", "fconst", "_func_form"]
 
-    def __init__(self, atoms=None, atom_numbers=None, func_form=None):
+    def __init__(self, atoms, atom_numbers=None, func_form=None):
         """
         Create a single bond definition.
 
-        :param atoms: List of atom names defining the bond
-        :param atom_numbers: List of atom numbers defining the bond
-        :return: Instance of Bond
+        :param List[str] atoms: List of atom names defining the bond
+        :param List[int] atom_numbers: List of atom numbers defining the bond
+        :param func_form: Functional form to use for Boltzmann Inversion
         """
         self.atoms = atoms
         self.atom_numbers = atom_numbers
