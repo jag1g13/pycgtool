@@ -37,7 +37,7 @@ class Atom:
     def __init__(self, name, num, type=None, mass=None, charge=None, coords=None):
         """
         Create an atom.
-        
+
         :param str name: The name of the atom
         :param int num: The atom number
         :param str type: The atom type
@@ -147,7 +147,7 @@ class Frame:
     def instance_from_reader(cls, reader):
         """
         Return Frame instance initialised from existing FrameReader object
-        
+
         :param FrameReader reader: FrameReader object
         :return: Frame instance
         """
@@ -251,41 +251,44 @@ class Frame:
         :param filename: Name of file to write to
         :param format: Format to write e.g. 'gro', 'lammps'
         """
-        outputs = {"gro": self._output_gro,
-                   "lammps": self._output_lammps_data}
+        outputs = {"gro": self._get_gro_lines,
+                   "lammps": self._get_lammps_data_lines}
         try:
-            outputs[format](filename)
+            lines = outputs[format]()
+            file_write_lines(filename, lines)
         except KeyError:
             print("ERROR: Invalid output format {0}, coordinates will not be output.".format(format))
 
-    def _output_lammps_data(self, filename):
+    def _get_lammps_data_lines(self):
         """
-        Output Frame coordinates in LAMMPS data format.
+        Return lines of LAMMPS DATA file.
 
-        :param filename: Name of DATA file to create
+        :return List[str]: Lines of DATA file containing current coordinates
+
         """
         raise NotImplementedError("LAMMPS Data output has not yet been implemented.")
 
-    def _output_gro(self, filename):
+    def _get_gro_lines(self):
         """
-        Create a GROMACS GRO file from the data in this Frame
+        Return lines of GRO file.
 
-        :param filename: Name of GRO file to create
+        :return List[str]: Lines of GRO file containing current coordinates
         """
-        backup_file(filename)
+        ret_lines = [
+            self.name,
+            "{0:5d}".format(self.natoms)
+        ]
 
-        with open(filename, "w") as gro:
-            print(self.name, file=gro)
-            print("{0:5d}".format(self.natoms), file=gro)
-            i = 1
-            format_string = "{0:5d}{1:5s}{2:>5s}{3:5d}{4:8.3f}{5:8.3f}{6:8.3f}"
-            for res in self.residues:
-                for atom in res:
-                    print(format_string.format(res.num, res.name,
-                                               atom.name, i,
-                                               *atom.coords), file=gro)
-                    i += 1
-            print("{0:10.5f}{1:10.5f}{2:10.5f}".format(*self.box), file=gro)
+        i = 1
+        format_string = "{0:5d}{1:5s}{2:>5s}{3:5d}{4:8.3f}{5:8.3f}{6:8.3f}"
+        for res in self.residues:
+            for atom in res:
+                ret_lines.append(format_string.format(res.num, res.name, atom.name, i, *atom.coords))
+                i += 1
+
+        ret_lines.append("{0:10.5f}{1:10.5f}{2:10.5f}".format(*self.box))
+
+        return ret_lines
 
     def add_residue(self, residue):
         """
