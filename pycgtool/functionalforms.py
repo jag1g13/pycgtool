@@ -67,7 +67,6 @@ class FunctionalForm(object, metaclass=abc.ABCMeta):
         """
         return np.nanmean(values)
 
-    @staticmethod
     @abc.abstractstaticmethod
     def fconst(values, temp):
         """
@@ -78,10 +77,34 @@ class FunctionalForm(object, metaclass=abc.ABCMeta):
         :param temp: Temperature of simulation
         :return: Calculated force constant
         """
-        pass
+        raise NotImplementedError
+
+    @abc.abstractproperty
+    def gromacs_type_ids(self):
+        """
+        Return tuple of GROMACS potential type ids when used as length, angle, dihedral.
+        
+        :return tuple[int]: Tuple of GROMACS potential type ids
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def gromacs_type_id_by_natoms(cls, natoms):
+        """
+        Return the GROMACS potential type id for this functional form when used with natoms.
+        
+        :param int natoms: 
+        :return int: GROMACS potential type id 
+        """
+        tipe = cls.gromacs_type_ids[natoms - 2]
+        if tipe is None:
+            raise TypeError("The functional form {0} does not have a defined GROMACS potential type when used with {1} atoms.".format(cls.__name__, natoms))
+        return tipe
 
 
 class Harmonic(FunctionalForm):
+    gromacs_type_ids = (1, 1, 1)  # Consider whether to use improper (type 2) instead, it is actually harmonic
+
     @staticmethod
     def fconst(values, temp):
         rt = 8.314 * temp / 1000.
@@ -90,6 +113,8 @@ class Harmonic(FunctionalForm):
 
 
 class CosHarmonic(FunctionalForm):
+    gromacs_type_ids = (None, 2, None)
+
     @staticmethod
     def fconst(values, temp):
         rt = 8.314 * temp / 1000.
@@ -99,18 +124,24 @@ class CosHarmonic(FunctionalForm):
 
 
 class MartiniDefaultLength(FunctionalForm):
+    gromacs_type_ids = (1, None, None)
+
     @staticmethod
     def fconst(values, temp):
         return 1250.
 
 
 class MartiniDefaultAngle(FunctionalForm):
+    gromacs_type_ids = (None, 2, None)
+
     @staticmethod
     def fconst(values, temp):
         return 25.
 
 
 class MartiniDefaultDihedral(FunctionalForm):
+    gromacs_type_ids = (None, None, 1)
+
     @staticmethod
     def fconst(values, temp):
         return 50.

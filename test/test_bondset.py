@@ -24,26 +24,26 @@ class DummyOptions:
 
 
 class BondSetTest(unittest.TestCase):
-    # Columns are: eqm value, standard fc, defaults fc, mixed fc
+    # Columns are: eqm value, standard fc, MARTINI defaults fc
     invert_test_ref_data = [
-        ( 0.220474419132,  72658.18163, 1250, 1520530.416),
-        ( 0.221844516963,  64300.01188, 1250, 1328761.015),
-        ( 0.216313356504,  67934.93368, 1250, 1474281.672),
-        ( 0.253166204438,  19545.27388, 1250,  311446.690),
-        ( 0.205958461836,  55359.06367, 1250, 1322605.992),
-        ( 0.180550961226, 139643.66601, 1250, 4334538.941),
-        ( 1.359314249473,    503.24211,   25,     481.527),
-        ( 2.026002746003,    837.76904,   25,     676.511),
-        ( 1.937848056214,    732.87969,   25,     639.007),
-        ( 1.453592079716,    945.32633,   25,     933.199),
-        ( 2.504189933347,    771.63691,   25,     273.207),
-        ( 1.733002945619,    799.82825,   25,     779.747),
-        (-1.446051810383,    253.75691,   50,    1250),
-        ( 1.067436470329,    125.04591,   50,    1250),
-        (-0.373528903861,    135.50927,   50,    1250),
-        ( 0.927837103158,     51.13975,   50,    1250),
-        (-1.685096988856,     59.38162,   50,    1250),
-        ( 1.315458354592,    279.80889,   50,    1250)
+        ( 0.220474419132,  72658.18163, 1250),
+        ( 0.221844516963,  64300.01188, 1250),
+        ( 0.216313356504,  67934.93368, 1250),
+        ( 0.253166204438,  19545.27388, 1250),
+        ( 0.205958461836,  55359.06367, 1250),
+        ( 0.180550961226, 139643.66601, 1250),
+        ( 1.359314249473,    503.24211,   25),
+        ( 2.026002746003,    837.76904,   25),
+        ( 1.937848056214,    732.87969,   25),
+        ( 1.453592079716,    945.32633,   25),
+        ( 2.504189933347,    771.63691,   25),
+        ( 1.733002945619,    799.82825,   25),
+        (-1.446051810383,    253.75691,   50),
+        ( 1.067436470329,    125.04591,   50),
+        (-0.373528903861,    135.50927,   50),
+        ( 0.927837103158,     51.13975,   50),
+        (-1.685096988856,     59.38162,   50),
+        ( 1.315458354592,    279.80889,   50)
     ]
 
     def test_bondset_create(self):
@@ -119,11 +119,11 @@ class BondSetTest(unittest.TestCase):
         measure.boltzmann_invert()
         self.support_check_mean_fc(measure["ALLA"], 2)
 
-    def test_bondset_boltzmann_invert_func_forms(self):
+    def test_bondset_boltzmann_invert_manual_default_fc(self):
         class FuncFormOptions(DummyOptions):
-            length_form = "CosHarmonic"
-            angle_form = "Harmonic"
-            dihedral_form = "MartiniDefaultLength"
+            length_form = "MartiniDefaultLength"
+            angle_form = "MartiniDefaultAngle"
+            dihedral_form = "MartiniDefaultDihedral"
 
         measure = BondSet("test/data/sugar.bnd", FuncFormOptions)
         frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
@@ -135,7 +135,7 @@ class BondSetTest(unittest.TestCase):
             measure.apply(cgframe)
 
         measure.boltzmann_invert()
-        self.support_check_mean_fc(measure["ALLA"], 3)
+        self.support_check_mean_fc(measure["ALLA"], 2)
 
     @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_bondset_boltzmann_invert_mdtraj(self):

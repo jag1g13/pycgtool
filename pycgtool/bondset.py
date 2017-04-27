@@ -31,7 +31,7 @@ class Bond:
 
     Bond lengths, angles and dihedrals are all equivalent, distinguished by the number of atoms present.
     """
-    __slots__ = ["atoms", "atom_numbers", "values", "eqm", "fconst", "_func_form"]
+    __slots__ = ["atoms", "atom_numbers", "values", "eqm", "fconst", "gromacs_type_id", "_func_form"]
 
     def __init__(self, atoms, atom_numbers=None, func_form=None):
         """
@@ -48,6 +48,7 @@ class Bond:
         self.fconst = None
 
         self._func_form = func_form
+        self.gromacs_type_id = func_form.gromacs_type_id_by_natoms(len(atoms))
 
     def __len__(self):
         return len(self.atoms)
@@ -273,10 +274,9 @@ class BondSet:
             if bonds:
                 print("\n[ {0:s} ]".format(section_header), file=itp)
             for bond in bonds:
-                # Factor is usually 1, unless doing correction
                 line = " ".join(["{0:4d}".format(atnum + 1) for atnum in bond.atom_numbers])
                 eqm = math.degrees(bond.eqm) if rad2deg else bond.eqm
-                line += " {0:4d} {1:12.5f}".format(1, eqm)
+                line += " {0:4d} {1:12.5f}".format(bond.gromacs_type_id, eqm)
                 if print_fconst:
                     line += " {0:12.5f}".format(bond.fconst)
                 if multiplicity is not None:

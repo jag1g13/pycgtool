@@ -13,6 +13,8 @@ class FunctionalFormTest(unittest.TestCase):
 
     def test_functional_form_new(self):
         class TestFunc(FunctionalForm):
+            gromacs_type_ids = (None, None, None)
+
             @staticmethod
             def eqm(values, temp):
                 return "TestResultEqm"
