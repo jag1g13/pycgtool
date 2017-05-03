@@ -3,9 +3,12 @@
 import argparse
 import sys
 
-from pycgtool.pycgtool import main, map_only
-from pycgtool.interface import Options
-from pycgtool.functionalforms import FunctionalForms
+try:
+    from pycgtool.pycgtool import main, map_only
+    from pycgtool.interface import Options
+    from pycgtool.functionalforms import FunctionalForms
+except SyntaxError:
+    raise RuntimeError("PyCGTOOL requires Python 3.2 or greater")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Perform coarse-grain mapping of atomistic trajectory")

@@ -146,7 +146,10 @@ class Options:
 
         for i, (key, value) in enumerate(self):
             window_keys.addstr(i, 0, key)
-            text_edit_wins.append(window_vals.derwin(1, 30, i, 0))
+            try:
+                text_edit_wins.append(window_vals.derwin(1, 30, i, 0))
+            except curses.error as e:
+                raise RuntimeError("Your terminal is too small to fit the interface, please expand it") from e
             text_edit_wins[-1].addstr(0, 0, str(value))
             text_inputs.append(curses.textpad.Textbox(text_edit_wins[-1]))
 
