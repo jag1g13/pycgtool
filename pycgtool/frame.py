@@ -63,14 +63,10 @@ class Atom:
     def add_missing_data(self, other):
         assert self.name == other.name
         assert self.num == other.num
-        if self.type is None:
-            self.type = other.type
-        if self.mass is None:
-            self.mass = other.mass
-        if self.charge is None:
-            self.charge = other.charge
-        if self.coords is None:
-            self.coords = other.coords
+
+        for attr in ("type", "mass", "charge", "coords"):
+            if getattr(self, attr) is None:
+                setattr(self, attr, getattr(other, attr))
 
 
 class Residue:
@@ -332,6 +328,13 @@ class Frame:
 
             if itp is not None:
                 self._parse_itp(itp)
+
+    @classmethod
+    def instance_from_reader(cls, reader):
+        obj = cls()
+        obj._trajreader = reader
+        obj._trajreader.initialise_frame(obj)
+        return obj
 
     def __len__(self):
         return len(self.residues)

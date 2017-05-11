@@ -6,6 +6,7 @@ import logging
 import numpy as np
 
 from pycgtool.frame import Atom, Residue, Frame
+from pycgtool.frame import FrameReaderSimpleTraj, FrameReaderMDTraj, FrameReader
 
 try:
     import mdtraj
@@ -163,6 +164,38 @@ class FrameTest(unittest.TestCase):
 
         while frame.next_frame():
             frame.write_xtc("water_test2.xtc")
+
+    def test_frame_instance_from_reader(self):
+        reader = FrameReaderSimpleTraj("test/data/water.gro")
+        frame = Frame.instance_from_reader(reader)
+
+        self.assertEqual(221, len(frame.residues))
+        self.assertEqual("SOL", frame.residues[0].name)
+        self.assertEqual(3, len(frame.residues[0].atoms))
+        self.assertEqual("OW", frame.residues[0].atoms[0].name)
+        np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),
+                                   frame.residues[0].atoms[0].coords)
+
+    def test_frame_instance_from_reader_dummy(self):
+        class DummyReader(FrameReader):
+            def _initialise_frame(self, frame):
+                frame.dummy_reader = True
+
+            def _read_frame_number(self, number):
+                return number * 10, [], None
+
+        reader = DummyReader(None)
+        frame = Frame.instance_from_reader(reader)
+        self.assertTrue(frame.dummy_reader)
+
+        frame.next_frame()
+        self.assertEqual(frame.number, 0)
+        self.assertEqual(frame.time, 0)
+        self.assertIsNone(frame.box)
+
+        frame.next_frame()
+        self.assertEqual(frame.number, 1)
+        self.assertEqual(frame.time, 10)
 
 
 if __name__ == '__main__':
