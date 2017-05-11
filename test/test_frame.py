@@ -6,13 +6,19 @@ import logging
 import numpy as np
 
 from pycgtool.frame import Atom, Residue, Frame
-from pycgtool.frame import FrameReaderSimpleTraj, FrameReaderMDTraj, FrameReader
+from pycgtool.frame import FrameReaderSimpleTraj, FrameReaderMDAnalysis, FrameReader
 
 try:
     import mdtraj
     mdtraj_present = True
 except ImportError:
     mdtraj_present = False
+
+try:
+    import MDAnalysis
+    mdanalysis_present = True
+except ImportError:
+    mdanalysis_present = False
 
 
 class AtomTest(unittest.TestCase):
@@ -58,14 +64,18 @@ class FrameTest(unittest.TestCase):
         self.assertEqual(residue, frame.residues[0])
         self.assertTrue(residue is frame.residues[0])
 
-    def test_frame_simpletraj_read_gro(self):
-        frame = Frame("test/data/water.gro", xtc_reader="simpletraj")
+    def helper_read_gro(self, frame):
         self.assertEqual(221, len(frame.residues))
         self.assertEqual("SOL", frame.residues[0].name)
         self.assertEqual(3, len(frame.residues[0].atoms))
         self.assertEqual("OW", frame.residues[0].atoms[0].name)
         np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),
                                    frame.residues[0].atoms[0].coords)
+
+    def test_frame_simpletraj_read_gro(self):
+        frame = Frame("test/data/water.gro", xtc_reader="simpletraj")
+
+        self.helper_read_gro(frame)
 
     # MDTRAJ changes water name to HOH
     @unittest.expectedFailure
@@ -75,12 +85,14 @@ class FrameTest(unittest.TestCase):
         frame = Frame("test/data/water.gro", xtc_reader="mdtraj")
         logging.disable(logging.NOTSET)
 
-        self.assertEqual(221, len(frame.residues))
-        self.assertEqual("SOL", frame.residues[0].name)
-        self.assertEqual(3, len(frame.residues[0].atoms))
-        self.assertEqual("OW", frame.residues[0].atoms[0].name)
-        np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),
-                                   frame.residues[0].atoms[0].coords)
+        self.helper_read_gro(frame)
+
+    @unittest.skipIf(not mdanalysis_present, "MDAnalysis not present")
+    def test_frame_mdanalysis_read_gro(self):
+        reader = FrameReaderMDAnalysis("test/data/water.gro")
+        frame = Frame.instance_from_reader(reader)
+
+        self.helper_read_gro(frame)
 
     def test_frame_output_gro(self):
         frame = Frame("test/data/water.gro")
@@ -101,9 +113,7 @@ class FrameTest(unittest.TestCase):
         logging.disable(logging.NOTSET)
         self.assertEqual(11, frame.numframes)
 
-    def test_frame_simpletraj_read_xtc(self):
-        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
-                      xtc_reader="simpletraj")
+    def helper_read_xtc(self, frame):
         self.assertEqual(663, frame.natoms)
         # These are the coordinates from the gro file
         np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),
@@ -122,6 +132,11 @@ class FrameTest(unittest.TestCase):
                                    frame.residues[0].atoms[0].coords)
         np.testing.assert_allclose(np.array([1.90325272, 1.90325272, 1.90325272]),
                                    frame.box)
+
+    def test_frame_simpletraj_read_xtc(self):
+        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
+                      xtc_reader="simpletraj")
+        self.helper_read_xtc(frame)
 
     @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_frame_mdtraj_read_xtc(self):
@@ -130,25 +145,14 @@ class FrameTest(unittest.TestCase):
                       xtc_reader="mdtraj")
         logging.disable(logging.NOTSET)
 
-        self.assertEqual(663, frame.natoms)
+        self.helper_read_xtc(frame)
 
-        # These are the coordinates from the gro file
-        np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),
-                                   frame.residues[0].atoms[0].coords)
-        np.testing.assert_allclose(np.array([1.89868, 1.89868, 1.89868]),
-                                   frame.box)
-        frame.next_frame()
+    @unittest.skipIf(not mdanalysis_present, "MDAnalysis not present")
+    def test_frame_mdanalysis_read_xtc(self):
+        reader = FrameReaderMDAnalysis("test/data/water.gro", "test/data/water.xtc")
+        frame = Frame.instance_from_reader(reader)
 
-        # These coordinates are from the xtc file
-        np.testing.assert_allclose(np.array([1.176, 1.152, 1.586]),
-                                   frame.residues[0].atoms[0].coords)
-        np.testing.assert_allclose(np.array([1.9052, 1.9052, 1.9052]),
-                                   frame.box)
-        frame.next_frame()
-        np.testing.assert_allclose(np.array([1.122, 1.130, 1.534]),
-                                   frame.residues[0].atoms[0].coords)
-        np.testing.assert_allclose(np.array([1.90325272, 1.90325272, 1.90325272]),
-                                   frame.box)
+        self.helper_read_xtc(frame)
 
     @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_frame_write_xtc_mdtraj(self):
@@ -169,12 +173,7 @@ class FrameTest(unittest.TestCase):
         reader = FrameReaderSimpleTraj("test/data/water.gro")
         frame = Frame.instance_from_reader(reader)
 
-        self.assertEqual(221, len(frame.residues))
-        self.assertEqual("SOL", frame.residues[0].name)
-        self.assertEqual(3, len(frame.residues[0].atoms))
-        self.assertEqual("OW", frame.residues[0].atoms[0].name)
-        np.testing.assert_allclose(np.array([0.696, 1.33, 1.211]),
-                                   frame.residues[0].atoms[0].coords)
+        self.helper_read_gro(frame)
 
     def test_frame_instance_from_reader_dummy(self):
         class DummyReader(FrameReader):

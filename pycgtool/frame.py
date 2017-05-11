@@ -288,6 +288,39 @@ class FrameReaderMDTraj(FrameReader):
         return self._traj.time[number], self._traj.xyz[number], self._traj.unitcell_lengths[number]
 
 
+class FrameReaderMDAnalysis(FrameReader):
+    def __init__(self, topname, trajname=None, frame_start=0):
+        import MDAnalysis
+
+        super().__init__(topname, trajname, frame_start)
+
+        if trajname is None:
+            self._traj = MDAnalysis.Universe(topname)
+        else:
+            self._traj = MDAnalysis.Universe(topname, trajname)
+
+        self.num_atoms = self._traj.atoms.n_atoms
+        self.num_frames = self._traj.trajectory.n_frames
+
+    def _initialise_frame(self, frame):
+        frame.name = ""
+        frame.natoms = self.num_atoms
+
+        import MDAnalysis
+        topol = MDAnalysis.Universe(self._topname)
+        frame.box = topol.dimensions[0:3] / 10.
+
+        for res in topol.residues:
+            residue = Residue(name=res.resname, num=res.resnum)
+            for atom in res.atoms:
+                residue.add_atom(Atom(name=atom.name, num=atom.id, coords=atom.position / 10.))
+            frame.residues.append(residue)
+
+    def _read_frame_number(self, number):
+        traj_frame = self._traj.trajectory[number]
+        return traj_frame.time, traj_frame.positions / 10., traj_frame.dimensions[0:3] / 10.
+
+
 class Frame:
     """
     Hold Atom data separated into Residues
