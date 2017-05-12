@@ -346,7 +346,8 @@ class Frame:
 
         if gro is not None:
             open_xtc = {"simpletraj": FrameReaderSimpleTraj,
-                        "mdtraj":     FrameReaderMDTraj}
+                        "mdtraj":     FrameReaderMDTraj,
+                        "mdanalysis": FrameReaderMDAnalysis}
             try:
                 self._trajreader = open_xtc[xtc_reader](gro, xtc, frame_start=frame_start)
             except KeyError as e:
@@ -364,6 +365,12 @@ class Frame:
 
     @classmethod
     def instance_from_reader(cls, reader):
+        """
+        Return Frame instance initialised from existing FrameReader object
+        
+        :param FrameReader reader: FrameReader object
+        :return: Frame instance
+        """
         obj = cls()
         obj._trajreader = reader
         obj._trajreader.initialise_frame(obj)
