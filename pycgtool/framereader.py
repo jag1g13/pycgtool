@@ -181,7 +181,7 @@ class FrameReaderMDTraj(FrameReader):
         try:
             import mdtraj
         except ImportError as e:
-            if "scipy" in e.msg:
+            if "scipy" in repr(e):
                 e.msg = "The MDTraj FrameReader also requires Scipy"
             else:
                 e.msg = "The MDTraj FrameReader requires the module MDTraj (and probably Scipy)"

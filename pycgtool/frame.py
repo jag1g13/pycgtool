@@ -200,7 +200,7 @@ class Frame:
             try:
                 import mdtraj
             except ImportError as e:
-                if "scipy" in e.msg:
+                if "scipy" in repr(e):
                     e.msg = "XTC output with MDTraj also requires Scipy"
                 else:
                     e.msg = "XTC output requires the module MDTraj (and probably Scipy)"
