@@ -1,6 +1,4 @@
-numpy
 scipy
-simpletraj
 mdtraj
 mdanalysis
 pytest
