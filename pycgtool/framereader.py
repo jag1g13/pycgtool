@@ -39,9 +39,10 @@ def get_frame_reader(top, traj=None, frame_start=0, name=None):
         for name, reader in readers.items():  # Return first reader that accepts given files
             try:
                 return reader(top, traj, frame_start)
-            except (UnsupportedFormatException, ImportError):
+            except (UnsupportedFormatException, ImportError) as e:
+                print(e)
                 continue
-        raise UnsupportedFormatException("None of the available readers support the trajector format provided")
+        raise UnsupportedFormatException("None of the available readers support the trajector format provided, {0} {1}".format(top, traj))
 
 
 class FrameReader(metaclass=abc.ABCMeta):
@@ -65,6 +66,8 @@ class FrameReader(metaclass=abc.ABCMeta):
     def read_frame_number(self, number, frame):
         try:
             time, coords, box = self._read_frame_number(number)
+            if box is None:
+                box = np.zeros(3)
             frame.time = time
             frame.box = box
 
@@ -113,6 +116,10 @@ class FrameReaderSimpleTraj(FrameReader):
                 if not os.path.isfile(trajname):
                     raise FileNotFoundError(trajname) from e
                 e.args = ("Error opening file '{0}'".format(trajname),)
+                raise
+            except Exception as e:
+                if "extension" in repr(e) and "not supported" in repr(e):
+                    raise UnsupportedFormatException from e
                 raise
 
             if self._traj.numatoms != self.num_atoms:
@@ -233,7 +240,10 @@ class FrameReaderMDTraj(FrameReader):
         """
         Read next frame from XTC using mdtraj library.
         """
-        return self._traj.time[number], self._traj.xyz[number], self._traj.unitcell_lengths[number]
+        try:
+            return self._traj.time[number], self._traj.xyz[number], self._traj.unitcell_lengths[number]
+        except TypeError:
+            return self._traj.time[number], self._traj.xyz[number], None
 
 
 class FrameReaderMDAnalysis(FrameReader):
