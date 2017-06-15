@@ -211,7 +211,7 @@ class FrameTest(unittest.TestCase):
         frame.next_frame()
         self.assertEqual(frame.number, 0)
         self.assertEqual(frame.time, 0)
-        self.assertIsNone(frame.box)
+        np.testing.assert_array_equal(np.zeros(3), frame.box)  # Reader replaces None with (0, 0, 0)
 
         frame.next_frame()
         self.assertEqual(frame.number, 1)
