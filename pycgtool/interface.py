@@ -299,7 +299,7 @@ class Progress:
     def _stop(self):
         if not self._quiet:
             time_taken = int(time.clock() - self._start_time)
-            print(self._bar + " took {0}s".format(time_taken))
+            print(self._bar + " took {0} seconds".format(time_taken))
         raise StopIteration
 
     def _display(self):
@@ -307,4 +307,4 @@ class Progress:
             time_remain = int((time.clock() - self._start_time) * ((self._maxits - self._its) / self._its))
         except ZeroDivisionError:
             time_remain = "-"
-        print(self._bar + " {0}s left".format(time_remain), end="\r")
+        print(self._bar + " {0}s left    ".format(time_remain), end="\r")
