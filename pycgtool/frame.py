@@ -9,7 +9,7 @@ import logging
 
 import numpy as np
 
-from .util import backup_file
+from .util import backup_file, file_write_lines
 from .parsers.cfg import CFG
 
 logger = logging.getLogger(__name__)
