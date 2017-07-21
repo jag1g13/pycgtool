@@ -7,7 +7,8 @@ import numpy as np
 
 from pycgtool.frame import Atom, Residue, Frame
 from pycgtool.framereader import FrameReaderSimpleTraj, FrameReaderMDAnalysis, FrameReaderMDTraj
-from pycgtool.framereader import FrameReader, get_frame_reader, UnsupportedFormatException
+from pycgtool.framereader import FrameReader, get_frame_reader
+from pycgtool.framereader import UnsupportedFormatException, NonMatchingSystemError
 
 try:
     import mdtraj
@@ -216,6 +217,24 @@ class FrameTest(unittest.TestCase):
         frame.next_frame()
         self.assertEqual(frame.number, 1)
         self.assertEqual(frame.time, 10)
+
+    def test_raise_nonmatching_system_all(self):
+        with self.assertRaises(NonMatchingSystemError):
+            reader = get_frame_reader("test/data/water.gro", "test/data/sugar.xtc")
+
+    def test_raise_nonmatching_system_simpletraj(self):
+        with self.assertRaises(NonMatchingSystemError):
+            reader = FrameReaderSimpleTraj("test/data/water.gro", "test/data/sugar.xtc")
+
+    @unittest.skipIf(not mdtraj_present, "MDTraj or Scipy not present")
+    def test_raise_nonmatching_system_mdtraj(self):
+        with self.assertRaises(NonMatchingSystemError):
+            reader = FrameReaderMDTraj("test/data/water.gro", "test/data/sugar.xtc")
+
+    @unittest.skipIf(not mdanalysis_present, "MDAnalysis not present")
+    def test_raise_nonmatching_system_mdanalysis(self):
+        with self.assertRaises(NonMatchingSystemError):
+            reader = FrameReaderMDAnalysis("test/data/water.gro", "test/data/sugar.xtc")
 
 
 if __name__ == '__main__':
