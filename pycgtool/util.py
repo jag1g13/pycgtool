@@ -297,7 +297,7 @@ def r_squared(ref, fit):
         return 0
 
 
-def cmp_whitespace_float(ref_filename, test_filename, float_rel_error=0.01):
+def cmp_whitespace_float(ref_filename, test_filename, float_rel_error=0.01, verbose=False):
     """
     Compare two files ignoring spacing on a line and using a tolerance on floats
 
@@ -319,24 +319,36 @@ def cmp_whitespace_float(ref_filename, test_filename, float_rel_error=0.01):
     if filecmp.cmp(ref_filename, test_filename):
         return True
     with open(ref_filename) as ref_file, open(test_filename) as test_file:
+        compare = True
         for ref_line, test_line in itertools.zip_longest(ref_file, test_file):
             if ref_line is None or test_line is None:
-                return False
+                compare = False
+                break
             if ref_line == test_line:
                 continue
 
             ref_toks = ref_line.split()
             test_toks = test_line.split()
             if len(ref_toks) != len(test_toks):
-                return False
+                compare = False
+                break
             for ref_tok, test_tok in zip(map(float_or_string, ref_toks),
                                          map(float_or_string, test_toks)):
                 if ref_tok != test_tok:
                     if float == type(ref_tok) and float == type(test_tok):
                         if abs(ref_tok - test_tok) > ref_tok * float_rel_error:
-                            return False
+                            compare = False
+                            break
                     else:
-                        return False
+                        compare = False
+                        break
+
+    if not compare:
+        if verbose:
+            print("Lines fail comparison:")
+            print("Ref:  {0}".format(ref_line))
+            print("Test: {0}".format(test_line))
+        return False
     return True
 
 
