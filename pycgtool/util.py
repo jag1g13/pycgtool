@@ -327,18 +327,19 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
     :param bool verbose: Print failing lines
     :return: True if all lines are the same, else False
     """
-    def float_or_string(string):
+    def number_or_string(string):
         try:
-            int(string)
-            return string
+            as_float = float(string)
+            as_int = int(as_float)
+            if as_int == as_float:
+                return as_int
+            return as_float
         except ValueError:
-            try:
-                return float(string)
-            except ValueError:
-                return string
+            return string
 
     compare = True
     for ref_line, test_line in itertools.zip_longest(ref_lines, test_lines):
+        # Shortcut trivial comparisons
         if ref_line is None or test_line is None:
             compare = False
             break
@@ -350,24 +351,26 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
         if len(ref_toks) != len(test_toks):
             compare = False
             break
-        for ref_tok, test_tok in zip(map(float_or_string, ref_toks),
-                                     map(float_or_string, test_toks)):
-            if ref_tok != test_tok:
-                if float == type(ref_tok) and float == type(test_tok):
-                    if abs(ref_tok - test_tok) > ref_tok * rtol:
-                        compare = False
-                        break
-                else:
-                    compare = False
-                    break
 
-    if not compare:
-        if verbose:
+        # Check for float comparison
+        for ref_tok, test_tok in zip(map(number_or_string, ref_toks),
+                                     map(number_or_string, test_toks)):
+            if ref_tok != test_tok:
+                try:
+                    if abs(ref_tok - test_tok) > abs(ref_tok) * rtol:
+                        compare = False
+                except TypeError:
+                    compare = False
+
+        if not compare:
+            break
+
+    if verbose and not compare:
             print("Lines fail comparison:")
             print("Ref:  {0}".format(ref_line))
             print("Test: {0}".format(test_line))
-        return False
-    return True
+
+    return compare
 
 
 def once_wrapper(func):

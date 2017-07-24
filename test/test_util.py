@@ -209,12 +209,17 @@ class UtilTest(unittest.TestCase):
         self.assertFalse(cmp_whitespace_float(ref, test))
 
     def test_cmp_whitespace_float(self):
-        ref =  ["8.3 1.00 -3"]
-        test = ["8.3 1.00 -3"]
+        ref =  ["8.3 1.00 -3 0"]
+        test = ["8.3 1.00 -3 0.0"]
         self.assertTrue(cmp_whitespace_float(ref, test))
-        test = ["8.3 1.01 -3"]
+        test = ["8.3 1.01 -3 0"]
         self.assertFalse(cmp_whitespace_float(ref, test))
         self.assertTrue(cmp_whitespace_float(ref, test, rtol=0.1))
+
+        test = ["8.3 1.00 -2.999 0"]
+        self.assertTrue(cmp_whitespace_float(ref, test))
+        test = ["8.3 1.00 -3.001 0"]
+        self.assertTrue(cmp_whitespace_float(ref, test))
 
 
 # TODO test backing up
