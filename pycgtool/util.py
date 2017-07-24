@@ -337,20 +337,18 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
         except ValueError:
             return string
 
-    compare = True
-    for ref_line, test_line in itertools.zip_longest(ref_lines, test_lines):
+    diff_lines = []
+    for i, (ref_line, test_line) in enumerate(itertools.zip_longest(ref_lines, test_lines)):
         # Shortcut trivial comparisons
         if ref_line is None or test_line is None:
-            compare = False
-            break
+            diff_lines.append((i, ref_line, test_line))
         if ref_line == test_line:
             continue
 
         ref_toks = ref_line.split()
         test_toks = test_line.split()
         if len(ref_toks) != len(test_toks):
-            compare = False
-            break
+            diff_lines.append((i, ref_line, test_line))
 
         # Check for float comparison
         for ref_tok, test_tok in zip(map(number_or_string, ref_toks),
@@ -358,19 +356,19 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
             if ref_tok != test_tok:
                 try:
                     if abs(ref_tok - test_tok) > abs(ref_tok) * rtol:
-                        compare = False
+                        diff_lines.append((i, ref_line, test_line))
                 except TypeError:
-                    compare = False
+                    diff_lines.append((i, ref_line, test_line))
 
-        if not compare:
-            break
-
-    if verbose and not compare:
+    if verbose and diff_lines:
             print("Lines fail comparison:")
-            print("Ref:  {0}".format(ref_line))
-            print("Test: {0}".format(test_line))
+            print(diff_lines)
+            for i, ref_line, test_line in diff_lines:
+                print("Line {}".format(i))
+                print("Ref:  {0}".format(ref_line))
+                print("Test: {0}".format(test_line))
 
-    return compare
+    return len(diff_lines) == 0
 
 
 def once_wrapper(func):
