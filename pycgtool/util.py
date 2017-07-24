@@ -297,14 +297,35 @@ def r_squared(ref, fit):
         return 0
 
 
-def cmp_whitespace_float(ref_filename, test_filename, float_rel_error=0.01, verbose=False):
+def cmp_file_whitespace_float(ref_filename, test_filename, rtol=0.01, verbose=False):
     """
     Compare two files ignoring spacing on a line and using a tolerance on floats
 
     :param ref_filename: Name of reference file
     :param test_filename: Name of test file
-    :param float_rel_error: Acceptable relative error on floating point numbers
+    :param float rtol: Acceptable relative error on floating point numbers
+    :param bool verbose: Print failing lines
     :return: True if files are the same, else False
+    """
+    if filecmp.cmp(ref_filename, test_filename):
+        return True
+
+    with open(ref_filename) as ref, open(test_filename) as test:
+        ref_lines = ref.readlines()
+        test_lines = test.readlines()
+
+        return cmp_whitespace_float(ref_lines, test_lines, rtol=rtol, verbose=verbose)
+
+
+def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
+    """
+    Compare two iterables of lines ignoring spacing on a line and using a tolerance on floats
+
+    :param ref_lines: Iterable of reference lines
+    :param test_lines: Iterable of test lines
+    :param float rtol: Acceptable relative error on floating point numbers
+    :param bool verbose: Print failing lines
+    :return: True if all lines are the same, else False
     """
     def float_or_string(string):
         try:
@@ -316,32 +337,29 @@ def cmp_whitespace_float(ref_filename, test_filename, float_rel_error=0.01, verb
             except ValueError:
                 return string
 
-    if filecmp.cmp(ref_filename, test_filename):
-        return True
-    with open(ref_filename) as ref_file, open(test_filename) as test_file:
-        compare = True
-        for ref_line, test_line in itertools.zip_longest(ref_file, test_file):
-            if ref_line is None or test_line is None:
-                compare = False
-                break
-            if ref_line == test_line:
-                continue
+    compare = True
+    for ref_line, test_line in itertools.zip_longest(ref_lines, test_lines):
+        if ref_line is None or test_line is None:
+            compare = False
+            break
+        if ref_line == test_line:
+            continue
 
-            ref_toks = ref_line.split()
-            test_toks = test_line.split()
-            if len(ref_toks) != len(test_toks):
-                compare = False
-                break
-            for ref_tok, test_tok in zip(map(float_or_string, ref_toks),
-                                         map(float_or_string, test_toks)):
-                if ref_tok != test_tok:
-                    if float == type(ref_tok) and float == type(test_tok):
-                        if abs(ref_tok - test_tok) > ref_tok * float_rel_error:
-                            compare = False
-                            break
-                    else:
+        ref_toks = ref_line.split()
+        test_toks = test_line.split()
+        if len(ref_toks) != len(test_toks):
+            compare = False
+            break
+        for ref_tok, test_tok in zip(map(float_or_string, ref_toks),
+                                     map(float_or_string, test_toks)):
+            if ref_tok != test_tok:
+                if float == type(ref_tok) and float == type(test_tok):
+                    if abs(ref_tok - test_tok) > ref_tok * rtol:
                         compare = False
                         break
+                else:
+                    compare = False
+                    break
 
     if not compare:
         if verbose:

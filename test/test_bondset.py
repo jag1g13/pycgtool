@@ -7,7 +7,7 @@ import os
 from pycgtool.bondset import BondSet
 from pycgtool.frame import Frame
 from pycgtool.mapping import Mapping
-from pycgtool.util import cmp_whitespace_float
+from pycgtool.util import cmp_file_whitespace_float
 
 try:
     import mdtraj
@@ -207,8 +207,8 @@ class BondSetTest(unittest.TestCase):
         measure.write_itp("sugar_out.itp", mapping)
         logging.disable(logging.NOTSET)
 
-        self.assertTrue(cmp_whitespace_float("sugar_out.itp", "test/data/sugar_out.itp",
-                                             float_rel_error=0.001, verbose=True))
+        self.assertTrue(cmp_file_whitespace_float("sugar_out.itp", "test/data/sugar_out.itp",
+                                                  rtol=0.001, verbose=True))
 
     def test_duplicate_atoms_in_bond(self):
         with self.assertRaises(ValueError):
@@ -230,8 +230,8 @@ class BondSetTest(unittest.TestCase):
 
         filenames = ("ALLA_length.dat", "ALLA_angle.dat", "ALLA_dihedral.dat")
         for filename in filenames:
-            self.assertTrue(cmp_whitespace_float(filename, os.path.join("test/data", filename),
-                                                 float_rel_error=0.001, verbose=True))
+            self.assertTrue(cmp_file_whitespace_float(filename, os.path.join("test/data", filename),
+                                                      rtol=0.001, verbose=True))
 
     def test_get_lines_for_bond_dump(self):
         expected = [

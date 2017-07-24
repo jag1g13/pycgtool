@@ -10,7 +10,7 @@ import numpy.testing
 from pycgtool.util import tuple_equivalent, extend_graph_chain, stat_moments, transpose_and_sample
 from pycgtool.util import dir_up, backup_file, sliding, r_squared, dist_with_pbc
 from pycgtool.util import SimpleEnum, FixedFormatUnpacker
-from pycgtool.util import file_write_lines
+from pycgtool.util import file_write_lines, cmp_whitespace_float
 
 
 class UtilTest(unittest.TestCase):
@@ -200,6 +200,21 @@ class UtilTest(unittest.TestCase):
         self.assertEqual(34, toks[1])
         self.assertEqual("hello", toks[2])
         self.assertAlmostEqual(12.3, toks[3])
+
+    def test_cmp_whitespace_text(self):
+        ref = ["Hello World"]
+        test = ["Hello World"]
+        self.assertTrue(cmp_whitespace_float(ref, test))
+        test = ["Hello PyCGTOOL"]
+        self.assertFalse(cmp_whitespace_float(ref, test))
+
+    def test_cmp_whitespace_float(self):
+        ref =  ["8.3 1.00 -3"]
+        test = ["8.3 1.00 -3"]
+        self.assertTrue(cmp_whitespace_float(ref, test))
+        test = ["8.3 1.01 -3"]
+        self.assertFalse(cmp_whitespace_float(ref, test))
+        self.assertTrue(cmp_whitespace_float(ref, test, rtol=0.1))
 
 
 # TODO test backing up
