@@ -362,7 +362,6 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
 
     if verbose and diff_lines:
             print("Lines fail comparison:")
-            print(diff_lines)
             for i, ref_line, test_line in diff_lines:
                 print("Line {}".format(i))
                 print("Ref:  {0}".format(ref_line))
