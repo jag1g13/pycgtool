@@ -61,6 +61,33 @@ class BeadMap(Atom):
     def __getitem__(self, item):
         return self.atoms[item]
 
+class VirtualMap(BeadMap):
+    __slots__ = ["name", "type", "atoms", "charge", "mass", "weights", "weights_dict"]
+    def __init__(self, name, num, type=None, atoms=None, charge=0, mass=0):
+        """
+        Create a single bead mapping.
+
+        :param str name: The name of the bead
+        :param int num: The number of the bead
+        :param str type: The bead type
+        :param List[str] atoms: The CG bead names from which the bead position is determined
+        :param float charge: The net charge on the bead
+        :param float mass: The total bead mass
+        """
+        BeadMap.__init__(self, name, num, type=type, atoms=atoms, charge=charge, mass=mass)
+
+    def update_contruction(self, beads=None):
+        """
+        Create links to CG beads that virutal atoms contructed from
+        :param beads:
+        :return:
+        """
+
+
+
+
+
+
 
 class EmptyBeadError(Exception):
     """
@@ -91,9 +118,20 @@ class Mapping:
             for mol_name, mol_section in cfg.items():
                 self._mappings[mol_name] = []
                 self._manual_charges[mol_name] = False
+                virtual = False
                 molmap = self._mappings[mol_name]
                 for i, (name, typ, first, *atoms) in enumerate(mol_section):
                     charge = 0
+                    if name.startswith('@'):
+                        if name == '@v':
+                            virtual = True
+                            name, typ, first, *atoms=mol_section[i][1:]
+                        #ADD CUSTOM ERROR HERE LATER?
+                        else:
+                            raise SyntaxError('"{}" line prefix invalid'.format(name))
+
+
+
                     try:
                         # Allow optional charge in mapping file
                         charge = float(first)
@@ -101,8 +139,13 @@ class Mapping:
                     except ValueError:
                         atoms.insert(0, first)
                     assert atoms, "Bead {0} specification contains no atoms".format(name)
-                    newbead = BeadMap(name, i, type=typ, atoms=atoms, charge=charge)
+                    if not virtual:
+                        newbead = BeadMap(name, i, type=typ, atoms=atoms, charge=charge)
+                    else:
+                        newbead = VirtualMap(name, i, type=typ, atoms=atoms, charge=charge)
                     molmap.append(newbead)
+
+            # TODO add contructing CG beads to virtual sites? #
 
         # TODO this only works with one moleculetype in one itp - extend this
         if itp is not None:
@@ -238,13 +281,26 @@ class Mapping:
         for aares, cgres in zip(frame.yield_resname_in(self._mappings), cgframe):
             molmap = self._mappings[aares.name]
 
+            #TODO currently only 'geom' supported for virtual atom contruction
+            virtual_beads= []
+            virtual_bmap = []
             for i, (bead, bmap) in enumerate(zip(cgres, molmap)):
                 ref_coords = aares[bmap[0]].coords
+                #this is messy, but allows the virtual bead to be specified anywhere in the .map file
+                if isinstance(bmap, VirtualMap):
+                    virtual_beads.append(bead)
+                    virtual_bmap.append(bmap)
+                    continue
+
                 if len(bmap) == 1:
                     bead.coords = ref_coords
                     continue
 
                 coords = np.asarray([aares[atom].coords for atom in bmap], dtype=np.float32)
+                bead.coords = coord_func(ref_coords, coords, cgframe.box, bmap.weights)
+
+            for bead, bmap in zip(virtual_beads, virtual_bmap):
+                coords = np.asarray([cgres[atom].coords for atom in bmap], dtype=np.float32)
                 bead.coords = coord_func(ref_coords, coords, cgframe.box, bmap.weights)
 
         return cgframe
