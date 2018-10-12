@@ -7,6 +7,7 @@ BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a sin
 import itertools
 import math
 import logging
+from .mapping import VirtualMap
 
 import numpy as np
 
@@ -235,6 +236,15 @@ class BondSet:
         """
         return [bond for bond in self._molecules[mol] if len(bond.atoms) == 4]
 
+    def get_virtual_beads(self, mapping):
+        """
+        Return list of all virtual beads in molecule
+        :param mapping:
+        :return: list of virtual beads
+        """
+        return [bead for bead in mapping if isinstance(bead, VirtualMap)]
+
+
     def _populate_atom_numbers(self, mapping):
         """
         Add atom numbers to all bonds.
@@ -312,10 +322,20 @@ class BondSet:
                           i + 1, bead.type, 1, mol, bead.name, i + 1, bead.charge
                           ), file=itp)
 
+                virtual_beads = self.get_virtual_beads(mapping[mol])
+                if len(virtual_beads) != 0:
+                    print("\n[ virtual_sitesn ]", file=itp)
+                    for vbead in virtual_beads:
+                        CGids = [bead.num + 1 for bead in mapping[mol] if bead.name in vbead.atoms]
+                        CGids.sort()
+                        CGids_string = " ".join(map(str,CGids))
+                        print("{0:^6d} {1:^6d} {2}".format(vbead.num+1, 1, CGids_string), file=itp)
+
                 write_bond_angle_dih(self.get_bond_lengths(mol), "bonds", itp)
                 write_bond_angle_dih(self.get_bond_angles(mol), "angles", itp, rad2deg=True)
                 write_bond_angle_dih(self.get_bond_dihedrals(mol), "dihedrals", itp, multiplicity=1, rad2deg=True)
                 write_bond_angle_dih(self.get_bond_length_constraints(mol), "constraints", itp, print_fconst=False)
+
 
     def apply(self, frame):
         """
