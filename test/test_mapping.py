@@ -4,7 +4,7 @@ import os
 
 import numpy as np
 
-from pycgtool.mapping import Mapping
+from pycgtool.mapping import Mapping, VirtualMap
 from pycgtool.frame import Frame
 
 
@@ -20,6 +20,16 @@ class MappingTest(unittest.TestCase):
         self.assertEqual(1, len(mapping["SOL"]))
         self.assertEqual(3, len(mapping["SOL"][0].atoms))
         self.assertEqual("OW", mapping["SOL"][0].atoms[0])
+
+    def test_virtual_mapping_create(self):
+        mapping = Mapping("test/data/martini3/naphthalene.map", DummyOptions)
+        self.assertEqual(1, len(mapping))
+        self.assertTrue("NAPH" in mapping)
+        self.assertEqual(5, len(mapping["NAPH"]))
+        self.assertTrue(isinstance(mapping["NAPH"][2], VirtualMap))
+        self.assertEqual(4, len(mapping["NAPH"][2].atoms))
+        self.assertEqual("R1", mapping["NAPH"][2].atoms[0])
+
 
     def test_mapping_apply(self):
         mapping = Mapping("test/data/water.map", DummyOptions)
@@ -78,6 +88,7 @@ class MappingTest(unittest.TestCase):
         mapping = Mapping("test/data/two.map", options, itp="test/data/two.itp")
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([1., 1., 1.]), cg[0][0].coords)
+
 
 
 
