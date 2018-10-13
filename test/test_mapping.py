@@ -62,6 +62,12 @@ class MappingTest(unittest.TestCase):
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([1.5, 1.5, 1.5]), cg[0][0].coords)
 
+    def test_virtual_mapping_weights_geom(self):
+        frame = Frame("test/data/martini3/four.gro")
+        mapping = Mapping("test/data/martini3/four.map", DummyOptions)
+        cg = mapping.apply(frame)
+        np.testing.assert_allclose(np.array([2.5, 2.5, 2.5]), cg[0][2].coords)
+
     def test_mapping_weights_mass(self):
         frame = Frame("test/data/two.gro")
         options = DummyOptions()
@@ -70,6 +76,15 @@ class MappingTest(unittest.TestCase):
         mapping = Mapping("test/data/two.map", options, itp="test/data/two.itp")
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([2., 2., 2.]), cg[0][0].coords)
+
+    def test_virtual_mapping_weights_mass(self):
+        frame = Frame("test/data/martini3/four.gro")
+        options = DummyOptions()
+        options.virtual_map_center = "mass"
+        options.map_center = "mass"
+        mapping = Mapping("test/data/martini3/four.map", options, itp="test/data/martini3/four.itp")
+        cg = mapping.apply(frame)
+        np.testing.assert_allclose(np.array([3.0, 3.0, 3.0]), cg[0][2].coords)
 
     def test_mapping_weights_guess_mass(self):
         frame = Frame("test/data/two.gro")
@@ -80,6 +95,16 @@ class MappingTest(unittest.TestCase):
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([1.922575,  1.922575,  1.922575], dtype=np.float32),
                                    cg[0][0].coords, rtol=0.01)
+
+    def test_virtual_mapping_weights_guess_mass(self):
+        frame = Frame("test/data/martini3/four.gro")
+        options = DummyOptions()
+        options.virtual_map_center = "mass"
+        mapping = Mapping("test/data/martini3/four.map", options)
+        cg = mapping.apply(frame)
+        np.testing.assert_allclose(np.array([2.83337, 2.83337, 2.83337], dtype=np.float32),
+                                   cg[0][2].coords, rtol=0.01)
+
 
     def test_mapping_weights_first(self):
         frame = Frame("test/data/two.gro")

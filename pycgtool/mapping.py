@@ -110,7 +110,7 @@ class Mapping:
         """
         self._mappings = {}
         self._map_center = options.map_center
-        self._virutal_map_center = options.virtual_map_center
+        self._virtual_map_center = options.virtual_map_center
         self._masses_are_set = False
 
         with CFG(filename) as cfg:
@@ -157,32 +157,48 @@ class Mapping:
 
                 molname = itp["moleculetype"][0][0]
                 for bead in self._mappings[molname]:
-                    mass_array = np.array([[atoms[atom][1]] for atom in bead], dtype=np.float32)
-                    bead.mass = sum(mass_array)
-                    mass_array /= bead.mass
-                    bead.weights_dict["mass"] = mass_array
+                    if not isinstance(bead, VirtualMap):
+                        mass_array = np.array([[atoms[atom][1]] for atom in bead], dtype=np.float32)
+                        bead.mass = sum(mass_array)
+                        mass_array /= bead.mass
+                        bead.weights_dict["mass"] = mass_array
 
-                    for atom in bead:
+                        for atom in bead:
+                            if self._manual_charges[molname]:
+                                logger.warning("Charges assigned in mapping for molecule {0}, ignoring itp charges.".format(molname))
+                            else:
+                                bead.charge += atoms[atom][0]
+
+                for bead in self._mappings[molname]:
+                    if isinstance(bead, VirtualMap):
+                        mass_array = np.array(
+                            [real_bead.mass for real_bead in self._mappings[molname] if real_bead.name in bead])
+                        weights_array = mass_array / sum(mass_array)
+                        bead.weights_dict["mass"] = weights_array
                         if self._manual_charges[molname]:
-                            logger.warning("Charges assigned in mapping for molecule {0}, ignoring itp charges.".format(molname))
+                            logger.warning(
+                                "Charges assigned in mapping for molecule {0}, ignoring itp charges.".format(molname))
                         else:
-                            bead.charge += atoms[atom][0]
+                            charges = [real_bead.charge for real_bead in self._mappings[molname] if real_bead.name in bead]
+                            bead.charge = sum(charges)
+
+
 
                 self._masses_are_set = True
 
-        if self._map_center == "mass" and not self._masses_are_set:
-            self._guess_atom_masses()
-
-        if self._virutal_map_center == "mass":
-            if not self._masses_are_set:
+        if not self._masses_are_set:
+            if self._map_center == "mass":
                 self._guess_atom_masses()
+
+            if self._virtual_map_center == "mass":
+                    self._guess_atom_masses()
 
 
         for molname, mapping in self._mappings.items():
             for bmap in mapping:
-                #TODO this doesn't work! Change this!
                 if isinstance(bmap, VirtualMap):
-                    bmap.weights = bmap.weights_dict[self._map_center]
+                    bmap.weights = bmap.weights_dict[self._virtual_map_center]
+                    bmap.gromacs_type_id = bmap.gromacs_type_id_dict[self._virtual_map_center]
                 else:
                     bmap.weights = bmap.weights_dict[self._map_center]
 
@@ -231,11 +247,11 @@ class Mapping:
                     bead.weights_dict["mass"] = mass_array
 
             #set virtual bead masses#
-            for virtual_bead in mol_mapping:
-                if isinstance(virtual_bead, VirtualMap):
-                    mass_array = np.array([bead.mass for bead in virtual_bead], dtype=np.float32gp)
+            for bead in mol_mapping:
+                if isinstance(bead, VirtualMap):
+                    mass_array = np.array([real_bead.mass for real_bead in mol_mapping if real_bead.name in bead])
                     weights_array = mass_array / sum(mass_array)
-                    virtual_bead.weights_dict["mass"] = weights_array
+                    bead.weights_dict["mass"] = weights_array
 
         self._masses_are_set = True
 
@@ -302,13 +318,13 @@ class Mapping:
             virtual_beads= []
             virtual_bmap = []
             for i, (bead, bmap) in enumerate(zip(cgres, molmap)):
-                ref_coords = aares[bmap[0]].coords
+
                 #this is messy, but allows the virtual bead to be specified anywhere in the .map file
                 if isinstance(bmap, VirtualMap):
                     virtual_beads.append(bead)
                     virtual_bmap.append(bmap)
                     continue
-
+                ref_coords = aares[bmap[0]].coords
                 if len(bmap) == 1:
                     bead.coords = ref_coords
                     continue
