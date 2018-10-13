@@ -329,7 +329,7 @@ class BondSet:
                         CGids = [bead.num + 1 for bead in mapping[mol] if bead.name in vbead.atoms]
                         CGids.sort()
                         CGids_string = " ".join(map(str,CGids))
-                        print("{0:^6d} {1:^6d} {2}".format(vbead.num+1, 1, CGids_string), file=itp)
+                        print("{0:^6d} {1:^6d} {2}".format(vbead.num+1, vbead.gromacs_type_id, CGids_string), file=itp)
 
                 write_bond_angle_dih(self.get_bond_lengths(mol), "bonds", itp)
                 write_bond_angle_dih(self.get_bond_angles(mol), "angles", itp, rad2deg=True)

@@ -62,8 +62,9 @@ class BeadMap(Atom):
         return self.atoms[item]
 
 class VirtualMap(BeadMap):
-    __slots__ = ["name", "type", "atoms", "charge", "mass", "weights", "weights_dict"]
-    def __init__(self, name, num, type=None, atoms=None, charge=0, mass=0):
+    __slots__ = ["name", "type", "atoms", "charge", "mass", "weights", "weights_dict", "gromacs_type_id_dict",
+                                                                                       "gromacs_type_id"]
+    def __init__(self, name, num, type=None, atoms=None, charge=0):
         """
         Create a single bead mapping.
 
@@ -72,16 +73,14 @@ class VirtualMap(BeadMap):
         :param str type: The bead type
         :param List[str] atoms: The CG bead names from which the bead position is determined
         :param float charge: The net charge on the bead
-        :param float mass: The total bead mass
         """
-        BeadMap.__init__(self, name, num, type=type, atoms=atoms, charge=charge, mass=mass)
+        BeadMap.__init__(self, name, num, type=type, atoms=atoms, charge=charge, mass=0.)
+        self.gromacs_type_id_dict = {"geom":1, "mass":2}
+        self.gromacs_type_id = self.gromacs_type_id_dict["geom"]
 
-    def update_contruction(self, beads=None):
-        """
-        Create links to CG beads that virutal atoms contructed from
-        :param beads:
-        :return:
-        """
+
+
+
 
 
 
@@ -111,6 +110,7 @@ class Mapping:
         """
         self._mappings = {}
         self._map_center = options.map_center
+        self._virutal_map_center = options.virtual_map_center
         self._masses_are_set = False
 
         with CFG(filename) as cfg:
@@ -172,9 +172,19 @@ class Mapping:
 
         if self._map_center == "mass" and not self._masses_are_set:
             self._guess_atom_masses()
+
+        if self._virutal_map_center == "mass":
+            if not self._masses_are_set:
+                self._guess_atom_masses()
+
+
         for molname, mapping in self._mappings.items():
             for bmap in mapping:
-                bmap.weights = bmap.weights_dict[self._map_center]
+                #TODO this doesn't work! Change this!
+                if isinstance(bmap, VirtualMap):
+                    bmap.weights = bmap.weights_dict[self._map_center]
+                else:
+                    bmap.weights = bmap.weights_dict[self._map_center]
 
     def __len__(self):
         return len(self._mappings)
@@ -199,7 +209,7 @@ class Mapping:
 
         for mol_mapping in self._mappings.values():
             for bead in mol_mapping:
-                if bead.mass == 0:
+                if bead.mass == 0 and not isinstance(bead, VirtualMap):
                     mass_array = np.zeros((len(bead.atoms), 1), dtype=np.float32)
                     for i, atom in enumerate(bead.atoms):
                         try:
@@ -219,6 +229,13 @@ class Mapping:
 
                     mass_array /= bead.mass
                     bead.weights_dict["mass"] = mass_array
+
+            #set virtual bead masses#
+            for virtual_bead in mol_mapping:
+                if isinstance(virtual_bead, VirtualMap):
+                    mass_array = np.array([bead.mass for bead in virtual_bead], dtype=np.float32)
+                    weights_array = mass_array / sum(mass_array)
+                    virtual_bead.weights_dict["mass"] = weights_array
 
         self._masses_are_set = True
 
