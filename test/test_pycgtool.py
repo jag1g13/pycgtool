@@ -35,6 +35,7 @@ class PycgtoolTest(unittest.TestCase):
                       ("output_xtc", True),
                       ("map_only", False),
                       ("map_center", "geom"),
+                      ("virtual_map_center", "geom"),
                       ("constr_threshold", 100000),
                       ("dump_measurements", False),
                       ("dump_n_values", 10000),
