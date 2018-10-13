@@ -10,6 +10,7 @@ from pycgtool.frame import Frame
 
 class DummyOptions:
     map_center = "geom"
+    virtual_map_center = "geom"
 
 
 class MappingTest(unittest.TestCase):

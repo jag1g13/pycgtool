@@ -233,7 +233,7 @@ class Mapping:
             #set virtual bead masses#
             for virtual_bead in mol_mapping:
                 if isinstance(virtual_bead, VirtualMap):
-                    mass_array = np.array([bead.mass for bead in virtual_bead], dtype=np.float32)
+                    mass_array = np.array([bead.mass for bead in virtual_bead], dtype=np.float32gp)
                     weights_array = mass_array / sum(mass_array)
                     virtual_bead.weights_dict["mass"] = weights_array
 
