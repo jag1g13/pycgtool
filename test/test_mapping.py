@@ -81,7 +81,6 @@ class MappingTest(unittest.TestCase):
         frame = Frame("test/data/martini3/four.gro")
         options = DummyOptions()
         options.virtual_map_center = "mass"
-        options.map_center = "mass"
         mapping = Mapping("test/data/martini3/four.map", options, itp="test/data/martini3/four.itp")
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([3.0, 3.0, 3.0]), cg[0][2].coords)
