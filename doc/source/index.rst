@@ -90,6 +90,21 @@ Note that bead charges in the MARTINI framework are by convention integers and a
    [SOL]
    W P4 OW HW1 HW2
 
+The Martini 3.0 force field has now introduced the use of virtual sites for polycylic compounds or polysaccharides
+in order to improve numerical stability for highly constrained structures. Below is an example of how virtual sites
+can be included in the mapping file for naphthalene (see /test/data/martini3/naphthalene.map ). Similar to the previously
+described mapping syntax, a virtual site is defined with a prefix of '@v' as follows '@v [name] [type] [charge] [constructing beads]'.
+The constructing beads refer to a list of space delimited coarse grained bead names from which the position of the
+virtual site will be decided. Currently virtual sites can be constructed from either the center of geometry or mass of
+the constructing sites via the --advanced flag.
+
+   [ NAPH ]
+   R1 TC4 C8 H8 C9 H9
+   R2 TC4 C6 H6 C7 H7
+   @v R3 TC4 R1 R2 R4 R5
+   R4 TC4 C1 H1 C2 H2
+   R5 TC4 C3 H3 C4 H4
+
 Bond Definition
 ~~~~~~~~~~~~~~~
 An example bond definition file for the monosaccharide allose taken from ``test/data/sugar.bnd`` is shown below.
@@ -120,6 +135,8 @@ If no angles are defined for a molecule, PyCGTOOL will construct all angles from
    C4 C5 O5 C1
    C5 O5 C1 C2
    O5 C1 C2 C3
+
+
 
 
 Advanced Usage
