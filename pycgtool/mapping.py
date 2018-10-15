@@ -121,6 +121,7 @@ class Mapping:
                 virtual = False
                 molmap = self._mappings[mol_name]
                 for i, (name, typ, first, *atoms) in enumerate(mol_section):
+                    virtual = False
                     charge = 0
                     if name.startswith('@'):
                         if name == '@v':

@@ -30,6 +30,8 @@ class MappingTest(unittest.TestCase):
         self.assertTrue(isinstance(mapping["NAPH"][2], VirtualMap))
         self.assertEqual(4, len(mapping["NAPH"][2].atoms))
         self.assertEqual("R1", mapping["NAPH"][2].atoms[0])
+        self.assertEqual(1, [isinstance(bead, VirtualMap) for bead in mapping["NAPH"]].count(True))
+
 
 
     def test_mapping_apply(self):
