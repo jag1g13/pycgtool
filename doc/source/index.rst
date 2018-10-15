@@ -92,11 +92,11 @@ Note that bead charges in the MARTINI framework are by convention integers and a
 
 The Martini 3.0 force field has now introduced the use of virtual sites for polycylic compounds or polysaccharides
 in order to improve numerical stability for highly constrained structures. Below is an example of how virtual sites
-can be included in the mapping file for naphthalene (see /test/data/martini3/naphthalene.map ). Similar to the previously
-described mapping syntax, a virtual site is defined with a prefix of '@v' as follows '@v [name] [type] [charge] [constructing beads]'.
+can be included in the mapping file for naphthalene (see ``/test/data/martini3/naphthalene.map`` ). Similar to the previously
+described mapping syntax, a virtual site is defined with a prefix of ``@v`` as follows ``@v [name] [type] [charge] [constructing beads]``.
 The constructing beads refer to a list of space delimited coarse grained bead names from which the position of the
-virtual site will be decided. Currently virtual sites can be constructed from either the center of geometry or mass of
-the constructing sites via the --advanced flag.
+virtual site will be calculated. Currently virtual sites can be constructed from either the center of geometry or mass of
+the constructing sites via the --advanced flag.::
 
    [ NAPH ]
    R1 TC4 C8 H8 C9 H9
@@ -180,6 +180,7 @@ output               Coordinate output format                     **gro**
 output_xtc           Should a pseudo-CG XTC be created            **False**, True
 map_only             Run in mapping-only mode                     **False**, True
 map_center           Mapping method                               **geom**, mass
+virtual_map_center   Virutal site mapping method                  **geom**, mass
 constr_threshold     Convert stiff bonds to constraints over      **100000**, any number
 dump_measurements    Whether to output bond measurements          **False**, True
 dump_n_values        How many measurements to output              **10000**, any number
