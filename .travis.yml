@@ -11,4 +11,4 @@ install:
     - pip install -r requirements.txt --only-binary=numpy
     - pip install -r .requirements-test.txt --only-binary=scipy
 script:
-    - py.test --cov=./ test/
+    - py.test test/
