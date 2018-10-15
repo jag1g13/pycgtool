@@ -180,7 +180,7 @@ output               Coordinate output format                     **gro**
 output_xtc           Should a pseudo-CG XTC be created            **False**, True
 map_only             Run in mapping-only mode                     **False**, True
 map_center           Mapping method                               **geom**, mass
-virtual_map_center   Virutal site mapping method                  **geom**, mass
+virtual_map_center   Virtual site mapping method                  **geom**, mass
 constr_threshold     Convert stiff bonds to constraints over      **100000**, any number
 dump_measurements    Whether to output bond measurements          **False**, True
 dump_n_values        How many measurements to output              **10000**, any number
