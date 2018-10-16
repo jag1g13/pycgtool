@@ -291,7 +291,7 @@ class Progress:
 
     @property
     def _bar(self):
-        done = int(self._length * (self._its / self._maxits))
+        done = self._length if self._maxits == 0 else int(self._length * (self._its / self._maxits))
         left = self._length - done
         width = len(str(self._maxits))
         return "{0:-{width}} [".format(self._its, width=width) + done * "#" + left * "-" + "] {0}".format(self._maxits)
@@ -299,7 +299,7 @@ class Progress:
     def _stop(self):
         if not self._quiet:
             time_taken = int(time.clock() - self._start_time)
-            print(self._bar + " took {0}s".format(time_taken))
+            print(self._bar + " took {0} seconds".format(time_taken))
         raise StopIteration
 
     def _display(self):
@@ -307,4 +307,4 @@ class Progress:
             time_remain = int((time.clock() - self._start_time) * ((self._maxits - self._its) / self._its))
         except ZeroDivisionError:
             time_remain = "-"
-        print(self._bar + " {0}s left".format(time_remain), end="\r")
+        print(self._bar + " {0}s left    ".format(time_remain), end="\r")

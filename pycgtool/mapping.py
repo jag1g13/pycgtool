@@ -215,6 +215,9 @@ class Mapping:
     def __iter__(self):
         return iter(self._mappings)
 
+    def items(self):
+        return self._mappings.items()
+
     def _guess_atom_masses(self):
         """
         Guess atom masses from names
