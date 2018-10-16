@@ -17,11 +17,19 @@ try:
 except ImportError:
     from .util import tqdm_dummy as tqdm
 
-from .util import sliding, dist_with_pbc, transpose_and_sample
-from .util import backup_file, extend_graph_chainfile_write_lines
-from .util import vector_len, vector_cross, vector_angle, vector_angle_signed
-from .parsers.cfg import CFG
 from .functionalforms import FunctionalForms
+from .parsers.cfg import CFG
+from .util import (
+    dist_with_pbc,
+    extend_graph_chain,
+    file_write_lines,
+    sliding,
+    transpose_and_sample,
+    vector_angle,
+    vector_angle_signed,
+    vector_cross,
+    vector_len
+)
 
 logger = logging.getLogger(__name__)
 
