@@ -34,6 +34,7 @@ if __name__ == "__main__":
         ("output_xtc", args.outputxtc),
         ("map_only", not bool(args.bnd)),
         ("map_center", "geom"),
+        ("virtual_map_center", "geom"),
         ("constr_threshold", 100000),
         ("dump_measurements", bool(args.bnd) and not bool(args.map)),
         ("dump_n_values", 10000),

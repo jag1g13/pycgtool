@@ -388,7 +388,6 @@ def once_wrapper(func):
     return wrap
 
 
-# TODO this gives code analysis warnings from PyCharm when committing changes
 class SimpleEnum(object):
     class Enum(object):
         def __iter__(self):
