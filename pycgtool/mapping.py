@@ -61,6 +61,7 @@ class BeadMap(Atom):
     def __getitem__(self, item):
         return self.atoms[item]
 
+
 class VirtualMap(BeadMap):
     __slots__ = ["name", "type", "atoms", "charge", "mass", "weights", "weights_dict", "gromacs_type_id_dict",
                                                                                        "gromacs_type_id"]
@@ -77,15 +78,6 @@ class VirtualMap(BeadMap):
         BeadMap.__init__(self, name, num, type=type, atoms=atoms, charge=charge, mass=0.)
         self.gromacs_type_id_dict = {"geom":1, "mass":2}
         self.gromacs_type_id = self.gromacs_type_id_dict["geom"]
-
-
-
-
-
-
-
-
-
 
 
 class EmptyBeadError(Exception):
@@ -127,11 +119,9 @@ class Mapping:
                         if name == '@v':
                             virtual = True
                             name, typ, first, *atoms=mol_section[i][1:]
-                        #ADD CUSTOM ERROR HERE LATER?
+                        #TODO ADD CUSTOM ERROR HERE LATER?
                         else:
                             raise SyntaxError('"{}" line prefix invalid'.format(name))
-
-
 
                     try:
                         # Allow optional charge in mapping file
@@ -145,8 +135,6 @@ class Mapping:
                     else:
                         newbead = VirtualMap(name, i, type=typ, atoms=atoms, charge=charge)
                     molmap.append(newbead)
-
-            # TODO add contructing CG beads to virtual sites? #
 
         # TODO this only works with one moleculetype in one itp - extend this
         if itp is not None:
@@ -173,7 +161,7 @@ class Mapping:
                 for bead in self._mappings[molname]:
                     if isinstance(bead, VirtualMap):
                         mass_array = np.array(
-                            [real_bead.mass for real_bead in self._mappings[molname] if real_bead.name in bead])
+                            [real_bead.mass for real_bead in self._mappings[molname] if real_bead.name in bead], dtype=np.float32)
                         weights_array = mass_array / sum(mass_array)
                         bead.weights_dict["mass"] = weights_array
                         if self._manual_charges[molname]:
@@ -182,9 +170,6 @@ class Mapping:
                         else:
                             charges = [real_bead.charge for real_bead in self._mappings[molname] if real_bead.name in bead]
                             bead.charge = sum(charges)
-
-
-
                 self._masses_are_set = True
 
         if not self._masses_are_set:
@@ -193,7 +178,6 @@ class Mapping:
 
             if self._virtual_map_center == "mass":
                     self._guess_atom_masses()
-
 
         for molname, mapping in self._mappings.items():
             for bmap in mapping:
@@ -253,7 +237,7 @@ class Mapping:
             #set virtual bead masses#
             for bead in mol_mapping:
                 if isinstance(bead, VirtualMap):
-                    mass_array = np.array([real_bead.mass for real_bead in mol_mapping if real_bead.name in bead])
+                    mass_array = np.array([real_bead.mass for real_bead in mol_mapping if real_bead.name in bead], dtype=np.float32)
                     weights_array = mass_array / sum(mass_array)
                     bead.weights_dict["mass"] = weights_array
 
@@ -318,16 +302,14 @@ class Mapping:
         for aares, cgres in zip(frame.yield_resname_in(self._mappings), cgframe):
             molmap = self._mappings[aares.name]
 
-            #TODO currently only 'geom' supported for virtual atom contruction
             virtual_beads= []
             virtual_bmap = []
             for i, (bead, bmap) in enumerate(zip(cgres, molmap)):
-
-                #this is messy, but allows the virtual bead to be specified anywhere in the .map file
                 if isinstance(bmap, VirtualMap):
                     virtual_beads.append(bead)
                     virtual_bmap.append(bmap)
                     continue
+
                 ref_coords = aares[bmap[0]].coords
                 if len(bmap) == 1:
                     bead.coords = ref_coords

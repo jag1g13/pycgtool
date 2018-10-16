@@ -7,8 +7,6 @@ BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a sin
 import itertools
 import math
 import logging
-from .mapping import VirtualMap
-
 import numpy as np
 
 
@@ -17,6 +15,7 @@ try:
 except ImportError:
     from .util import tqdm_dummy as tqdm
 
+from .mapping import VirtualMap
 from .functionalforms import FunctionalForms
 from .parsers.cfg import CFG
 from .util import (
