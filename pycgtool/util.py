@@ -95,7 +95,6 @@ def circular_variance(values):
 
     mean = circular_mean(values)
     diff = np.mod(np.abs(values - mean), np.pi * 2)
-    np.nanmean(np.square(diff))
     return np.nanmean(np.square(diff))
 
 
