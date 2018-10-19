@@ -124,7 +124,7 @@ class BondSet:
         if self._default_fc:
             default_forms = ["MartiniDefaultLength", "MartiniDefaultAngle", "MartiniDefaultDihedral"]
         else:
-            default_forms = ["Harmonic", "CosHarmonic", "Harmonic"]
+            default_forms = ["Harmonic", "CosHarmonic", "HarmonicDihedral"]
         self._functional_forms = [None, None]
         self._functional_forms.extend(map(lambda x: functional_forms[x], default_forms))
 
@@ -142,6 +142,9 @@ class BondSet:
             self._functional_forms[4] = functional_forms[options.dihedral_form]
         except AttributeError:
             pass
+        else:
+            if options.dihedral_form == "Harmonic":
+                self._functional_forms[4] = functional_forms["HarmonicDihedral"]
 
         with CFG(filename) as cfg:
             for mol_name, mol_section in cfg.items():
@@ -383,7 +386,6 @@ class BondSet:
 
             c1 = vector_cross(veca, vecb)
             c2 = vector_cross(vecb, vecc)
-
             return vector_angle_signed(c1, c2, vecb)
 
         calc = {2: calc_length,

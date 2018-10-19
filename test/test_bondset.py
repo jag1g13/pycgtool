@@ -209,7 +209,7 @@ class BondSetTest(unittest.TestCase):
         logging.disable(logging.NOTSET)
 
         self.assertTrue(cmp_file_whitespace_float("sugar_out.itp", "test/data/sugar_out.itp",
-                                                  rtol=0.001, verbose=True))
+                                                  rtol=0.005, verbose=True))
 
     def test_duplicate_atoms_in_bond(self):
         with self.assertRaises(ValueError):
@@ -232,7 +232,7 @@ class BondSetTest(unittest.TestCase):
         filenames = ("ALLA_length.dat", "ALLA_angle.dat", "ALLA_dihedral.dat")
         for filename in filenames:
             self.assertTrue(cmp_file_whitespace_float(os.path.join("test/data", filename), filename,
-                                                      rtol=0.005, verbose=True))
+                                                      rtol=0.008, verbose=True))
 
     def test_get_lines_for_bond_dump(self):
         expected = [
