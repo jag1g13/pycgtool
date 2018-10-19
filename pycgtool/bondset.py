@@ -27,8 +27,7 @@ from .util import (
     vector_angle,
     vector_angle_signed,
     vector_cross,
-    vector_len,
-    dihedral_from_vectors
+    vector_len
 )
 
 logger = logging.getLogger(__name__)
@@ -381,14 +380,13 @@ class BondSet:
             return math.pi - vector_angle(veca, vecb)
 
         def calc_dihedral(atoms):
-            veca = dist_with_pbc(atoms[1].coords, atoms[0].coords, frame.box)
+            veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
             vecb = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.box)
             vecc = dist_with_pbc(atoms[2].coords, atoms[3].coords, frame.box)
 
-            #c1 = vector_cross(veca, vecb)
-            #c2 = vector_cross(vecb, vecc)
-            return dihedral_from_vectors(veca, vecb, vecc)
-            #return vector_angle_signed(c1, c2, vecb)
+            c1 = vector_cross(veca, vecb)
+            c2 = vector_cross(vecb, vecc)
+            return vector_angle_signed(c1, c2, vecb)
 
         calc = {2: calc_length,
                 3: calc_angle,

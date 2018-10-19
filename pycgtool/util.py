@@ -148,26 +148,6 @@ def vector_angle_signed(a, b, ref=np.array([0., 0., 1.])):
     signum = math.copysign(1, vector_dot(vector_cross(a, b), ref))
     return ang * signum
 
-def dihedral_from_vectors(veca, vecb, vecc):
-    """
-
-    :param veca: First vector
-    :param vecb: Second vector
-    :param vecc: Third vector
-    :return: angle in radians
-    """
-
-    vecb /= vector_len(vecb)
-
-    # v = projection veca onto the plane perpendicular to vecb #
-    #minus the component that aligns with vecb#
-    v = veca - vector_dot(veca, vecb) * vecb
-    w = vecc - vector_dot(veca, vecb) * vecb
-
-    x = vector_dot(v, w)
-    y = np.dot(vector_cross(vecb, v), w)
-    return np.arctan2(y, x)
-
 
 def tuple_equivalent(tuple1, tuple2):
     """
