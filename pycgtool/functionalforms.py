@@ -3,7 +3,7 @@ import math
 
 import numpy as np
 
-from pycgtool.util import SimpleEnum
+from pycgtool.util import SimpleEnum, circular_mean, circular_variance
 
 
 class FunctionalForms(object):
@@ -104,12 +104,23 @@ class FunctionalForm(object, metaclass=abc.ABCMeta):
 
 class Harmonic(FunctionalForm):
     gromacs_type_ids = (1, 1, 1)  # Consider whether to use improper (type 2) instead, it is actually harmonic
-
     @staticmethod
     def fconst(values, temp):
         rt = 8.314 * temp / 1000.
         var = np.nanvar(values)
         return rt / var
+
+class HarmonicDihedral(FunctionalForm):
+    gromacs_type_ids = (1, 1, 1)  # Consider whether to use improper (type 2) instead, it is actually harmonic
+    @staticmethod
+    def fconst(values, temp):
+        rt = 8.314 * temp / 1000.
+        var = circular_variance(values)
+        return rt / var
+
+    @staticmethod
+    def eqm(values, temp):
+        return circular_mean(values)
 
 
 class CosHarmonic(FunctionalForm):
@@ -119,8 +130,12 @@ class CosHarmonic(FunctionalForm):
     def fconst(values, temp):
         rt = 8.314 * temp / 1000.
         mean = CosHarmonic.eqm(values, temp)
-        var = np.nanvar(values)
+        var = circular_variance(values)
         return rt / (math.sin(mean)**2 * var)
+
+    @staticmethod
+    def eqm(values, temp):
+        return circular_mean(values)
 
 
 class MartiniDefaultLength(FunctionalForm):

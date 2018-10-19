@@ -74,9 +74,9 @@ class PycgtoolTest(unittest.TestCase):
                                                    "-b", "test/data/sugar.bnd",
                                                    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE))
         self.assertTrue(cmp_file_whitespace_float("out.itp", "test/data/sugar_out.itp",
-                                                  rtol=0.001))
+                                                  rtol=0.005))
         self.assertTrue(cmp_file_whitespace_float("out.gro", "test/data/sugar_out.gro",
-                                                  rtol=0.001))
+                                                  rtol=0.005))
     # TODO more tests
 
 

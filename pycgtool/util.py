@@ -67,6 +67,37 @@ def vector_cross(u, v):
     res[2] = u[0] * v[1] - u[1] * v[0]
     return res
 
+def circular_mean(values):
+    """
+    return average of values on a cirle
+
+    :param values: array values to average
+    :return: average
+    """
+    if not isinstance(values, np.ndarray):
+        values = np.array(values)
+
+    x = np.cos(values)
+    y = np.sin(values)
+    vec = np.array([x, y]).T
+    x_av, y_av = np.nanmean(vec, axis=0)
+    return np.arctan2(y_av, x_av)
+
+def circular_variance(values):
+    """
+    return variance of values on a cirle
+
+    :param values: array values
+    :return: average
+    """
+    if not isinstance(values, np.ndarray):
+        values = np.array(values)
+
+    mean = circular_mean(values)
+    diff = np.mod(np.abs(values - mean), np.pi * 2)
+    var = np.nanmean(np.square(diff))
+    return var
+
 
 @numba.jit(numba.float32(numba.float32[3], numba.float32[3]))
 def vector_dot(u, v):
