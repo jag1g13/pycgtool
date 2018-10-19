@@ -95,8 +95,8 @@ def circular_variance(values):
 
     mean = circular_mean(values)
     diff = np.mod(np.abs(values - mean), np.pi * 2)
-    var = np.nanmean(np.square(diff))
-    return var
+    np.nanmean(np.square(diff))
+    return np.nanmean(np.square(diff))
 
 
 @numba.jit(numba.float32(numba.float32[3], numba.float32[3]))
