@@ -93,8 +93,10 @@ def circular_variance(values):
     if not isinstance(values, np.ndarray):
         values = np.array(values)
 
+    two_pi = 2 * np.pi
     mean = circular_mean(values)
-    diff = np.mod(np.abs(values - mean), np.pi * 2)
+    diff = values - mean
+    diff -= np.rint(diff / two_pi ) * two_pi
     return np.nanmean(np.square(diff))
 
 

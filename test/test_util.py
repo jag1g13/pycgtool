@@ -236,6 +236,9 @@ class UtilTest(unittest.TestCase):
         test_var = np.var(values)
         self.assertAlmostEqual( circular_variance(values), test_var, delta=test_var / 500.)
 
+        values = np.deg2rad(np.array([-175, 165], dtype=np.float32))
+        self.assertAlmostEqual(circular_variance(values), test_var, delta=test_var / 500.)
+
 
 
 # TODO test backing up
