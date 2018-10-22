@@ -1,6 +1,7 @@
 # IDE files
 .idea/
 settings.json
+.vscode/
 
 # Input / Output files
 /fftest.ff
