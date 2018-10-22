@@ -3,6 +3,7 @@ import unittest
 from pycgtool.functionalforms import FunctionalForms, FunctionalForm
 
 
+# TODO test injection of mean / variance functions
 class FunctionalFormTest(unittest.TestCase):
     def test_functional_form(self):
         funcs = FunctionalForms()

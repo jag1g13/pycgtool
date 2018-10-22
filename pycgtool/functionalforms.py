@@ -25,7 +25,7 @@ class FunctionalForms(object):
         for subclass in FunctionalForm.__subclasses__():
             name = subclass.__name__
             if name not in cls.FormsEnum:
-                enum_dict[name] = subclass()
+                enum_dict[name] = subclass
 
         cls.FormsEnum = SimpleEnum.enum_from_dict("FormsEnum", enum_dict)
 
@@ -52,11 +52,19 @@ class FunctionalForms(object):
 class FunctionalForm(object, metaclass=abc.ABCMeta):
     """
     Parent class of any functional form used in Boltzmann Inversion to convert variance to a force constant.
-
-    New functional forms must define a static __call__ method.
     """
-    @staticmethod
-    def eqm(values, temp):
+    def __init__(self, mean_func=np.nanmean, variance_func=np.nanvar):
+        """
+        Inject functions for calculating the mean and variance into the
+        Boltzmann Inversion equations.
+
+        :param mean_func: Function to calculate the mean - default is np.nanmean
+        :param variance_func: Function to calculate the variance - default is np.nanvar
+        """
+        self._mean_func = mean_func
+        self._variance_func = variance_func
+
+    def eqm(self, values, temp):
         """
         Calculate equilibrium value.
         May be overridden by functional forms.
@@ -65,10 +73,10 @@ class FunctionalForm(object, metaclass=abc.ABCMeta):
         :param temp: Temperature of simulation
         :return: Calculated equilibrium value
         """
-        return np.nanmean(values)
+        return self._mean_func(values)
 
-    @abc.abstractstaticmethod
-    def fconst(values, temp):
+    @abc.abstractmethod
+    def fconst(self, values, temp):
         """
         Calculate force constant.
         Abstract static method to be defined by all functional forms.
@@ -104,59 +112,39 @@ class FunctionalForm(object, metaclass=abc.ABCMeta):
 
 class Harmonic(FunctionalForm):
     gromacs_type_ids = (1, 1, 1)  # Consider whether to use improper (type 2) instead, it is actually harmonic
-    @staticmethod
-    def fconst(values, temp):
-        rt = 8.314 * temp / 1000.
-        var = np.nanvar(values)
-        return rt / var
 
-class HarmonicDihedral(FunctionalForm):
-    gromacs_type_ids = (1, 1, 1)  # Consider whether to use improper (type 2) instead, it is actually harmonic
-    @staticmethod
-    def fconst(values, temp):
+    def fconst(self, values, temp):
         rt = 8.314 * temp / 1000.
-        var = circular_variance(values)
+        var = self._variance_func(values)
         return rt / var
-
-    @staticmethod
-    def eqm(values, temp):
-        return circular_mean(values)
 
 
 class CosHarmonic(FunctionalForm):
     gromacs_type_ids = (None, 2, None)
 
-    @staticmethod
-    def fconst(values, temp):
+    def fconst(self, values, temp):
         rt = 8.314 * temp / 1000.
-        mean = CosHarmonic.eqm(values, temp)
-        var = circular_variance(values)
+        mean = self.eqm(values, temp)
+        var = self._variance_func(values)
         return rt / (math.sin(mean)**2 * var)
-
-    @staticmethod
-    def eqm(values, temp):
-        return circular_mean(values)
 
 
 class MartiniDefaultLength(FunctionalForm):
     gromacs_type_ids = (1, None, None)
 
-    @staticmethod
-    def fconst(values, temp):
+    def fconst(self, values, temp):
         return 1250.
 
 
 class MartiniDefaultAngle(FunctionalForm):
     gromacs_type_ids = (None, 2, None)
 
-    @staticmethod
-    def fconst(values, temp):
+    def fconst(self, values, temp):
         return 25.
 
 
 class MartiniDefaultDihedral(FunctionalForm):
     gromacs_type_ids = (None, None, 1)
 
-    @staticmethod
-    def fconst(values, temp):
+    def fconst(self, values, temp):
         return 50.
