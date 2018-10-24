@@ -19,6 +19,8 @@ from .mapping import VirtualMap
 from .functionalforms import FunctionalForms
 from .parsers.cfg import CFG
 from .util import (
+    circular_mean,
+    circular_variance,
     dist_with_pbc,
     extend_graph_chain,
     file_write_lines,
@@ -120,31 +122,28 @@ class BondSet:
             self._default_fc = False
 
         # Setup default functional forms
-        functional_forms = FunctionalForms()
+        functional_forms_map = FunctionalForms()
         if self._default_fc:
             default_forms = ["MartiniDefaultLength", "MartiniDefaultAngle", "MartiniDefaultDihedral"]
         else:
-            default_forms = ["Harmonic", "CosHarmonic", "HarmonicDihedral"]
+            default_forms = ["Harmonic", "CosHarmonic", "Harmonic"]
         self._functional_forms = [None, None]
-        self._functional_forms.extend(map(lambda x: functional_forms[x], default_forms))
+        self._functional_forms.extend(map(lambda x: functional_forms_map[x], default_forms))
 
         try:
-            self._functional_forms[2] = functional_forms[options.length_form]
+            self._functional_forms[2] = functional_forms_map[options.length_form]
         except AttributeError:
             pass
 
         try:
-            self._functional_forms[3] = functional_forms[options.angle_form]
+            self._functional_forms[3] = functional_forms_map[options.angle_form]
         except AttributeError:
             pass
 
         try:
-            self._functional_forms[4] = functional_forms[options.dihedral_form]
+            self._functional_forms[4] = functional_forms_map[options.dihedral_form]
         except AttributeError:
             pass
-        else:
-            if options.dihedral_form == "Harmonic":
-                self._functional_forms[4] = functional_forms["HarmonicDihedral"]
 
         with CFG(filename) as cfg:
             for mol_name, mol_section in cfg.items():
@@ -153,12 +152,24 @@ class BondSet:
 
                 angles_defined = False
                 for atomlist in mol_section:
+                    is_angle_or_dihedral = len(atomlist) > 2
+                    mean_function = circular_mean if is_angle_or_dihedral else np.nanmean
+                    variance_function = circular_variance if is_angle_or_dihedral else np.nanvar
+
+                    # Consruct instance of Boltzmann Inversion function and
+                    # injet dependencies for mean and varianc functions
                     try:
                         # TODO consider best way to override default func form
                         # On per bond, or per type basis
-                        func_form = functional_forms[atomlist[-1]]
+                        func_form = functional_forms_map[atomlist[-1]](
+                            mean_function,
+                            variance_function
+                        )
                     except AttributeError:
-                        func_form = self._functional_forms[len(atomlist)]
+                        func_form = self._functional_forms[len(atomlist)](
+                            mean_function,
+                            variance_function
+                        )
 
                     if {x for x in atomlist if atomlist.count(x) > 1}:
                         raise ValueError("Defined bond '{0}' contains duplicate atoms".format(atomlist))
@@ -172,11 +183,21 @@ class BondSet:
 
                     if options.generate_angles:
                         for atomlist in angles:
-                            mol_bonds.append(Bond(atoms=atomlist, func_form=self._functional_forms[3]))
+                            mol_bonds.append(
+                                Bond(
+                                    atoms=atomlist,
+                                    func_form=self._functional_forms[3]
+                                )
+                            )
 
                     if options.generate_dihedrals:
                         for atomlist in dihedrals:
-                            mol_bonds.append(Bond(atoms=atomlist, func_form=self._functional_forms[4]))
+                            mol_bonds.append(
+                                Bond(
+                                    atoms=atomlist,
+                                    func_form=self._functional_forms[4]
+                                )
+                            )
 
     @staticmethod
     def _create_angles(mol_bonds):

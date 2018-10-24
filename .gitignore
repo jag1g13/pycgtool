@@ -1,14 +1,21 @@
-*.pyc
+# IDE files
 .idea/
-.cache/
+settings.json
+.vscode/
+
+# Input / Output files
+/fftest.ff
 /*.gro
 /*.itp
-/fftest.ff
-/env
-/minenv
+*.offsets
+
+# Environment
+.cache/
 .coverage
 /cover
-/tmp
 /doc/build
+/env
+/minenv
 /nose2-junit.xml
-*.offsets
+*.pyc
+/tmp
