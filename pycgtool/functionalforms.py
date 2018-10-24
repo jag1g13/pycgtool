@@ -3,7 +3,7 @@ import math
 
 import numpy as np
 
-from pycgtool.util import SimpleEnum, circular_mean, circular_variance
+from pycgtool.util import SimpleEnum
 
 
 class FunctionalForms(object):
