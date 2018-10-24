@@ -6,7 +6,6 @@ from pycgtool.functionalforms import FunctionalForms, FunctionalForm
 from pycgtool.util import circular_mean, circular_variance
 
 
-# TODO test injection of mean / variance functions
 class FunctionalFormTest(unittest.TestCase):
     def test_functional_form(self):
         funcs = FunctionalForms()
