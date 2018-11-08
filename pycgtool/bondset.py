@@ -186,7 +186,7 @@ class BondSet:
                             mol_bonds.append(
                                 Bond(
                                     atoms=atomlist,
-                                    func_form=self._functional_forms[3]
+                                    func_form=self._functional_forms[3](circular_mean, circular_variance)
                                 )
                             )
 
@@ -195,7 +195,7 @@ class BondSet:
                             mol_bonds.append(
                                 Bond(
                                     atoms=atomlist,
-                                    func_form=self._functional_forms[4]
+                                    func_form=self._functional_forms[4](circular_mean, circular_variance)
                                 )
                             )
 
