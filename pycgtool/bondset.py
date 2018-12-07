@@ -324,6 +324,8 @@ class BondSet:
         file_write_lines(filename, self.itp_text(mapping))
 
     def itp_text(self, mapping):
+        atom_template = {"nomass": "{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f}",
+                              "mass": "{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f} {7:8.3f}"}
         def write_bond_angle_dih(bonds, section_header, print_fconst=True, multiplicity=None, rad2deg=False):
             ret_lines = []
             if bonds:
@@ -363,11 +365,17 @@ class BondSet:
             ret_lines.append("{0:4s} {1:4d}".format(mol, 1))
 
             ret_lines.append("\n[ atoms ]")
+
             for i, bead in enumerate(mapping[mol], start=1):
                 #                 atnum   type resnum resname atname c-group charge (mass)
-                ret_lines.append("{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f}".format(
-                    i, bead.type, 1, mol, bead.name, i, bead.charge
-                ))
+                if isinstance(bead, VirtualMap):
+                    ret_lines.append(atom_template["mass"].format(
+                        i, bead.type, 1, mol, bead.name, i, bead.charge, bead.mass
+                    ))
+                else:
+                    ret_lines.append(atom_template["nomass"].format(
+                        i, bead.type, 1, mol, bead.name, i, bead.charge
+                    ))
 
             virtual_beads = self.get_virtual_beads(mapping[mol])
             if len(virtual_beads) != 0:
