@@ -32,7 +32,7 @@ if __name__ == "__main__":
     advanced_arguments.add_argument("--map_center", default="geom", choices=["geom", "mass", "first"], help="Mapping method")
     advanced_arguments.add_argument("--virtual_map_center", default="geom", choices=["geom", "mass", "first"],
                              help="Virtual site mapping method")
-    advanced_arguments.add_argument("--constr_threshold", type=float, default=10000,
+    advanced_arguments.add_argument("--constr_threshold", type=float, default=100000,
                              help="Convert stiff bonds to contraints over [value]")
     advanced_arguments.add_argument("--dump_measurements", default=False, action="store_true",
                              help="Whether to output bond measurements")
