@@ -30,7 +30,7 @@ if __name__ == "__main__":
     input_files.add_argument('--end', type=int, default=-1, help="Frame number to end")
     #advanced options
     advanced_arguments.add_argument("--map_center", default="geom", choices=["geom", "mass", "first"], help="Mapping method")
-    advanced_arguments.add_argument("--virtual_map_center", default="geom", choices=["geom", "mass", "first"],
+    advanced_arguments.add_argument("--virtual_map_center", default="geom", choices=["geom", "mass"],
                              help="Virtual site mapping method")
     advanced_arguments.add_argument("--constr_threshold", type=float, default=100000,
                              help="Convert stiff bonds to contraints over [value]")
