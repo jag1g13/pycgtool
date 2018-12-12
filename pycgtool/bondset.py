@@ -380,11 +380,15 @@ class BondSet:
             virtual_beads = self.get_virtual_beads(mapping[mol])
             if len(virtual_beads) != 0:
                 ret_lines.append("\n[ virtual_sitesn ]")
+                excl_lines = ["\n[ exclusions ]"]   #exlusions section for virtual sites
                 for vbead in virtual_beads:
                     CGids = [bead.num + 1 for bead in mapping[mol] if bead.name in vbead.atoms]
                     CGids.sort()
                     CGids_string = " ".join(map(str, CGids))
                     ret_lines.append("{0:^6d} {1:^6d} {2}".format(vbead.num+1, vbead.gromacs_type_id, CGids_string))
+                    vsite_exclusions = "{} ".format(vbead.num + 1) + CGids_string
+                    excl_lines.append(vsite_exclusions)
+                ret_lines.extend(excl_lines)
 
             ret_lines.extend(write_bond_angle_dih(self.get_bond_lengths(mol), "bonds"))
             ret_lines.extend(write_bond_angle_dih(self.get_bond_angles(mol), "angles", rad2deg=True))
