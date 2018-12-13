@@ -22,8 +22,6 @@ if __name__ == "__main__":
     input_files.add_argument('-b', '--bnd', type=str, help="Bonds file")
     input_files.add_argument('-i', '--itp', type=str, help="GROMACS ITP file")
 
-
-    parser.add_argument('--advanced', default=False, action='store_true', help="Show advanced options menu")
     parser.add_argument('--outputxtc', default=False, action='store_true', help="Output a pseudo-CG trajectory")
     parser.add_argument('--quiet', default=False, action='store_true', help="Hide progress bars")
     input_files.add_argument('--begin', type=int, default=0, help="Frame number to begin")
@@ -50,6 +48,9 @@ if __name__ == "__main__":
     func_forms = FunctionalForms()
 
     args = parser.parse_args()
+    if not args.dump_measurements:
+        args.dump_measurements = bool(args.bnd) and not bool(args.map)
+
     config = Options([
         ("output_name", "out"),
         ("output", "gro"),
@@ -58,7 +59,7 @@ if __name__ == "__main__":
         ("map_center", args.map_center),
         ("virtual_map_center", args.virtual_map_center),
         ("constr_threshold", args.constr_threshold),
-        ("dump_measurements", bool(args.bnd) and not bool(args.map)),
+        ("dump_measurements", args.dump_measurements),
         ("dump_n_values", args.dump_n_values),
         ("output_forcefield", args.output_forcefield),
         ("temperature", args.temperature),
@@ -73,14 +74,9 @@ if __name__ == "__main__":
     if not args.map and not args.bnd:
         parser.error("One or both of -m and -b is required.")
 
-    if args.advanced:
-        try:
-            config.interactive()
-        except KeyboardInterrupt:
-            sys.exit(0)
-    else:
-        print("Using GRO: {0}".format(args.gro))
-        print("Using XTC: {0}".format(args.xtc))
+
+    print("Using GRO: {0}".format(args.gro))
+    print("Using XTC: {0}".format(args.xtc))
 
     if config.map_only:
         map_only(args, config)
