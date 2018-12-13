@@ -50,12 +50,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if not args.dump_measurements:
         args.dump_measurements = bool(args.bnd) and not bool(args.map)
+    if not args.map_only:
+        args.map_only = not bool(args.bnd)
 
     config = Options([
         ("output_name", "out"),
         ("output", "gro"),
         ("output_xtc", args.outputxtc),
-        ("map_only", not bool(args.bnd)),
+        ("map_only", args.map_only),
         ("map_center", args.map_center),
         ("virtual_map_center", args.virtual_map_center),
         ("constr_threshold", args.constr_threshold),
