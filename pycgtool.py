@@ -27,6 +27,7 @@ if __name__ == "__main__":
     input_files.add_argument('--begin', type=int, default=0, help="Frame number to begin")
     input_files.add_argument('--end', type=int, default=-1, help="Frame number to end")
     #advanced options
+    advanced_arguments.add_argument("--map_only", default=False, action="store_true", help="Run in mapping-only mode")
     advanced_arguments.add_argument("--map_center", default="geom", choices=["geom", "mass", "first"], help="Mapping method")
     advanced_arguments.add_argument("--virtual_map_center", default="geom", choices=["geom", "mass"],
                              help="Virtual site mapping method")
@@ -44,6 +45,7 @@ if __name__ == "__main__":
     advanced_arguments.add_argument("--length_form", default="harmonic", help="Form of bond potential")
     advanced_arguments.add_argument("--angle_form", default="cosharmonic", help="Form of angle potential")
     advanced_arguments.add_argument("--dihedral_form", default="harmonic", help="Form of dihedral potential")
+
 
     func_forms = FunctionalForms()
 
