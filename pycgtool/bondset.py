@@ -79,6 +79,13 @@ class Bond:
 
         with np.errstate(divide="raise"):
             self.eqm = self._func_form.eqm(values, temp)
+            # if dihedral get value to shift cosine function by, NOT equilibrium value
+            if len(self.atoms) == 4:
+                two_pi = 2 * np.pi
+                self.eqm -= np.pi
+                self.eqm = (((self.eqm + np.pi) % two_pi) - np.pi)
+
+
             try:
                 self.fconst = self._func_form.fconst(values, temp)
             except FloatingPointError:
@@ -155,6 +162,8 @@ class BondSet:
                     is_angle_or_dihedral = len(atomlist) > 2
                     mean_function = circular_mean if is_angle_or_dihedral else np.nanmean
                     variance_function = circular_variance if is_angle_or_dihedral else np.nanvar
+                    #mean_function = np.nanmean
+                    #variance_function = np.nanvar
 
                     # Consruct instance of Boltzmann Inversion function and
                     # injet dependencies for mean and varianc functions
@@ -326,6 +335,7 @@ class BondSet:
     def itp_text(self, mapping):
         atom_template = {"nomass": "{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f}",
                               "mass": "{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f} {7:8.3f}"}
+
         def write_bond_angle_dih(bonds, section_header, print_fconst=True, multiplicity=None, rad2deg=False):
             ret_lines = []
             if bonds:
