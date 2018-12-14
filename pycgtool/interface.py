@@ -16,7 +16,7 @@ class Options:
         Create Options instance from iterable of keys and default values.
 
         :param default: Iterable of key, default value pairs (e.g. list of tuples)
-        :param args: Optional program arguments from Argparse, will be displayed in interactive mode
+        :param args: Optional program arguments from Argparse
         """
         self._dict = collections.OrderedDict()
         for key, val in default:

@@ -27,6 +27,8 @@ if __name__ == "__main__":
     input_files.add_argument('--begin', type=int, default=0, help="Frame number to begin")
     input_files.add_argument('--end', type=int, default=-1, help="Frame number to end")
     #advanced options
+    advanced_arguments.add_argument("--output_name", default="out", help="Base name of output files")
+    advanced_arguments.add_argument("--output", default="gro", help="Coordinate output format")
     advanced_arguments.add_argument("--map_only", default=False, action="store_true", help="Run in mapping-only mode")
     advanced_arguments.add_argument("--map_center", default="geom", choices=["geom", "mass", "first"], help="Mapping method")
     advanced_arguments.add_argument("--virtual_map_center", default="geom", choices=["geom", "mass"],
@@ -56,8 +58,8 @@ if __name__ == "__main__":
         args.map_only = not bool(args.bnd)
 
     config = Options([
-        ("output_name", "out"),
-        ("output", "gro"),
+        ("output_name", args.output_name),
+        ("output", args.output),
         ("output_xtc", args.outputxtc),
         ("map_only", args.map_only),
         ("map_center", args.map_center),
