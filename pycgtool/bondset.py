@@ -162,11 +162,9 @@ class BondSet:
                     is_angle_or_dihedral = len(atomlist) > 2
                     mean_function = circular_mean if is_angle_or_dihedral else np.nanmean
                     variance_function = circular_variance if is_angle_or_dihedral else np.nanvar
-                    #mean_function = np.nanmean
-                    #variance_function = np.nanvar
 
-                    # Consruct instance of Boltzmann Inversion function and
-                    # injet dependencies for mean and varianc functions
+                    # Construct instance of Boltzmann Inversion function and
+                    # inject dependencies for mean and variance functions
                     try:
                         # TODO consider best way to override default func form
                         # On per bond, or per type basis
