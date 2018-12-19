@@ -100,6 +100,47 @@ class Bond:
         except (AttributeError, TypeError):
             return "<Bond containing atoms {0}>".format(", ".join(self.atoms))
 
+class GlobalBond(Bond):
+    __slots__ = ["atoms", "atom_numbers", "values", "eqm", "fconst", "gromacs_type_id", "_func_form",
+                 "resids", "resnames", "labels"]
+    def __init__(self, atoms, atom_numbers=None, func_form=None):
+        """
+        Class for bonds between not necessarily adjacent residues
+        :param List[str] atoms: List of atom names defining the bond
+        :param List[int] atom_numbers: List of atom numbers defining the bond
+        :param func_form: Functional form to use for Boltzmann Inversion
+        """
+        self.labels = atoms
+        atom_names = []
+        resids = []
+        resnames = []
+        for atom in atoms:
+            try:
+                name, resid, resname = atom.split("_")
+                resid = int(resid)
+                atom_names.append(name)
+                resids.append(resid)
+                resnames.append(resname)
+
+            except ValueError:
+                print("incorrect syntax for entry '{}' in [global] section".format(atom))
+                raise SyntaxError
+        Bond.__init__(self, atom_names, atom_numbers=atom_numbers, func_form=func_form)
+        self.resids = resids
+        self.resnames = resnames
+
+    def get_atoms(self, residues):
+        atoms = []
+        for resid, resname, name in zip(self.resids, self.resnames, self.atoms):
+            for residue in residues:
+                if residue.num == resid:
+                    if residue.name == resname:
+                        try:
+                            atom = residue[name]
+                            atoms.append(atom)
+                        except KeyError:
+                            pass
+        return atoms
 
 class BondSet:
     """
@@ -115,6 +156,7 @@ class BondSet:
         :return: Instance of BondSet
         """
         self._molecules = {}
+        self.global_connections = []
 
         self._fconst_constr_threshold = options.constr_threshold
 
@@ -154,8 +196,12 @@ class BondSet:
 
         with CFG(filename) as cfg:
             for mol_name, mol_section in cfg.items():
-                self._molecules[mol_name] = []
-                mol_bonds = self._molecules[mol_name]
+                is_global = False
+                if mol_name == "global":
+                    is_global = True
+                else:
+                    self._molecules[mol_name] = []
+                    mol_bonds = self._molecules[mol_name]
 
                 angles_defined = False
                 for atomlist in mol_section:
@@ -180,31 +226,50 @@ class BondSet:
 
                     if {x for x in atomlist if atomlist.count(x) > 1}:
                         raise ValueError("Defined bond '{0}' contains duplicate atoms".format(atomlist))
-
-                    mol_bonds.append(Bond(atoms=atomlist, func_form=func_form))
+                    if is_global:
+                        self.global_connections.append(GlobalBond(atoms=atomlist, func_form=func_form))
+                    else:
+                        mol_bonds.append(Bond(atoms=atomlist, func_form=func_form))
                     if len(atomlist) > 2:
                         angles_defined = True
 
                 if not angles_defined:
-                    angles, dihedrals = self._create_angles(mol_bonds)
+                    if is_global:
+                        if options.generate_angles or options.generate_dihedrals:
+                            logger.warning("Automated generation of angles or dihedrals between "
+                                  "residues not implemented! Please specifiy angles and dihedrals in [global] "
+                                  "section of *.bnd file")
+                    else:
 
-                    if options.generate_angles:
-                        for atomlist in angles:
-                            mol_bonds.append(
-                                Bond(
-                                    atoms=atomlist,
-                                    func_form=self._functional_forms[3](circular_mean, circular_variance)
-                                )
-                            )
+                        angles, dihedrals = self._create_angles(mol_bonds)
 
-                    if options.generate_dihedrals:
-                        for atomlist in dihedrals:
-                            mol_bonds.append(
-                                Bond(
-                                    atoms=atomlist,
-                                    func_form=self._functional_forms[4](circular_mean, circular_variance)
+                        if options.generate_angles:
+                            for atomlist in angles:
+                                mol_bonds.append(
+                                    Bond(
+                                        atoms=atomlist,
+                                        func_form=self._functional_forms[3](circular_mean, circular_variance)
+                                    )
                                 )
-                            )
+
+                        if options.generate_dihedrals:
+                            for atomlist in dihedrals:
+                                mol_bonds.append(
+                                    Bond(
+                                        atoms=atomlist,
+                                        func_form=self._functional_forms[4](circular_mean, circular_variance)
+                                    )
+                                )
+        if is_global:
+            self._molecules["global"] = self.global_connections
+
+    def join_residues(self, residues):
+        """
+        join together residues connected by global bonds into new molecules
+        :param residues: Iterator of Residue objects
+        :return:
+        """
+        pass
 
     @staticmethod
     def _create_angles(mol_bonds):
@@ -455,6 +520,16 @@ class BondSet:
                 except ZeroDivisionError as e:
                     e.args = ("Zero division in calculation of <{0}>".format(" ".join(bond.atoms)),)
                     raise e
+        #calculate values for global bonds#
+        if len(self.global_connections) > 0:
+            for bond in self.global_connections:
+                try:
+                    atoms = bond.get_atoms(frame)
+                    val = calc[len(atoms)](atoms)
+                    bond.values.append(val)
+                except ZeroDivisionError as e:
+                    e.args = ("Zero division in calculation of <{0}>".format(" ".join(bond.labels)),)
+                    raise e
 
     def boltzmann_invert(self, progress=False):
         """
@@ -463,6 +538,8 @@ class BondSet:
         :param progress: Display a progress bar using tqdm if available
         """
         bond_iter = itertools.chain(*self._molecules.values())
+        if len(self.global_connections) > 0:
+            bond_iter = itertools.chain(bond_iter, self.global_connections)
         if progress:
             total = sum(map(len, self._molecules.values()))
             bond_iter = tqdm(bond_iter, total=total, ncols=80)
@@ -514,6 +591,9 @@ class BondSet:
             if bonds:
                 lines = BondSet._get_lines_for_bond_dump(bonds, target_number, rad2deg=True)
                 file_write_lines("{0}_dihedral.dat".format(mol), lines)
+        if len(self.global_connections) > 0:
+            global_bonds = self.global_connections
+            lines = BondSet._get_lines_for_bond_dump(glo)
 
     def __len__(self):
         return len(self._molecules)
