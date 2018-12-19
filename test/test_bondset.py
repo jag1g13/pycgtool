@@ -276,3 +276,27 @@ class BondSetTest(unittest.TestCase):
             self.assertIn(line, expected)
             self.assertNotIn(line, seen)
             seen.add(line)
+
+    def test_global_bond_create(self):
+        DummyOptions.generate_angles=False
+        measure = BondSet("test/data/global.bnd", DummyOptions)
+        self.assertEqual(len(measure.global_connections), 2)
+        names = ["O1", "O1"]
+        resids = [1, 2]
+        resnames = ["GLX", "GLY"]
+        self.assertListEqual(resnames, measure.global_connections[0].resnames)
+        self.assertListEqual(resids, measure.global_connections[0].resids)
+        self.assertListEqual(names, measure.global_connections[0].atoms)
+
+    def test_global_bond_get_atoms(self):
+        DummyOptions.generate_angles = False
+        measure = BondSet("test/data/global.bnd", DummyOptions)
+        frame = Frame("test/data/global.gro")
+        target_bond = [frame.residues[0]["O1"], frame.residues[1]["O1"]]
+        target_angle = [frame.residues[0]["O1"], frame.residues[1]["O1"], frame.residues[1]["C1"]]
+        atoms = measure.global_connections[0].get_atoms(frame)
+        self.assertListEqual(target_bond, atoms)
+        atoms = measure.global_connections[1].get_atoms(frame)
+        self.assertListEqual(target_angle, atoms)
+
+
