@@ -1,0 +1,8 @@
+; these are fake bead types
+[ GLY ]
+S1 TC3 C1
+S2 TC3 O1 HO1
+
+[ GLX ]
+S1 TC3 C1
+S2 TC3 O1 HO1

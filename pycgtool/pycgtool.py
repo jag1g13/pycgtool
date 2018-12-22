@@ -63,10 +63,14 @@ def main(args, config):
         if args.map:
             logger.info("Beginning Boltzmann inversion")
             bonds.boltzmann_invert(progress=(not args.quiet))
+            bonds.connect_residues(cgframe, mapping)
             if config.output_forcefield:
-                logger.info("Creating GROMACS forcefield directory")
-                ForceField(config.output_name).write(config.output_name, mapping, bonds)
-                logger.info("GROMACS forcefield directory created")
+                if len(bonds.global_connections) > 0:
+                    logger.warning("Cannot create GROMACS forcefield when using [ global ] connections!")
+                else:
+                    logger.info("Creating GROMACS forcefield directory")
+                    ForceField(config.output_name).write(config.output_name, mapping, bonds)
+                    logger.info("GROMACS forcefield directory created")
             else:
                 bonds.write_itp(config.output_name + ".itp", mapping=mapping)
 

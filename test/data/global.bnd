@@ -1,7 +1,7 @@
 ; comments begin with a semicolon
 [ global ]
-O1_1_GLX O1_2_GLY
-O1_1_GLX O1_2_GLY C1_2_GLY
+S2_1_GLX S1_2_GLY
+S2_1_GLX S1_2_GLY S2_2_GLY
 
 
 

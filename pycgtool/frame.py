@@ -66,6 +66,19 @@ class Atom:
                 setattr(self, attr, getattr(other, attr))
 
 
+class Molecule:
+    """
+    Holds data for a molecule comprised of multiple residues
+    """
+    __slots__ = ["resnames", "bonds", "beads", "resid_to_beads"]
+
+    def __init__(self, resnames, bonds, beads):
+        self.resnames = resnames
+        self.resid_to_beads = dict(zip(range(len(resnames)), beads))
+        self.bonds = bonds
+        self.beads = np.array(beads).flatten().tolist()
+
+
 class Residue:
     """
     Hold data for a residue - list of atoms
@@ -95,6 +108,9 @@ class Residue:
 
     def __len__(self):
         return len(self.atoms)
+
+    def __contains__(self, item):
+        return item in self.name_to_num
 
     def add_atom(self, atom):
         """
