@@ -2,8 +2,6 @@
 This module contains classes for interaction at the terminal.
 """
 import collections
-import curses
-import curses.textpad
 import time
 
 
@@ -18,7 +16,7 @@ class Options:
         Create Options instance from iterable of keys and default values.
 
         :param default: Iterable of key, default value pairs (e.g. list of tuples)
-        :param args: Optional program arguments from Argparse, will be displayed in interactive mode
+        :param args: Optional program arguments from Argparse
         """
         self._dict = collections.OrderedDict()
         for key, val in default:
@@ -110,83 +108,7 @@ class Options:
         opt = list(self._dict.keys())[opt_num]
         self.toggle_boolean(opt)
 
-    def interactive(self):
-        """
-        Read options in interactive terminal mode using curses.
-        """
-        curses.wrapper(self._inter)
 
-    def _inter(self, stdscr):
-        """
-        Read options in interactive terminal mode using curses.
-
-        :param stdscr: Curses window to use as interface
-        """
-        stdscr.clear()
-        if self.args is not None:
-            stdscr.addstr(1, 1, "Using GRO: {0}".format(self.args.gro))
-            stdscr.addstr(2, 1, "Using XTC: {0}".format(self.args.xtc))
-        stdscr.addstr(4, 1, "Press q to proceed")
-        stdscr.box()
-        stdscr.refresh()
-
-        nrows = len(self)
-
-        errscr = stdscr.derwin(3, curses.COLS - 3, nrows + 8, 1)
-        errscr.border()
-
-        window_config = stdscr.derwin(nrows + 2, curses.COLS - 3, 5, 1)
-        window_config.box()
-        window_config.refresh()
-        window_keys = window_config.derwin(nrows, 20, 1, 0)
-        window_config.vline(1, 18, curses.ACS_VLINE, nrows)
-        window_vals = window_config.derwin(nrows, curses.COLS - 24, 1, 20)
-        text_edit_wins = []
-        text_inputs = []
-
-        for i, (key, value) in enumerate(self):
-            window_keys.addstr(i, 0, key)
-            try:
-                text_edit_wins.append(window_vals.derwin(1, 30, i, 0))
-            except curses.error as e:
-                raise RuntimeError("Your terminal is too small to fit the interface, please expand it") from e
-            text_edit_wins[-1].addstr(0, 0, str(value))
-            text_inputs.append(curses.textpad.Textbox(text_edit_wins[-1]))
-
-        stdscr.refresh()
-        window_keys.refresh()
-        for window in text_edit_wins:
-            window.refresh()
-
-        pos = 0
-        move = {"KEY_UP": lambda x: (x - 1) % nrows,
-                "KEY_DOWN": lambda x: (x + 1) % nrows,
-                "KEY_LEFT": lambda x: x,
-                "KEY_RIGHT": lambda x: x}
-
-        while True:
-            key = text_edit_wins[pos].getkey(0, 0)
-            errscr.erase()
-            if key in move:
-                pos = move[key](pos)
-            if key == "\n":
-                if type(self[pos]) is bool:
-                    self._toggle_boolean_by_num(pos)
-                else:
-                    val = text_inputs[pos].edit().strip()
-                    try:
-                        self._set_by_num(pos, val)
-                    except ValueError:
-                        errscr.addstr(0, 0, "Invalid value '{0}' for option".format(val))
-                        errscr.addstr(1, 0, "Value has been reset".format(val))
-
-                text_edit_wins[pos].erase()
-                text_edit_wins[pos].addstr(0, 0, str(self[pos]))
-                text_edit_wins[pos].refresh()
-
-            errscr.refresh()
-            if key == "q":
-                break
 
 
 def _truthy(string):

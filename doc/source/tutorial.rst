@@ -111,10 +111,9 @@ Additionally, other methods of validation should be applied relevant to the clas
 To compare the distribution of bonded terms, we must first rerun PyCGTOOL to generate samples of the bonded measurements.
 For the atomistic reference simulation, this can be done by running::
 
-    pycgtool.py -g ref.gro -x ref.xtc -m atenolol.map -b atenolol.bnd --advanced
+    pycgtool.py -g ref.gro -x ref.xtc -m atenolol.map -b atenolol.bnd --dump_measurements
 
-In the menu, set the advanced option `dump_measurements` to `True` by selecting it with the arrow keys and toggling with the enter key.
-Once this option has been set, continue by pressing the q key.
+
 PyCGTOOL will now output a sample of each measured bond length and angle (but since the reference trajectory is short, the target sample size is not met and all values are collected), in the files ``36KB_length.dat`` and ``36KB_angle.dat``.
 
 Since we will be collecting samples of the same measurements from the CG simulation, these files should be renamed to, for instance, `ref_length.dat` and `ref_angle.dat`.
