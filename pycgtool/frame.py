@@ -70,11 +70,12 @@ class Molecule:
     """
     Holds data for a molecule comprised of multiple residues
     """
-    __slots__ = ["resnames", "bonds", "beads", "resid_to_beads"]
+    __slots__ = ["resnames", "bonds", "beads", "resid_to_beads", "resid_to_resname"]
 
     def __init__(self, resnames, bonds, beads):
         self.resnames = resnames
-        self.resid_to_beads = dict(zip(range(len(resnames)), beads))
+        self.resid_to_resname = dict(zip(range(1, len(resnames)+1), resnames))
+        self.resid_to_beads = dict(zip(range(1, len(resnames)+1), beads))
         self.bonds = bonds
         self.beads = np.array(beads).flatten().tolist()
 
