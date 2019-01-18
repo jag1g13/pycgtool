@@ -309,8 +309,8 @@ class BondSetTest(unittest.TestCase):
         measure.global_connections[1].eqm = 90.
         measure.global_connections[1].fconst = 100.
         measure.connect_residues(frame, mapping)
-        self.assertEqual(measure["GLX_GLY"].beads[-1].num, 3)
-        self.assertListEqual(measure["GLX_GLY"].bonds[0].atom_numbers, [1, 2])
+        self.assertEqual(measure["mol_01"].beads[-1].num, 3)
+        self.assertListEqual(measure["mol_01"].bonds[0].atom_numbers, [1, 2])
 
     def test_global_itp(self):
         DummyOptions.generate_angles = False
