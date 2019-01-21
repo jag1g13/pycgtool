@@ -184,7 +184,6 @@ class BondSet:
         :return: Instance of BondSet
         """
         self._molecules = {}
-        self.global_connections = []
 
         self._fconst_constr_threshold = options.constr_threshold
 
@@ -222,11 +221,19 @@ class BondSet:
         except AttributeError:
             pass
 
+        molecule_delimiters = ('<', '>')
+        is_global = False
         with CFG(filename) as cfg:
             for mol_name, mol_section in cfg.items():
-                is_global = False
-                if mol_name == "global":
+                if "<" in mol_name:
                     is_global = True
+            for mol_name, mol_section in cfg.items():
+                now_global = False
+                if "<" in mol_name:
+                    now_global = True
+                    mol_name = mol_name.strip(" ".join(molecule_delimiters))
+                    self._molecules[mol_name] = []
+                    mol_bonds = self._molecules[mol_name]
                 else:
                     self._molecules[mol_name] = []
                     mol_bonds = self._molecules[mol_name]
@@ -254,8 +261,8 @@ class BondSet:
 
                     if {x for x in atomlist if atomlist.count(x) > 1}:
                         raise ValueError("Defined bond '{0}' contains duplicate atoms".format(atomlist))
-                    if is_global:
-                        self.global_connections.append(GlobalBond(atoms=atomlist, func_form=func_form))
+                    if now_global:
+                        mol_bonds.append(GlobalBond(atoms=atomlist, func_form=func_form))
                     else:
                         mol_bonds.append(Bond(atoms=atomlist, func_form=func_form))
                     if len(atomlist) > 2:
@@ -265,8 +272,8 @@ class BondSet:
                     if is_global:
                         if options.generate_angles or options.generate_dihedrals:
                             logger.warning("Automated generation of angles or dihedrals between "
-                                  "residues not implemented! Please specifiy angles and dihedrals in [global] "
-                                  "section of *.bnd file")
+                                  "residues not implemented! Please specifiy angles and dihedrals in [< {0} >] "
+                                  "section of *.bnd file".format(mol_name))
                     else:
 
                         angles, dihedrals = self._create_angles(mol_bonds)
@@ -288,6 +295,8 @@ class BondSet:
                                         func_form=self._functional_forms[4](circular_mean, circular_variance)
                                     )
                                 )
+                if now_global:
+                    self._molecules[mol_name] = Molecule(bonds=mol_bonds)
 
     @staticmethod
     def _create_angles(mol_bonds):
@@ -430,55 +439,61 @@ class BondSet:
         connects residues together to form new molecules
         :param frame: Frame from which to determine inter residue connections
         """
-        if len(self.global_connections) > 0:
-            fragments = []
-            for bond in self.global_connections:
-                fragments.append(bond.get_residue_ids(frame))
+        count = 0
+        not_multi = [mol for mol in self._molecules if not isinstance(self._molecules[mol], Molecule)]
+        for mol in self._molecules:
+            if isinstance(self._molecules[mol], Molecule):
+                if count > 1:
+                    print("More than one multi residue molecule detected - this is not yet supported by pycgtool")
+                    raise NotImplementedError
+                mol_bonds = self._molecules[mol].bonds
+                fragments = []
+                for bond in mol_bonds:
+                    fragments.append(bond.get_residue_ids(frame))
 
-            self._populate_atom_numbers(mapping)
+                self._populate_atom_numbers(mapping)
 
-            molecule_internal_ids = merge_list_of_lists(fragments)
-            if len(molecule_internal_ids) > 1:
-                print("More than one multi residue molecule detected - this is not yet supported by pycgtool")
-                raise NotImplementedError
-            molecule_internal_ids = molecule_internal_ids[0]
-            resnames = [frame[mol_id].name for mol_id in molecule_internal_ids]
-            all_bonds = []
-            all_beads = []
-            start = 0
-            for resid, resname in enumerate(resnames):
-                if resname in mapping:
-                    beads = list(map(deepcopy, mapping[resname]))
-                    if len(self._molecules) > 0:
-                        bonds = list(map(deepcopy, self._molecules[resname]))
-                        all_bonds.extend(bonds)
-                    for i, bead in enumerate(beads):
-                        bead.num = start + i
+                molecule_internal_ids = merge_list_of_lists(fragments)
+                if len(molecule_internal_ids) > 1:
+                    print("All Fragments of Molecule '{}' are not connected - add missing bonds to .bnd".format(mol))
+                    raise SyntaxError
+                molecule_internal_ids = molecule_internal_ids[0]
+                resnames = [frame[mol_id].name for mol_id in molecule_internal_ids]
+                all_bonds = []
+                all_beads = []
+                start = 0
+                for resid, resname in enumerate(resnames):
+                    if resname in mapping:
+                        beads = list(map(deepcopy, mapping[resname]))
+                        if len(not_multi) > 0:
+                            bonds = list(map(deepcopy, self._molecules[resname]))
+                            all_bonds.extend(bonds)
+                        for i, bead in enumerate(beads):
+                            bead.num = start + i
 
-                    if len(self._molecules) > 0:
-                        index = [bead.name for bead in beads]
-                        for bond in bonds:
-                            try:
-                                bond.atom_numbers = [index.index(atom.lstrip("+-")) for atom in bond.atoms]
-                            except ValueError as e:
-                                missing = [atom for atom in bond.atoms if atom.lstrip("+-") not in index]
-                                e.args = ("Bead(s) {0} do(es) not exist in residue {1}".format(missing, resname),)
-                                raise
-                            bond.atom_numbers = [start + ind for ind in bond.atom_numbers]
+                        if len(not_multi) > 0:
+                            index = [bead.name for bead in beads]
+                            for bond in bonds:
+                                try:
+                                    bond.atom_numbers = [index.index(atom.lstrip("+-")) for atom in bond.atoms]
+                                except ValueError as e:
+                                    missing = [atom for atom in bond.atoms if atom.lstrip("+-") not in index]
+                                    e.args = ("Bead(s) {0} do(es) not exist in residue {1}".format(missing, resname),)
+                                    raise
+                                bond.atom_numbers = [start + ind for ind in bond.atom_numbers]
 
-                    all_beads.append(beads)
-                    start = beads[-1].num + 1
+                        all_beads.append(beads)
+                        start = beads[-1].num + 1
 
 
-            for bond in self.global_connections:
-                bond.populate_ids(all_beads)
+                for bond in mol_bonds:
+                    bond.populate_ids(all_beads)
 
-            all_bonds.extend(self.global_connections)
-            molecule = Molecule(resnames, all_bonds, all_beads)
-            molecule_name = "mol_01"
-            self._molecules[molecule_name] = molecule
-        else:
-            return
+                all_bonds.extend(mol_bonds)
+                molecule = Molecule(resnames, all_bonds, all_beads)
+                self._molecules[mol] = molecule
+                count += 1
+        return
 
     def write_itp(self, filename, mapping):
         """
@@ -668,17 +683,21 @@ class BondSet:
                     pass
                 except ZeroDivisionError as e:
                     e.args = ("Zero division in calculation of <{0}>".format(" ".join(bond.atoms)),)
+                    #print(type(bond), mol_meas)
                     raise e
+
         #calculate values for global bonds#
-        if len(self.global_connections) > 0:
-            for bond in self.global_connections:
-                try:
-                    atoms = bond.get_atoms(frame)
-                    val = calc[len(atoms)](atoms)
-                    bond.values.append(val)
-                except ZeroDivisionError as e:
-                    e.args = ("Zero division in calculation of <{0}>".format(" ".join(bond.labels)),)
-                    raise e
+        for mol in self._molecules:
+            if isinstance(self._molecules[mol], Molecule):
+                bonds = self._molecules[mol].bonds
+                for bond in bonds:
+                    try:
+                        atoms = bond.get_atoms(frame)
+                        val = calc[len(atoms)](atoms)
+                        bond.values.append(val)
+                    except ZeroDivisionError as e:
+                        e.args = ("Zero division in calculation of <{0}>".format(" ".join(bond.labels)),)
+                        raise e
 
     def boltzmann_invert(self, progress=False):
         """
@@ -687,8 +706,10 @@ class BondSet:
         :param progress: Display a progress bar using tqdm if available
         """
         bond_iter = itertools.chain(*self._molecules.values())
-        if len(self.global_connections) > 0:
-            bond_iter = itertools.chain(bond_iter, self.global_connections)
+        for mol in self._molecules:
+            if isinstance(self._molecules[mol], Molecule):
+                bonds = self._molecules[mol].bonds
+                bond_iter = itertools.chain(bond_iter, bonds)
         if progress:
             total = sum(map(len, self._molecules.values()))
             bond_iter = tqdm(bond_iter, total=total, ncols=80)

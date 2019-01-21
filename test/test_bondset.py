@@ -278,49 +278,54 @@ class BondSetTest(unittest.TestCase):
             seen.add(line)
 
     def test_global_bond_create(self):
+        mol = "mol_01"
         DummyOptions.generate_angles=False
         measure = BondSet("test/data/global.bnd", DummyOptions)
-        self.assertEqual(len(measure.global_connections), 2)
+        self.assertEqual(len(measure[mol].bonds), 2)
         names = ["S2", "S1"]
         resids = [1, 2]
         resnames = ["GLX", "GLY"]
-        self.assertListEqual(resnames, measure.global_connections[0].resnames)
-        self.assertListEqual(resids, measure.global_connections[0].resids)
-        self.assertListEqual(names, measure.global_connections[0].atoms)
+        self.assertListEqual(resnames, measure[mol].bonds[0].resnames)
+        self.assertListEqual(resids, measure[mol].bonds[0].resids)
+        self.assertListEqual(names, measure[mol].bonds[0].atoms)
 
     def test_global_bond_get_atoms(self):
+        mol = "mol_01"
         DummyOptions.generate_angles = False
         measure = BondSet("test/data/global.bnd", DummyOptions)
         cgframe = Frame("test/data/global-cg.gro")
         target_bond = [cgframe.residues[0]["S2"], cgframe.residues[1]["S1"]]
         target_angle = [cgframe.residues[0]["S2"], cgframe.residues[1]["S1"], cgframe.residues[1]["S2"]]
-        atoms = measure.global_connections[0].get_atoms(cgframe)
+        atoms = measure[mol].bonds[0].get_atoms(cgframe)
         self.assertListEqual(target_bond, atoms)
-        atoms = measure.global_connections[1].get_atoms(cgframe)
+        atoms = measure[mol].bonds[1].get_atoms(cgframe)
         self.assertListEqual(target_angle, atoms)
 
     def test_connect_residues(self):
+        mol = "mol_01"
         DummyOptions.generate_angles = False
         mapping = Mapping("test/data/global.map", DummyOptions)
         measure = BondSet("test/data/global.bnd", DummyOptions)
         frame = Frame("test/data/global-cg.gro")
-        measure.global_connections[0].eqm = 2.
-        measure.global_connections[0].fconst = 1000.
-        measure.global_connections[1].eqm = 90.
-        measure.global_connections[1].fconst = 100.
+        measure[mol].bonds[0].eqm = 2.
+        measure[mol].bonds[0].fconst = 1000.
+        measure[mol].bonds[1].eqm = 90.
+        measure[mol].bonds[1].fconst = 100.
         measure.connect_residues(frame, mapping)
-        self.assertEqual(measure["mol_01"].beads[-1].num, 3)
-        self.assertListEqual(measure["mol_01"].bonds[0].atom_numbers, [1, 2])
+        self.assertEqual(measure[mol].beads[-1].num, 3)
+        self.assertListEqual(measure[mol].bonds[0].atom_numbers, [1, 2])
 
     def test_global_itp(self):
+        mol = "mol_01"
         DummyOptions.generate_angles = False
         mapping = Mapping("test/data/global.map", DummyOptions)
         measure = BondSet("test/data/global.bnd", DummyOptions)
         frame = Frame("test/data/global-cg.gro")
-        measure.global_connections[0].eqm = 2.
-        measure.global_connections[0].fconst = 1000.
-        measure.global_connections[1].eqm = 3.
-        measure.global_connections[1].fconst = 100.
+        print(measure)
+        measure[mol].bonds[0].eqm = 2.
+        measure[mol].bonds[0].fconst = 1000.
+        measure[mol].bonds[1].eqm = 3.
+        measure[mol].bonds[1].fconst = 100.
         measure.connect_residues(frame, mapping)
         measure.write_itp("global.itp", mapping)
 
