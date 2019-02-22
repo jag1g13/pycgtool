@@ -41,14 +41,19 @@ class Molecule:
     """
     Holds data for a molecule comprised of multiple residues
     """
-    __slots__ = ["resnames", "bonds", "beads", "resid_to_beads", "resid_to_resname"]
+    __slots__ = ["resnames", "bonds", "beads", "resname_to_beads"]
 
     def __init__(self, resnames=None, bonds=None, beads=None):
+        '''
+
+        :param resnames: list of resname names
+        :param bonds:  list of lists of BeadMap objects in the same order as 'resnames'
+        :param beads: list of bonds
+        '''
         self.resnames = resnames
         if beads and resnames is not None:
-            self.resid_to_resname = dict(zip(range(1, len(resnames) + 1), resnames))
-            self.resid_to_beads = dict(zip(range(1, len(resnames) + 1), beads))
-            self.beads = np.array(beads).flatten().tolist()
+            self.resname_to_beads = dict(zip(resnames, beads))
+            self.beads = [bead for res_beads in beads for bead in res_beads]
 
         self.bonds = bonds
         if bonds is None:
@@ -56,6 +61,11 @@ class Molecule:
 
 
     def add_bond(self, bond):
+        '''
+        Add bond to object
+
+        :param bond: instance of class with 'Bond' as their base class
+        '''
         self.bonds.append(bond)
 
     @property
@@ -285,7 +295,7 @@ class BondSet:
                     mol_bonds = self._molecules[mol_name]
 
                 else:
-                    self._molecules[mol_name] = Molecule()
+                    self._molecules[mol_name] = Molecule(resnames=[mol_name])
                     mol_bonds = self._molecules[mol_name]
 
                 angles_defined = False
@@ -319,7 +329,7 @@ class BondSet:
                         angles_defined = True
 
                 if not angles_defined:
-                    if now_global:
+                    if is_global:
                         if options.generate_angles or options.generate_dihedrals:
                             logger.warning("Automated generation of angles or dihedrals between "
                                   "residues not implemented! Please specifiy angles and dihedrals in [< {0} >] "
@@ -577,102 +587,62 @@ class BondSet:
         # Print molecule
         not_calc = "  Parameters have not been calculated."
         for mol in self._molecules:
-            if not self._molecules[mol].is_multiresidue:
-                if mol not in mapping:
-                    logger.warning("Molecule '{0}' present in bonding file, but not in mapping.".format(mol) + not_calc)
-                    continue
-                if not all((bond.fconst is not None for bond in self._molecules[mol])):
-                    logger.warning("Molecule '{0}' has no measured bond values.".format(mol) + not_calc)
+            molecule = self._molecules[mol]
+
+            if not all((bond.fconst is not None for bond in self._molecules[mol])):
+                logger.warning("Molecule '{0}' has no measured bond values.".format(mol) + not_calc)
+                continue
+
+            ret_lines.append("\n[ moleculetype ]")
+            ret_lines.append("{0:4s} {1:4d}".format(mol, 1))
+
+            ret_lines.append("\n[ atoms ]")
+
+            for resid, res in enumerate(molecule.resnames, start=1):
+                beads = molecule.resname_to_beads[res] if molecule.is_multiresidue else mapping[mol]
+
+
+                if res not in mapping:
+                    logger.warning("Residue '{0}' present in bonding file, but not in mapping.".format(mol) + not_calc)
                     continue
 
-                ret_lines.append("\n[ moleculetype ]")
-                ret_lines.append("{0:4s} {1:4d}".format(mol, 1))
-
-                ret_lines.append("\n[ atoms ]")
-                for i, bead in enumerate(mapping[mol], start=1):
+                for i, bead in enumerate(beads, start=1):
                     #                 atnum   type resnum resname atname c-group charge (mass)
                     if isinstance(bead, VirtualMap):
                         ret_lines.append(atom_template["mass"].format(
-                            i, bead.type, 1, mol, bead.name, i, bead.charge, bead.mass
+                            bead.num + 1, bead.type, resid, res, bead.name, bead.num + 1, bead.charge, bead.mass
                         ))
 
                     else:
                         ret_lines.append(atom_template["nomass"].format(
-                            i, bead.type, 1, mol, bead.name, i, bead.charge
+                            bead.num + 1, bead.type, resid, res, bead.name, bead.num + 1, bead.charge
                         ))
 
-                virtual_beads = self.get_virtual_beads(mapping[mol])
-                if len(virtual_beads) != 0:
-                    ret_lines.append("\n[ virtual_sitesn ]")
-                    excl_lines = ["\n[ exclusions ]"]   #exlusions section for virtual sites
+            all_beads = molecule.beads if molecule.is_multiresidue else mapping[mol]
+            virtual_beads = self.get_virtual_beads(all_beads)
+            if len(virtual_beads) != 0:
+                ret_lines.append("\n[ virtual_sitesn ]")
+                excl_lines = ["\n[ exclusions ]"]   #exlusions section for virtual sites
+                for res in molecule.resnames:
+                    beads = molecule.resname_to_beads[res] if molecule.is_multiresidue else mapping[mol]
+                    virtual_beads = self.get_virtual_beads(beads)
                     for vbead in virtual_beads:
-                        CGids = [bead.num + 1 for bead in mapping[mol] if bead.name in vbead.atoms]
+                        CGids = [bead.num + 1 for bead in beads if bead.name in vbead.atoms]
                         CGids.sort()
                         CGids_string = " ".join(map(str, CGids))
-                        ret_lines.append("{0:^6d} {1:^6d} {2}".format(vbead.num+1, vbead.gromacs_type_id, CGids_string))
+                        ret_lines.append(
+                            "{0:^6d} {1:^6d} {2}".format(vbead.num + 1, vbead.gromacs_type_id, CGids_string))
                         vsite_exclusions = "{} ".format(vbead.num + 1) + CGids_string
                         excl_lines.append(vsite_exclusions)
-                    ret_lines.extend(excl_lines)
+                ret_lines.extend(excl_lines)
 
 
-                ret_lines.extend(write_bond_angle_dih(self.get_bond_lengths(mol), "bonds"))
-                ret_lines.extend(write_bond_angle_dih(self.get_bond_angles(mol), "angles", rad2deg=True))
-                ret_lines.extend(write_bond_angle_dih(self.get_bond_dihedrals(mol), "dihedrals", multiplicity=1, rad2deg=True))
-                ret_lines.extend(write_bond_angle_dih(self.get_bond_length_constraints(mol), "constraints", print_fconst=False))
+            ret_lines.extend(write_bond_angle_dih(self.get_bond_lengths(mol), "bonds"))
+            ret_lines.extend(write_bond_angle_dih(self.get_bond_angles(mol), "angles", rad2deg=True))
+            ret_lines.extend(write_bond_angle_dih(self.get_bond_dihedrals(mol), "dihedrals", multiplicity=1, rad2deg=True))
+            ret_lines.extend(write_bond_angle_dih(self.get_bond_length_constraints(mol), "constraints", print_fconst=False))
 
-            else:
-                mol_count = 0
-                for res in self._molecules[mol].resnames:
-                    if res not in mapping:
-                        logger.warning(
-                            "Residue '{0}' present in bonding file, but not in mapping.".format(res) + not_calc)
-                        continue
-                    if res not in self._molecules:
-                        logger.warning(("Residue '{0}' has no internal bonds").format(res))
 
-                ret_lines.append("\n[ moleculetype ]")
-
-                ret_lines.append("{0:4s} {1:4d}".format(mol, 1))
-
-                ret_lines.append("\n[ atoms ]")
-                for resid in range(1, len(self._molecules[mol].resnames) + 1):
-                    beads = self._molecules[mol].resid_to_beads[resid]
-                    resname = self._molecules[mol].resid_to_resname[resid]
-                    for bead in beads:
-                        #                 atnum   type resnum resname atname c-group charge (mass)
-                        if isinstance(bead, VirtualMap):
-                            ret_lines.append(atom_template["mass"].format(
-                                bead.num + 1, bead.type, resid, resname, bead.name, bead.num + 1, bead.charge, bead.mass
-                            ))
-                        else:
-                            ret_lines.append(atom_template["nomass"].format(
-                                bead.num + 1, bead.type, resid, resname, bead.name, bead.num + 1, bead.charge
-                            ))
-
-                virtual_beads = self.get_virtual_beads(self._molecules[mol].beads)
-                if len(virtual_beads) != 0:
-                    ret_lines.append("\n[ virtual_sitesn ]")
-                    excl_lines = ["\n[ exclusions ]"]  # exlusions section for virtual sites
-                    for resid in range(1, len(self._molecules[mol].resnames) + 1):
-                        beads = self._molecules[mol].resid_to_beads[resid]
-                        virtual_beads = self.get_virtual_beads(beads)
-                        for vbead in virtual_beads:
-                            CGids = [bead.num + 1 for bead in beads if bead.name in vbead.atoms]
-                            CGids.sort()
-                            CGids_string = " ".join(map(str, CGids))
-                            ret_lines.append(
-                                "{0:^6d} {1:^6d} {2}".format(vbead.num + 1, vbead.gromacs_type_id, CGids_string))
-                            vsite_exclusions = "{} ".format(vbead.num + 1) + CGids_string
-                            excl_lines.append(vsite_exclusions)
-                    ret_lines.extend(excl_lines)
-
-                ret_lines.extend(write_bond_angle_dih(self.get_bond_lengths(mol), "bonds"))
-                ret_lines.extend(write_bond_angle_dih(self.get_bond_angles(mol), "angles", rad2deg=True))
-                ret_lines.extend(
-                    write_bond_angle_dih(self.get_bond_dihedrals(mol), "dihedrals", multiplicity=1, rad2deg=True))
-                ret_lines.extend(
-                    write_bond_angle_dih(self.get_bond_length_constraints(mol), "constraints", print_fconst=False))
-                mol_count += 1
         return ret_lines
 
     def apply(self, frame):
