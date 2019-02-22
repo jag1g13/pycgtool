@@ -796,7 +796,8 @@ class BondSet:
         for mol in self._molecules:
             if mol == "SOL":
                 continue
-            if not isinstance(self._molecules[mol], Molecule):
+            if not self._molecules[mol].is_multiresidue:
+
                 bonds = self.get_bond_lengths(mol, with_constr=True)
                 if bonds:
                     lines = BondSet._get_lines_for_bond_dump(bonds, target_number)
