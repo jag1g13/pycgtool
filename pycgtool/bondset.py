@@ -18,7 +18,6 @@ except ImportError:
 
 from .mapping import VirtualMap
 from .functionalforms import FunctionalForms
-from .frame import Molecule
 from .parsers.cfg import CFG
 from .util import (
     circular_mean,
@@ -37,6 +36,50 @@ from .util import (
 
 logger = logging.getLogger(__name__)
 
+
+class Molecule:
+    """
+    Holds data for a molecule comprised of multiple residues
+    """
+    __slots__ = ["resnames", "bonds", "beads", "resid_to_beads", "resid_to_resname"]
+
+    def __init__(self, resnames=None, bonds=None, beads=None):
+        self.resnames = resnames
+        if beads and resnames is not None:
+            self.resid_to_resname = dict(zip(range(1, len(resnames) + 1), resnames))
+            self.resid_to_beads = dict(zip(range(1, len(resnames) + 1), beads))
+            self.beads = np.array(beads).flatten().tolist()
+
+        self.bonds = bonds
+        if bonds is None:
+            self.bonds = []
+
+
+    def add_bond(self, bond):
+        self.bonds.append(bond)
+
+    @property
+    def inter(self):
+        '''collects inter residue bonds'''
+        inter = []
+        for bond in self.bonds:
+            if isinstance(bond, GlobalBond):
+                inter.append(bond)
+        return inter
+
+    @property
+    def is_multiresidue(self):
+        '''checks if Molecule has multiple residues'''
+        return True if len(self.inter) > 0 else False
+
+    def __len__(self):
+        return len(self.bonds)
+
+    def __iter__(self):
+        return iter(self.bonds)
+
+    def __getitem__(self, item):
+        return self.bonds[item]
 
 class Bond:
     """
@@ -223,6 +266,7 @@ class BondSet:
 
         molecule_delimiters = ('<', '>')
         is_global = False
+        multi_count = 0
         with CFG(filename) as cfg:
             for mol_name, mol_section in cfg.items():
                 if "<" in mol_name:
@@ -230,12 +274,18 @@ class BondSet:
             for mol_name, mol_section in cfg.items():
                 now_global = False
                 if "<" in mol_name:
+                    multi_count += 1
+                    if multi_count > 1:
+                        print("More than one multi residue molecule detected - this is not yet supported by pycgtool")
+                        raise NotImplementedError
                     now_global = True
                     mol_name = mol_name.strip(" ".join(molecule_delimiters))
-                    self._molecules[mol_name] = []
+                    self._molecules[mol_name] = Molecule()
+
                     mol_bonds = self._molecules[mol_name]
+
                 else:
-                    self._molecules[mol_name] = []
+                    self._molecules[mol_name] = Molecule()
                     mol_bonds = self._molecules[mol_name]
 
                 angles_defined = False
@@ -262,14 +312,14 @@ class BondSet:
                     if {x for x in atomlist if atomlist.count(x) > 1}:
                         raise ValueError("Defined bond '{0}' contains duplicate atoms".format(atomlist))
                     if now_global:
-                        mol_bonds.append(GlobalBond(atoms=atomlist, func_form=func_form))
+                        mol_bonds.add_bond(GlobalBond(atoms=atomlist, func_form=func_form))
                     else:
-                        mol_bonds.append(Bond(atoms=atomlist, func_form=func_form))
+                        mol_bonds.add_bond(Bond(atoms=atomlist, func_form=func_form))
                     if len(atomlist) > 2:
                         angles_defined = True
 
                 if not angles_defined:
-                    if is_global:
+                    if now_global:
                         if options.generate_angles or options.generate_dihedrals:
                             logger.warning("Automated generation of angles or dihedrals between "
                                   "residues not implemented! Please specifiy angles and dihedrals in [< {0} >] "
@@ -280,7 +330,7 @@ class BondSet:
 
                         if options.generate_angles:
                             for atomlist in angles:
-                                mol_bonds.append(
+                                mol_bonds.add_bond(
                                     Bond(
                                         atoms=atomlist,
                                         func_form=self._functional_forms[3](circular_mean, circular_variance)
@@ -289,14 +339,13 @@ class BondSet:
 
                         if options.generate_dihedrals:
                             for atomlist in dihedrals:
-                                mol_bonds.append(
+                                mol_bonds.add_bond(
                                     Bond(
                                         atoms=atomlist,
                                         func_form=self._functional_forms[4](circular_mean, circular_variance)
                                     )
                                 )
-                if now_global:
-                    self._molecules[mol_name] = Molecule(bonds=mol_bonds)
+
 
     @staticmethod
     def _create_angles(mol_bonds):
@@ -320,10 +369,7 @@ class BondSet:
         :param function select: Optional lambda, return only bonds for which this is True
         :return List[Bond]: List of bonds
         """
-        if isinstance(self._molecules[mol], Molecule):
-            bonds = self._molecules[mol].bonds
-        else:
-            bonds = self._molecules[mol]
+        bonds = self._molecules[mol]
 
         if natoms == -1:
             return [bond for bond in bonds if select(bond)]
@@ -337,10 +383,7 @@ class BondSet:
         :param with_constr: Include constraints?
         :return: List of bonds
         """
-        if isinstance(self._molecules[mol], Molecule):
-            bonds = self._molecules[mol].bonds
-        else:
-            bonds = self._molecules[mol]
+        bonds = self._molecules[mol]
 
         if with_constr:
             return [bond for bond in bonds if len(bond.atoms) == 2]
@@ -354,10 +397,7 @@ class BondSet:
         :param mol: Molecule name to return bonds for
         :return: List of bonds
         """
-        if isinstance(self._molecules[mol], Molecule):
-            bonds = self._molecules[mol].bonds
-        else:
-            bonds = self._molecules[mol]
+        bonds = self._molecules[mol]
         return [bond for bond in bonds if len(bond.atoms) == 2 and bond.fconst >= self._fconst_constr_threshold]
 
     def get_bond_angles(self, mol, exclude_triangle=True):
@@ -368,10 +408,7 @@ class BondSet:
         :param exclude_triangle: Exclude angles that are part of a triangle?
         :return: List of bonds
         """
-        if isinstance(self._molecules[mol], Molecule):
-            bonds = self._molecules[mol].bonds
-        else:
-            bonds = self._molecules[mol]
+        bonds = self._molecules[mol]
         angles = [bond for bond in bonds if len(bond.atoms) == 3]
 
         if exclude_triangle:
@@ -395,10 +432,7 @@ class BondSet:
         :param mol: Molecule name to return bonds for
         :return: List of bonds
         """
-        if isinstance(self._molecules[mol], Molecule):
-            bonds = self._molecules[mol].bonds
-        else:
-            bonds = self._molecules[mol]
+        bonds = self._molecules[mol]
         return [bond for bond in bonds if len(bond.atoms) == 4]
 
     def get_virtual_beads(self, mapping):
@@ -439,14 +473,11 @@ class BondSet:
         connects residues together to form new molecules
         :param frame: Frame from which to determine inter residue connections
         """
-        count = 0
-        not_multi = [mol for mol in self._molecules if not isinstance(self._molecules[mol], Molecule)]
+        #TODO this section is a bit verbose - simplify
+        not_multi = [mol for mol in self._molecules if not self._molecules[mol].is_multiresidue]
         for mol in self._molecules:
-            if isinstance(self._molecules[mol], Molecule):
-                if count > 1:
-                    print("More than one multi residue molecule detected - this is not yet supported by pycgtool")
-                    raise NotImplementedError
-                mol_bonds = self._molecules[mol].bonds
+            if self._molecules[mol].is_multiresidue:
+                mol_bonds = self._molecules[mol].inter
                 fragments = []
                 for bond in mol_bonds:
                     fragments.append(bond.get_residue_ids(frame))
@@ -489,10 +520,19 @@ class BondSet:
                 for bond in mol_bonds:
                     bond.populate_ids(all_beads)
 
+                for mol in self._molecules:
+                    num = 0
+                    for res in frame:
+                        if res.name == mol:
+                            num += 1
+                    if num > 1:
+                        logger.warning("More than one {0} residue found in gro, note that pycgtool "
+                                       "does not currently support the fitting of bonding parameters of multi-residue "
+                                       "molecules + single residue molecules simultaneously.")
+
                 all_bonds.extend(mol_bonds)
                 molecule = Molecule(resnames, all_bonds, all_beads)
                 self._molecules[mol] = molecule
-                count += 1
         return
 
     def write_itp(self, filename, mapping):
@@ -537,7 +577,7 @@ class BondSet:
         # Print molecule
         not_calc = "  Parameters have not been calculated."
         for mol in self._molecules:
-            if not isinstance(self._molecules[mol], Molecule):
+            if not self._molecules[mol].is_multiresidue:
                 if mol not in mapping:
                     logger.warning("Molecule '{0}' present in bonding file, but not in mapping.".format(mol) + not_calc)
                     continue
@@ -573,6 +613,7 @@ class BondSet:
                         vsite_exclusions = "{} ".format(vbead.num + 1) + CGids_string
                         excl_lines.append(vsite_exclusions)
                     ret_lines.extend(excl_lines)
+
 
                 ret_lines.extend(write_bond_angle_dih(self.get_bond_lengths(mol), "bonds"))
                 ret_lines.extend(write_bond_angle_dih(self.get_bond_angles(mol), "angles", rad2deg=True))
@@ -662,6 +703,7 @@ class BondSet:
                 3: calc_angle,
                 4: calc_dihedral}
 
+        # TODO tidy this section
         for prev_res, res, next_res in sliding(frame):
             try:
                 mol_meas = self._molecules[res.name]
@@ -674,26 +716,33 @@ class BondSet:
 
             for bond in mol_meas:
                 try:
-                    # TODO tidy this
                     atoms = [adj_res.get(name[0], res)[name.lstrip("-+")] for name in bond.atoms]
-                    val = calc[len(atoms)](atoms)
+                    num_atoms = len(atoms)
+                    if num_atoms == 0:
+                        raise Exception("Error: {0} residue in *.map and *.gro file, but atoms {1} not in gro".format(
+                            res.name, " ".join(bond.atoms)))
+                    val = calc[num_atoms](atoms)
                     bond.values.append(val)
                 except (NotImplementedError, TypeError):
                     # TypeError is raised when residues on end of chain calc bond to next
                     pass
                 except ZeroDivisionError as e:
                     e.args = ("Zero division in calculation of <{0}>".format(" ".join(bond.atoms)),)
-                    #print(type(bond), mol_meas)
                     raise e
 
-        #calculate values for global bonds#
+        #calculate values for global bonds
         for mol in self._molecules:
-            if isinstance(self._molecules[mol], Molecule):
+            if self._molecules[mol].is_multiresidue:
                 bonds = self._molecules[mol].bonds
                 for bond in bonds:
                     try:
                         atoms = bond.get_atoms(frame)
-                        val = calc[len(atoms)](atoms)
+                        num_atoms = len(atoms)
+                        if num_atoms == 0:
+                            raise Exception(
+                                "Error: {0} Molecule in *.map, but atoms {1} not in gro".format(
+                                    mol, " ".join(bond.atoms)))
+                        val = calc[num_atoms](atoms)
                         bond.values.append(val)
                     except ZeroDivisionError as e:
                         e.args = ("Zero division in calculation of <{0}>".format(" ".join(bond.labels)),)
@@ -707,7 +756,7 @@ class BondSet:
         """
         bond_iter = itertools.chain(*self._molecules.values())
         for mol in self._molecules:
-            if isinstance(self._molecules[mol], Molecule):
+            if self._molecules[mol].is_multiresidue:
                 bonds = self._molecules[mol].bonds
                 bond_iter = itertools.chain(bond_iter, bonds)
         if progress:

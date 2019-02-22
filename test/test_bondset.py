@@ -3,6 +3,7 @@ import unittest
 import logging
 import math
 import os
+import numpy as np
 
 from pycgtool.bondset import BondSet
 from pycgtool.frame import Frame
@@ -321,12 +322,16 @@ class BondSetTest(unittest.TestCase):
         mapping = Mapping("test/data/global.map", DummyOptions)
         measure = BondSet("test/data/global.bnd", DummyOptions)
         frame = Frame("test/data/global-cg.gro")
-        print(measure)
         measure[mol].bonds[0].eqm = 2.
         measure[mol].bonds[0].fconst = 1000.
-        measure[mol].bonds[1].eqm = 3.
+        measure[mol].bonds[1].eqm = np.deg2rad(30.)
         measure[mol].bonds[1].fconst = 100.
         measure.connect_residues(frame, mapping)
         measure.write_itp("global.itp", mapping)
+        logging.disable(logging.NOTSET)
+
+        self.assertTrue(cmp_file_whitespace_float("global.itp", "test/data/global.itp",
+                                                  rtol=0.005, verbose=True))
+
 
 

@@ -8,6 +8,7 @@ Both Frame and Residue are iterable. Residue is indexable with either atom numbe
 import logging
 
 import numpy as np
+import collections
 
 from .util import backup_file, file_write_lines
 from .parsers.cfg import CFG
@@ -66,25 +67,8 @@ class Atom:
                 setattr(self, attr, getattr(other, attr))
 
 
-class Molecule:
-    """
-    Holds data for a molecule comprised of multiple residues
-    """
-    __slots__ = ["resnames", "bonds", "beads", "resid_to_beads", "resid_to_resname"]
 
-    def __init__(self, resnames=None, bonds=None, beads=None):
-        self.resnames = resnames
-        if beads and resnames is not None:
-            self.resid_to_resname = dict(zip(range(1, len(resnames)+1), resnames))
-            self.resid_to_beads = dict(zip(range(1, len(resnames)+1), beads))
-            self.beads = np.array(beads).flatten().tolist()
-        self.bonds = bonds
 
-    def __len__(self):
-        return len(self.bonds)
-
-    def __iter__(self):
-        return iter(self.bonds)
 
 
 
