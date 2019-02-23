@@ -313,8 +313,8 @@ class BondSetTest(unittest.TestCase):
         measure[mol].bonds[1].eqm = 90.
         measure[mol].bonds[1].fconst = 100.
         measure.connect_residues(frame, mapping)
-        self.assertEqual(measure[mol].beads[-1].num, 3)
         self.assertListEqual(measure[mol].bonds[0].atom_numbers, [1, 2])
+        self.assertListEqual(measure[mol].bonds[1].atom_numbers, [1, 2, 3])
 
     def test_global_itp(self):
         mol = "mol_01"
@@ -327,6 +327,8 @@ class BondSetTest(unittest.TestCase):
         measure[mol].bonds[1].eqm = np.deg2rad(30.)
         measure[mol].bonds[1].fconst = 100.
         measure.connect_residues(frame, mapping)
+
+        logging.disable(logging.WARNING)
         measure.write_itp("global.itp", mapping)
         logging.disable(logging.NOTSET)
 

@@ -67,21 +67,6 @@ def vector_cross(u, v):
     res[2] = u[0] * v[1] - u[1] * v[0]
     return res
 
-def shift_func_value(func_to_decorate, shift, periodic=None):
-    """
-    shift value that a function returns
-    :param func_to_decorate:
-    :param shift: value to shift return value by
-    :return: new_func: new function
-    """
-
-    def new_func(*original_args, **original_kwargs):
-        value = func_to_decorate(*original_args, **original_kwargs) - shift
-        if periodic is not None:
-           value -= np.rint(value / two_pi) * two_pi
-        return value
-    return new_func
-
 def circular_mean(values):
     """
     return average of values on a cirle
