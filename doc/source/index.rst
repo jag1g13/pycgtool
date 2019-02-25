@@ -193,13 +193,12 @@ generate_dihedrals   Generate dihedrals from bonds                **False**, Tru
 
 Connect Residues
 ~~~~~~~~~~~~~~~~
-In the .bnd file the [ global ] section can be used to form bonds, angles or dihedrals between any residue in a system.
-The syntax for a bond in the global section is::
+In the .bnd file the [< mol >] section can be used to form bonds, angles or dihedrals between any residue in a system.
+The syntax for an inter residue bond is::
    [atom_name1]_[resid1]_[resname1] [atom_name2]_[resid2]_[resname2]
    or angle::
    [atom_name1]_[resid1]_[resname1] [atom_name2]_[resid2]_[resname2]  [atom_name3]_[resid3]_[resname3]
-Currently this feature only works for a single molecule and the name of the molecule outputted will always be 'mol_0'.
-Also itp reading is not currently supported for multi-residue itps
+Currently this feature only works for a single molecule. Note that itp reading is not currently supported for multi-residue itps
 
 Indexes
 =======
