@@ -11,6 +11,7 @@ import numpy as np
 
 from .util import backup_file, file_write_lines
 from .parsers.cfg import CFG
+from .parsers.itp import ITP
 
 logger = logging.getLogger(__name__)
 
@@ -234,15 +235,16 @@ class Frame:
         :param filename: Filename of GROMACS ITP to read
         """
         with CFG(filename) as itp:
-            itpres = Residue(itp["moleculetype"][0][0])
-            for line in itp["atoms"]:
-                atom = Atom(num=int(line[0]) - 1, type=line[1], name=line[4], charge=float(line[6]), mass=float(line[7]))
-                itpres.add_atom(atom)
+            for molecule in itp:
+                itpres = Residue(itp[molecule])
+                for line in itp[molecule]["atoms"]:
+                    atom = Atom(num=int(line[0]) - 1, type=line[1], name=line[4], charge=float(line[6]), mass=float(line[7]))
+                    itpres.add_atom(atom)
 
-            for res in self.residues:
-                if res.name == itpres.name:
-                    for atom, itpatom in zip(res, itpres):
-                        atom.add_missing_data(itpatom)
+                for res in self.residues:
+                    if res.name == itpres.name:
+                        for atom, itpatom in zip(res, itpres):
+                            atom.add_missing_data(itpatom)
 
     def output(self, filename, format="gro"):
         """

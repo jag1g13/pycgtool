@@ -1,3 +1,2 @@
 from .cfg import CFG
-
-ITP = CFG
+from .itp import ITP

@@ -6,7 +6,7 @@ import os
 import shutil
 
 from .util import dir_up, any_starts_with, file_write_lines
-from .parsers import ITP
+from .parsers import CFG
 
 
 class ForceField:
@@ -38,7 +38,7 @@ class ForceField:
 
         # Create atomtypes.atp required for correct masses with pdb2gmx
         atomtypes_atp = os.path.join(self.dirname, "atomtypes.atp")
-        with ITP(martini_itp) as itp, open(atomtypes_atp, 'w') as atomtypes:
+        with CFG(martini_itp) as itp, open(atomtypes_atp, 'w') as atomtypes:
             for toks in itp["atomtypes"]:
                 print(" ".join(toks), file=atomtypes)
 
