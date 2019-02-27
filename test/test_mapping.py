@@ -116,6 +116,13 @@ class MappingTest(unittest.TestCase):
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([1., 1., 1.]), cg[0][0].coords)
 
+    def test_mapping_itp_multi(self):
+        mapping = Mapping("test/data/membrane/membrane.map", DummyOptions, itp="test/data/membrane/membrane.top")
+        self.assertAlmostEqual( -1.2, mapping["POPE"][0].charge, delta=0.0001)
+        self.assertAlmostEqual(0, mapping["POPG"][0].charge, delta=0.0001)
+
+        self.assertAlmostEqual([94.9716], mapping["POPE"][0].mass, delta=0.0001)
+
 
 
 
