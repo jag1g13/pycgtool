@@ -1,0 +1,21 @@
+;
+; Topology prepared automatically using PyCGTOOL
+; James Graham <J.A.Graham@soton.ac.uk> 2016
+; University of Southampton
+; https://github.com/jag1g13/pycgtool
+;
+
+[ moleculetype ]
+mol_01    1
+
+[ atoms ]
+   1 TC3     1 GLX  S1      1    0.000
+   2 TC3     1 GLX  S2      2    0.000
+   3 TC3     2 GLY  S1      3    0.000
+   4 TC3     2 GLY  S2      4    0.000
+
+[ bonds ]
+   2    3    1      2.00000   1000.00000
+
+[ angles ]
+   2    3    4    2     30.00000    100.00000

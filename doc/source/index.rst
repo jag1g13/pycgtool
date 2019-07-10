@@ -190,6 +190,15 @@ generate_angles      Generate angles from bonds                   **True**, Fals
 generate_dihedrals   Generate dihedrals from bonds                **False**, True
 ==================   ==========================================   =======================
 
+Connect Residues
+~~~~~~~~~~~~~~~~
+In the .bnd file the [< mol >] section can be used to form bonds, angles or dihedrals between any residue in a system.
+The syntax for an inter residue bond is::
+   [atom_name1]_[resid1]_[resname1] [atom_name2]_[resid2]_[resname2]
+   or angle::
+   [atom_name1]_[resid1]_[resname1] [atom_name2]_[resid2]_[resname2]  [atom_name3]_[resid3]_[resname3]
+Currently this feature only works for a single molecule. Note that itp reading is not currently supported for multi-residue itps
+
 Indexes
 =======
 

@@ -11,7 +11,7 @@ from pycgtool.util import tuple_equivalent, extend_graph_chain, stat_moments, tr
 from pycgtool.util import dir_up, backup_file, sliding, r_squared, dist_with_pbc
 from pycgtool.util import SimpleEnum, FixedFormatUnpacker
 from pycgtool.util import file_write_lines, cmp_whitespace_float
-from pycgtool.util import circular_mean, circular_variance
+from pycgtool.util import circular_mean, circular_variance, merge_list_of_lists
 
 
 class UtilTest(unittest.TestCase):
@@ -271,6 +271,11 @@ class UtilFileWriteLinesTest(unittest.TestCase):
         file_write_lines(filename, lines[2:], append=True)
         with open(filename) as f:
             self.assertListEqual(lines, f.read().splitlines())
+
+    def test_merge_list_of_lists(self):
+        l = [['a', 'b', 'c'], ['b', 'd', 'e'], ['k'], ['o', 'p'], ['e', 'f'], ['p', 'a'], ['d', 'g']]
+        merged_list = [['a','b','c','d','e','f','g','o','p'],['k']]
+        self.assertListEqual(merged_list,merge_list_of_lists(l))
 
 
 if __name__ == '__main__':

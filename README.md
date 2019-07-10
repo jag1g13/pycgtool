@@ -2,6 +2,7 @@
 
 
 # PyCGTOOL
+WARNING THIS IS A VERY EXPERIMENTAL BRANCH - EXERCISE CAUTION!
 Please see http://pycgtool.readthedocs.io/en/master/ for full documentation.
 
 

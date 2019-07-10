@@ -8,6 +8,7 @@ Both Frame and Residue are iterable. Residue is indexable with either atom numbe
 import logging
 
 import numpy as np
+import collections
 
 from .util import backup_file, file_write_lines
 from .parsers.cfg import CFG
@@ -67,6 +68,11 @@ class Atom:
                 setattr(self, attr, getattr(other, attr))
 
 
+
+
+
+
+
 class Residue:
     """
     Hold data for a residue - list of atoms
@@ -96,6 +102,9 @@ class Residue:
 
     def __len__(self):
         return len(self.atoms)
+
+    def __contains__(self, item):
+        return item in self.name_to_num
 
     def add_atom(self, atom):
         """
