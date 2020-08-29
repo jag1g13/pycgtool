@@ -1,14 +1,25 @@
+
+# Data
+/*.gro*
+/*.itp*
+/*.xtc*
+/fftest.ff/
+
+# Dependencies and runtime
+/env/
+/minenv/
+/venv/
 *.pyc
-.idea/
-.cache/
-/*.gro
-/*.itp
-/fftest.ff
-/env
-/minenv
+
+# Development and Testing
 .coverage
-/cover
-/tmp
-/doc/build
+.idea/
+.vscode/
+/cover/
+/tmp/
+/doc/build/
 /nose2-junit.xml
+
+# Misc
+.cache/
 *.offsets
