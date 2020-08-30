@@ -521,9 +521,10 @@ testing = ["jaraco.itertools", "func-timeout"]
 [extras]
 all = ["mdtraj"]
 mdtraj = ["mdtraj"]
+test = []
 
 [metadata]
-content-hash = "bbd67591357f43a17bc1915c4f9ffb890fb422ebd099f134e107633bada391b9"
+content-hash = "0fc91d6f545db953735d734ff92273b637d0e0b2fe09f47203d7ff0a2ff27275"
 lock-version = "1.0"
 python-versions = "^3.6"
 
