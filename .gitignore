@@ -16,6 +16,7 @@
 .idea/
 .vscode/
 /cover/
+/dist/
 /tmp/
 /doc/build/
 /nose2-junit.xml
