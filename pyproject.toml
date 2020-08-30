@@ -30,7 +30,7 @@ flake8 = "^3.8.3"
 
 [tool.poetry.extras]
 mdtraj = ["mdtraj"]
-test = ["mdtraj", "pytest", "prospector", "flake8"]
+all = ["mdtraj"]
 
 [build-system]
 requires = ["poetry>=0.12"]
