@@ -7,7 +7,7 @@ on:
   push:
     branches: [ master, dev, modernisation ]
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, dev, modernisation ]
 
 jobs:
   build:
@@ -27,13 +27,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install poetry
-        poetry install --extras test
+        poetry install --no-root --extras all --extras test
     - name: Lint with flake8 and prospector
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # check for other issues but don't stop the build
-        prospector --strictness veryhigh --zero-exit
+        poetry run prospector --strictness veryhigh --zero-exit
     - name: Test with pytest
       run: |
-        pytest
+        poetry run pytest
