@@ -1,14 +1,35 @@
 [tool.poetry]
-name = "PyCGTOOL"
+name = "pycgtool"
 version = "2.0.0a0"
 description = "Generate coarse-grained MD models from atomistic trajectories"
 authors = ["James Graham <j.graham@soton.ac.uk>"]
 license = "GPL-3.0-only"
 
+[tool.poetry.urls]
+homepage = "https://github.com/jag1g13/pycgtool"
+repository = "https://github.com/jag1g13/pycgtool"
+documentation = "https://pycgtool.readthedocs.io/en/master/"
+
+[tool.poetry.scripts]
+pycgtool = "pycgtool.__main__:main"
+
 [tool.poetry.dependencies]
 python = "^3.6"
+numpy = "^1.19.1"
+cython = "^0.29.21"
+simpletraj = "^0.5"
+
+# Optional extras to enable additional functionality
+mdtraj = { version = "^1.9.4", optional = true }
 
 [tool.poetry.dev-dependencies]
+pytest = "^6.0.1"
+pylint = "^2.6.0"
+yapf = "^0.30.0"
+
+[tool.poetry.extras]
+mdtraj = ["mdtraj"]
+test = ["mdtraj", "pytest"]
 
 [build-system]
 requires = ["poetry>=0.12"]
