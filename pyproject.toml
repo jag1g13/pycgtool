@@ -24,12 +24,13 @@ mdtraj = { version = "^1.9.4", optional = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.1"
-pylint = "^2.6.0"
 yapf = "^0.30.0"
+prospector = "^1.3.0"
+flake8 = "^3.8.3"
 
 [tool.poetry.extras]
 mdtraj = ["mdtraj"]
-test = ["mdtraj", "pytest"]
+test = ["mdtraj", "pytest", "prospector", "flake8"]
 
 [build-system]
 requires = ["poetry>=0.12"]
