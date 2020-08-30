@@ -207,7 +207,7 @@ class Frame:
                 raise
 
             backup_file(filename)
-            self._xtc_buffer = mdtraj.formats.XTCTrajectoryFile(filename, mode="w")
+            self._xtc_buffer = mdtraj.formats.XTCTrajectoryFile(str(filename), mode="w")
 
         xyz = np.ndarray((1, self.natoms, 3), dtype=np.float32)
         i = 0

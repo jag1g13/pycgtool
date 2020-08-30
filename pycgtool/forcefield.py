@@ -2,25 +2,26 @@
 This module contains a single class ForceField used to output a GROMACS .ff forcefield.
 """
 
-import os
-import shutil
 import functools
+import os
+import pathlib
+import shutil
 
-from .util import dir_up
 from .parsers import ITP
+from .util import dir_up
 
 
 class ForceField:
     """
     Class used to output a GROMACS .ff forcefield
     """
-    def __init__(self, name):
+    def __init__(self, name, dir_path=pathlib.Path('.')):
         """
         Open a named forcefield directory.  If it does not exist it is created.
 
         :param name: Forcefield name to open/create
         """
-        self.dirname = "ff{0}.ff".format(name)
+        self.dirname = dir_path.joinpath("ff{0}.ff".format(name))
         os.makedirs(self.dirname, exist_ok=True)
 
         with open(os.path.join(self.dirname, "forcefield.itp"), "w") as itp:

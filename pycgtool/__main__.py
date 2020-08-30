@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import pathlib
 import sys
 
 from .frame import Frame
@@ -28,6 +29,11 @@ def full_run(args, config):
                   itp=args.itp,
                   frame_start=args.begin)
 
+    out_dir = pathlib.Path(args.out_dir)
+    out_gro_file = out_dir.joinpath(config.output_name + ".gro")
+    out_xtc_file = out_dir.joinpath(config.output_name + ".xtc")
+    out_itp_file = out_dir.joinpath(config.output_name + ".itp")
+
     if args.bnd:
         logger.info("Bond measurements will be made")
         bonds = BondSet(args.bnd, config)
@@ -37,9 +43,10 @@ def full_run(args, config):
 
     if args.map:
         logger.info("Mapping will be performed")
+
         mapping = Mapping(args.map, config, itp=args.itp)
         cgframe = mapping.apply(frame)
-        cgframe.output(config.output_name + ".gro", format=config.output)
+        cgframe.output(out_gro_file, format=config.output)
 
     else:
         logger.info("Mapping will not be performed")
@@ -60,7 +67,7 @@ def full_run(args, config):
             cgframe = mapping.apply(frame, cgframe=cgframe)
 
             if config.output_xtc:
-                cgframe.write_xtc(config.output_name + ".xtc")
+                cgframe.write_xtc(out_xtc_file)
 
         else:
             cgframe = frame
@@ -81,12 +88,12 @@ def full_run(args, config):
 
             if config.output_forcefield:
                 logger.info("Creating GROMACS forcefield directory")
-                ForceField(config.output_name).write(config.output_name,
-                                                     mapping, bonds)
+                ff = ForceField(config.output_name, dir_path=out_dir)
+                ff.write(config.output_name, mapping, bonds)
                 logger.info("GROMACS forcefield directory created")
 
             else:
-                bonds.write_itp(config.output_name + ".itp", mapping=mapping)
+                bonds.write_itp(out_itp_file, mapping=mapping)
 
         if config.dump_measurements:
             logger.info("Dumping bond measurements to file")
@@ -102,8 +109,13 @@ def map_only(args, config):
     """
     frame = Frame(gro=args.gro, xtc=args.xtc)
     mapping = Mapping(args.map, config)
+
+    out_dir = pathlib.Path(args.out_dir)
+    out_gro_file = out_dir.joinpath(config.output_name + ".gro")
+    out_xtc_file = out_dir.joinpath(config.output_name + ".xtc")
+
     cgframe = mapping.apply(frame)
-    cgframe.output(config.output_name + ".gro", format=config.output)
+    cgframe.output(out_gro_file, format=config.output)
 
     if args.xtc and (config.output_xtc or args.outputxtc):
         # Main loop - perform mapping and measurement on every frame in XTC
@@ -113,7 +125,7 @@ def map_only(args, config):
                 return False
 
             cgframe = mapping.apply(frame, cgframe=cgframe)
-            cgframe.write_xtc(config.output_name + ".xtc")
+            cgframe.write_xtc(out_xtc_file)
             return True
 
         numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
@@ -138,6 +150,10 @@ def main():
                         default=False,
                         action='store_true',
                         help="Show advanced options menu")
+    parser.add_argument('--out-dir',
+                        default='.',
+                        type=str,
+                        help="Directory where output files should be placed")
     parser.add_argument('--outputxtc',
                         default=False,
                         action='store_true',
