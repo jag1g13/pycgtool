@@ -177,16 +177,25 @@ def main():
     _ = FunctionalForms()
 
     args = parser.parse_args()
-    config = Options(
-        [("output_name", "out"), ("output", "gro"),
-         ("output_xtc", args.outputxtc), ("map_only", not bool(args.bnd)),
-         ("map_center", "geom"), ("constr_threshold", 100000),
-         ("dump_measurements", bool(args.bnd) and not bool(args.map)),
-         ("dump_n_values", 10000), ("output_forcefield", False),
-         ("temperature", 310), ("default_fc", False),
-         ("generate_angles", True), ("generate_dihedrals", False),
-         ("length_form", "harmonic"), ("angle_form", "cosharmonic"),
-         ("dihedral_form", "harmonic")], args)
+    config = Options([
+        ("output_name", "out"),
+        ("output", "gro"),
+        ("output_xtc", args.outputxtc),
+        ("map_only", not bool(args.bnd)),
+        ("map_center", "geom"),
+        ("virtual_map_center", "geom"),
+        ("constr_threshold", 100000),
+        ("dump_measurements", bool(args.bnd) and not bool(args.map)),
+        ("dump_n_values", 10000),
+        ("output_forcefield", False),
+        ("temperature", 310),
+        ("default_fc", False),
+        ("generate_angles", True),
+        ("generate_dihedrals", False),
+        ("length_form", "harmonic"),
+        ("angle_form", "cosharmonic"),
+        ("dihedral_form", "harmonic")
+    ], args)  # yapf: disable
 
     if not args.map and not args.bnd:
         parser.error("One or both of -m and -b is required.")

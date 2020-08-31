@@ -33,22 +33,24 @@ class Args:
 
 
 class PycgtoolTest(unittest.TestCase):
-    config = Options([("output_name", "out"),
-                      ("output", "gro"),
-                      ("output_xtc", True),
-                      ("map_only", False),
-                      ("map_center", "geom"),
-                      ("constr_threshold", 100000),
-                      ("dump_measurements", False),
-                      ("dump_n_values", 10000),
-                      ("output_forcefield", False),
-                      ("temperature", 310),
-                      ("default_fc", False),
-                      ("generate_angles", True),
-                      ("generate_dihedrals", False),
-                      ("length_form", "harmonic"),
-                      ("angle_form", "harmonic"),
-                      ("dihedral_form", "harmonic"),
+    config = Options([
+        ("output_name", "out"),
+        ("output", "gro"),
+        ("output_xtc", True),
+        ("map_only", False),
+        ("map_center", "geom"),
+        ("virtual_map_center", "geom"),
+        ("constr_threshold", 100000),
+        ("dump_measurements", False),
+        ("dump_n_values", 10000),
+        ("output_forcefield", False),
+        ("temperature", 310),
+        ("default_fc", False),
+        ("generate_angles", True),
+        ("generate_dihedrals", False),
+        ("length_form", "harmonic"),
+        ("angle_form", "harmonic"),
+        ("dihedral_form", "harmonic"),
     ])  # yapf: disable
 
     def test_run_help(self):

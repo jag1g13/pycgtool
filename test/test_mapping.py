@@ -4,12 +4,13 @@ import os
 
 import numpy as np
 
-from pycgtool.mapping import Mapping
+from pycgtool.mapping import Mapping, VirtualMap
 from pycgtool.frame import Frame
 
 
 class DummyOptions:
     map_center = "geom"
+    virtual_map_center = "geom"
 
 
 class MappingTest(unittest.TestCase):
@@ -20,6 +21,16 @@ class MappingTest(unittest.TestCase):
         self.assertEqual(1, len(mapping["SOL"]))
         self.assertEqual(3, len(mapping["SOL"][0].atoms))
         self.assertEqual("OW", mapping["SOL"][0].atoms[0])
+
+    def test_virtual_mapping_create(self):
+        mapping = Mapping("test/data/martini3/naphthalene.map", DummyOptions)
+        self.assertEqual(1, len(mapping))
+        self.assertTrue("NAPH" in mapping)
+        self.assertEqual(5, len(mapping["NAPH"]))
+        self.assertTrue(isinstance(mapping["NAPH"][2], VirtualMap))
+        self.assertEqual(4, len(mapping["NAPH"][2].atoms))
+        self.assertEqual("R1", mapping["NAPH"][2].atoms[0])
+        self.assertEqual(1, [isinstance(bead, VirtualMap) for bead in mapping["NAPH"]].count(True))
 
     def test_mapping_apply(self):
         mapping = Mapping("test/data/water.map", DummyOptions)
@@ -51,6 +62,12 @@ class MappingTest(unittest.TestCase):
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([1.5, 1.5, 1.5]), cg[0][0].coords)
 
+    def test_virtual_mapping_weights_geom(self):
+        frame = Frame("test/data/martini3/four.gro")
+        mapping = Mapping("test/data/martini3/four.map", DummyOptions)
+        cg = mapping.apply(frame)
+        np.testing.assert_allclose(np.array([2.5, 2.5, 2.5]), cg[0][2].coords)
+
     def test_mapping_weights_mass(self):
         frame = Frame("test/data/two.gro")
         options = DummyOptions()
@@ -59,6 +76,14 @@ class MappingTest(unittest.TestCase):
         mapping = Mapping("test/data/two.map", options, itp="test/data/two.itp")
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([2., 2., 2.]), cg[0][0].coords)
+
+    def test_virtual_mapping_weights_mass(self):
+        frame = Frame("test/data/martini3/four.gro")
+        options = DummyOptions()
+        options.virtual_map_center = "mass"
+        mapping = Mapping("test/data/martini3/four.map", options, itp="test/data/martini3/four.itp")
+        cg = mapping.apply(frame)
+        np.testing.assert_allclose(np.array([3.0, 3.0, 3.0]), cg[0][2].coords)
 
     def test_mapping_weights_guess_mass(self):
         frame = Frame("test/data/two.gro")
@@ -70,6 +95,15 @@ class MappingTest(unittest.TestCase):
         np.testing.assert_allclose(np.array([1.922575,  1.922575,  1.922575], dtype=np.float32),
                                    cg[0][0].coords, rtol=0.01)
 
+    def test_virtual_mapping_weights_guess_mass(self):
+        frame = Frame("test/data/martini3/four.gro")
+        options = DummyOptions()
+        options.virtual_map_center = "mass"
+        mapping = Mapping("test/data/martini3/four.map", options)
+        cg = mapping.apply(frame)
+        np.testing.assert_allclose(np.array([2.83337, 2.83337, 2.83337], dtype=np.float32),
+                                   cg[0][2].coords, rtol=0.01)
+
     def test_mapping_weights_first(self):
         frame = Frame("test/data/two.gro")
         options = DummyOptions()
@@ -78,6 +112,3 @@ class MappingTest(unittest.TestCase):
         mapping = Mapping("test/data/two.map", options, itp="test/data/two.itp")
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([1., 1., 1.]), cg[0][0].coords)
-
-
-

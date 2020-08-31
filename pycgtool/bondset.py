@@ -7,7 +7,6 @@ BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a sin
 import itertools
 import math
 import logging
-
 import numpy as np
 
 
@@ -16,11 +15,20 @@ try:
 except ImportError:
     from .util import tqdm_dummy as tqdm
 
-from .util import sliding, dist_with_pbc, transpose_and_sample
-from .util import extend_graph_chain, file_write_lines
-from .util import vector_len, vector_cross, vector_angle, vector_angle_signed
-from .parsers.cfg import CFG
+from .mapping import VirtualMap
 from .functionalforms import FunctionalForms
+from .parsers.cfg import CFG
+from .util import (
+    dist_with_pbc,
+    extend_graph_chain,
+    file_write_lines,
+    sliding,
+    transpose_and_sample,
+    vector_angle,
+    vector_angle_signed,
+    vector_cross,
+    vector_len
+)
 
 logger = logging.getLogger(__name__)
 
@@ -248,6 +256,14 @@ class BondSet:
         """
         return [bond for bond in self._molecules[mol] if len(bond.atoms) == 4]
 
+    def get_virtual_beads(self, mapping):
+        """
+        Return list of all virtual beads in molecule
+        :param mapping:
+        :return: list of virtual beads
+        """
+        return [bead for bead in mapping if isinstance(bead, VirtualMap)]
+
     def _populate_atom_numbers(self, mapping):
         """
         Add atom numbers to all bonds.
@@ -265,6 +281,7 @@ class BondSet:
 
             index = [bead.name for bead in molmap]
             for bond in self._molecules[mol]:
+                # TODO this causes issue #8
                 try:
                     bond.atom_numbers = [index.index(atom.lstrip("+-")) for atom in bond.atoms]
                 except ValueError as e:
@@ -327,6 +344,15 @@ class BondSet:
                 ret_lines.append("{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f}".format(
                     i, bead.type, 1, mol, bead.name, i, bead.charge
                 ))
+
+            virtual_beads = self.get_virtual_beads(mapping[mol])
+            if len(virtual_beads) != 0:
+                ret_lines.append("\n[ virtual_sitesn ]")
+
+                for vbead in virtual_beads:
+                    cg_ids = sorted([bead.num + 1 for bead in mapping[mol] if bead.name in vbead.atoms])
+                    cg_ids_string = " ".join(map(str, cg_ids))
+                    ret_lines.append("{0:^6d} {1:^6d} {2}".format(vbead.num+1, vbead.gromacs_type_id, cg_ids_string))
 
             ret_lines.extend(write_bond_angle_dih(self.get_bond_lengths(mol), "bonds"))
             ret_lines.extend(write_bond_angle_dih(self.get_bond_angles(mol), "angles", rad2deg=True))
@@ -408,7 +434,7 @@ class BondSet:
     def _get_lines_for_bond_dump(bonds, target_number=None, rad2deg=False):
         """
         Return a dump of bond measurements as a list of lines of text.
-        
+
         :param bonds: Iterable of bonds
         :param int target_number: Sample size of bonds to dump - None will dump all bonds
         :param bool rad2deg: Should bond measurements be converted from radians to degrees?

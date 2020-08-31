@@ -291,7 +291,7 @@ class Progress:
 
     @property
     def _bar(self):
-        done = int(self._length * (self._its / self._maxits))
+        done = self._length if self._maxits == 0 else int(self._length * (self._its / self._maxits))
         left = self._length - done
         width = len(str(self._maxits))
         return "{0:-{width}} [".format(self._its, width=width) + done * "#" + left * "-" + "] {0}".format(self._maxits)

@@ -40,7 +40,7 @@ class BeadMap(Atom):
         :param float charge: The net charge on the bead
         :param float mass: The total bead mass
         """
-        Atom.__init__(self, name, num, type=type, charge=charge, mass=mass)
+        super().__init__(name, num, type=type, charge=charge, mass=mass)
         self.atoms = atoms
         # NB: Mass weights are added in Mapping.__init__ if an itp file is provided
         self.weights_dict = {"geom": np.array([[1. / len(atoms)] for _ in atoms], dtype=np.float32),
@@ -60,6 +60,26 @@ class BeadMap(Atom):
 
     def __getitem__(self, item):
         return self.atoms[item]
+
+
+class VirtualMap(BeadMap):
+    __slots__ = ["name", "type", "atoms", "charge", "mass", "weights", "weights_dict",
+                 "gromacs_type_id_dict", "gromacs_type_id"]
+
+    def __init__(self, name, num, type=None, atoms=None, charge=0):
+        """
+        Create a single bead mapping.
+
+        :param str name: The name of the bead
+        :param int num: The number of the bead
+        :param str type: The bead type
+        :param List[str] atoms: The CG bead names from which the bead position is determined
+        :param float charge: The net charge on the bead
+        """
+        super().__init__(name, num, type=type, atoms=atoms, charge=charge, mass=0.)
+
+        self.gromacs_type_id_dict = {"geom": 1, "mass": 2}
+        self.gromacs_type_id = self.gromacs_type_id_dict["geom"]
 
 
 class EmptyBeadError(Exception):
@@ -82,26 +102,47 @@ class Mapping:
         :param filename: File from which to read mapping
         :return: Instance of Mapping
         """
+        self._manual_charges = {}
         self._mappings = {}
         self._map_center = options.map_center
+        self._virtual_map_center = options.virtual_map_center
         self._masses_are_set = False
 
         with CFG(filename) as cfg:
-            self._manual_charges = {}
             for mol_name, mol_section in cfg.items():
                 self._mappings[mol_name] = []
                 self._manual_charges[mol_name] = False
                 molmap = self._mappings[mol_name]
+
                 for i, (name, typ, first, *atoms) in enumerate(mol_section):
+                    virtual = False
                     charge = 0
+
+                    if name.startswith('@'):
+                        if name == '@v':
+                            virtual = True
+                            name, typ, first, *atoms=mol_section[i][1:]
+
+                        else:
+                            #TODO ADD CUSTOM ERROR HERE LATER?
+                            raise SyntaxError('"{}" line prefix invalid'.format(name))
+
                     try:
                         # Allow optional charge in mapping file
                         charge = float(first)
                         self._manual_charges[mol_name] = True
+
                     except ValueError:
                         atoms.insert(0, first)
+
                     assert atoms, "Bead {0} specification contains no atoms".format(name)
-                    newbead = BeadMap(name, i, type=typ, atoms=atoms, charge=charge)
+
+                    if virtual:
+                        newbead = VirtualMap(name, i, type=typ, atoms=atoms, charge=charge)
+
+                    else:
+                        newbead = BeadMap(name, i, type=typ, atoms=atoms, charge=charge)
+
                     molmap.append(newbead)
 
         # TODO this only works with one moleculetype in one itp - extend this
@@ -114,24 +155,44 @@ class Mapping:
 
                 molname = itp["moleculetype"][0][0]
                 for bead in self._mappings[molname]:
-                    mass_array = np.array([[atoms[atom][1]] for atom in bead], dtype=np.float32)
-                    bead.mass = sum(mass_array)
-                    mass_array /= bead.mass
-                    bead.weights_dict["mass"] = mass_array
+                    if not isinstance(bead, VirtualMap):
+                        mass_array = np.array([[atoms[atom][1]] for atom in bead], dtype=np.float32)
+                        bead.mass = sum(mass_array)
+                        mass_array /= bead.mass
+                        bead.weights_dict["mass"] = mass_array
 
-                    for atom in bead:
+                        for atom in bead:
+                            if self._manual_charges[molname]:
+                                logger.warning("Charges assigned in mapping for molecule {0}, ignoring itp charges.".format(molname))
+                            else:
+                                bead.charge += atoms[atom][0]
+
+                for bead in self._mappings[molname]:
+                    if isinstance(bead, VirtualMap):
+                        mass_array = np.array(
+                            [real_bead.mass for real_bead in self._mappings[molname] if real_bead.name in bead], dtype=np.float32)
+                        weights_array = mass_array / sum(mass_array)
+                        bead.weights_dict["mass"] = weights_array
                         if self._manual_charges[molname]:
-                            logger.warning("Charges assigned in mapping for molecule {0}, ignoring itp charges.".format(molname))
+                            logger.warning(
+                                "Charges assigned in mapping for molecule {0}, ignoring itp charges.".format(molname))
                         else:
-                            bead.charge += atoms[atom][0]
-
+                            charges = [real_bead.charge for real_bead in self._mappings[molname] if real_bead.name in bead]
+                            bead.charge = sum(charges)
                 self._masses_are_set = True
 
-        if self._map_center == "mass" and not self._masses_are_set:
+        if ((self._map_center == "mass" or self._virtual_map_center == "mass")
+                and not self._masses_are_set):
             self._guess_atom_masses()
+
         for molname, mapping in self._mappings.items():
             for bmap in mapping:
-                bmap.weights = bmap.weights_dict[self._map_center]
+                if isinstance(bmap, VirtualMap):
+                    bmap.weights = bmap.weights_dict[self._virtual_map_center]
+                    bmap.gromacs_type_id = bmap.gromacs_type_id_dict[self._virtual_map_center]
+
+                else:
+                    bmap.weights = bmap.weights_dict[self._map_center]
 
     def __len__(self):
         return len(self._mappings)
@@ -159,7 +220,7 @@ class Mapping:
 
         for mol_mapping in self._mappings.values():
             for bead in mol_mapping:
-                if bead.mass == 0:
+                if bead.mass == 0 and not isinstance(bead, VirtualMap):
                     mass_array = np.zeros((len(bead.atoms), 1), dtype=np.float32)
                     for i, atom in enumerate(bead.atoms):
                         try:
@@ -179,6 +240,13 @@ class Mapping:
 
                     mass_array /= bead.mass
                     bead.weights_dict["mass"] = mass_array
+
+            #set virtual bead masses#
+            for bead in mol_mapping:
+                if isinstance(bead, VirtualMap):
+                    mass_array = np.array([real_bead.mass for real_bead in mol_mapping if real_bead.name in bead], dtype=np.float32)
+                    weights_array = mass_array / sum(mass_array)
+                    bead.weights_dict["mass"] = weights_array
 
         self._masses_are_set = True
 
@@ -241,13 +309,24 @@ class Mapping:
         for aares, cgres in zip(frame.yield_resname_in(self._mappings), cgframe):
             molmap = self._mappings[aares.name]
 
+            virtual_beads= []
+            virtual_bmap = []
             for i, (bead, bmap) in enumerate(zip(cgres, molmap)):
+                if isinstance(bmap, VirtualMap):
+                    virtual_beads.append(bead)
+                    virtual_bmap.append(bmap)
+                    continue
+
                 ref_coords = aares[bmap[0]].coords
                 if len(bmap) == 1:
                     bead.coords = ref_coords
                     continue
 
                 coords = np.asarray([aares[atom].coords for atom in bmap], dtype=np.float32)
+                bead.coords = coord_func(ref_coords, coords, cgframe.box, bmap.weights)
+
+            for bead, bmap in zip(virtual_beads, virtual_bmap):
+                coords = np.asarray([cgres[atom].coords for atom in bmap], dtype=np.float32)
                 bead.coords = coord_func(ref_coords, coords, cgframe.box, bmap.weights)
 
         return cgframe
