@@ -19,6 +19,8 @@ from .mapping import VirtualMap
 from .functionalforms import FunctionalForms
 from .parsers.cfg import CFG
 from .util import (
+    circular_mean,
+    circular_variance,
     dist_with_pbc,
     extend_graph_chain,
     file_write_lines,
@@ -77,8 +79,17 @@ class Bond:
 
         with np.errstate(divide="raise"):
             self.eqm = self._func_form.eqm(values, temp)
+
+            # TODO: consider moving this correction to the functional form
+            # If dihedral, get value to shift cosine function by, NOT equilibrium value
+            if len(self.atoms) == 4:
+                two_pi = 2 * np.pi
+                self.eqm -= np.pi
+                self.eqm = (((self.eqm + np.pi) % two_pi) - np.pi)
+
             try:
                 self.fconst = self._func_form.fconst(values, temp)
+
             except FloatingPointError:
                 # Happens when variance is 0, i.e. we only have one value
                 self.fconst = float("inf")
@@ -120,26 +131,26 @@ class BondSet:
             self._default_fc = False
 
         # Setup default functional forms
-        functional_forms = FunctionalForms()
+        functional_forms_map = FunctionalForms()
         if self._default_fc:
             default_forms = ["MartiniDefaultLength", "MartiniDefaultAngle", "MartiniDefaultDihedral"]
         else:
             default_forms = ["Harmonic", "CosHarmonic", "Harmonic"]
         self._functional_forms = [None, None]
-        self._functional_forms.extend(map(lambda x: functional_forms[x], default_forms))
+        self._functional_forms.extend(map(lambda x: functional_forms_map[x], default_forms))
 
         try:
-            self._functional_forms[2] = functional_forms[options.length_form]
+            self._functional_forms[2] = functional_forms_map[options.length_form]
         except AttributeError:
             pass
 
         try:
-            self._functional_forms[3] = functional_forms[options.angle_form]
+            self._functional_forms[3] = functional_forms_map[options.angle_form]
         except AttributeError:
             pass
 
         try:
-            self._functional_forms[4] = functional_forms[options.dihedral_form]
+            self._functional_forms[4] = functional_forms_map[options.dihedral_form]
         except AttributeError:
             pass
 
@@ -150,12 +161,24 @@ class BondSet:
 
                 angles_defined = False
                 for atomlist in mol_section:
+                    is_angle_or_dihedral = len(atomlist) > 2
+                    mean_function = circular_mean if is_angle_or_dihedral else np.nanmean
+                    variance_function = circular_variance if is_angle_or_dihedral else np.nanvar
+
+                    # Construct instance of Boltzmann Inversion function and
+                    # inject dependencies for mean and variance functions
                     try:
                         # TODO consider best way to override default func form
                         # On per bond, or per type basis
-                        func_form = functional_forms[atomlist[-1]]
+                        func_form = functional_forms_map[atomlist[-1]](
+                            mean_function,
+                            variance_function
+                        )
                     except AttributeError:
-                        func_form = self._functional_forms[len(atomlist)]
+                        func_form = self._functional_forms[len(atomlist)](
+                            mean_function,
+                            variance_function
+                        )
 
                     if {x for x in atomlist if atomlist.count(x) > 1}:
                         raise ValueError("Defined bond '{0}' contains duplicate atoms".format(atomlist))
@@ -169,11 +192,21 @@ class BondSet:
 
                     if options.generate_angles:
                         for atomlist in angles:
-                            mol_bonds.append(Bond(atoms=atomlist, func_form=self._functional_forms[3]))
+                            mol_bonds.append(
+                                Bond(
+                                    atoms=atomlist,
+                                    func_form=self._functional_forms[3](circular_mean, circular_variance)
+                                )
+                            )
 
                     if options.generate_dihedrals:
                         for atomlist in dihedrals:
-                            mol_bonds.append(Bond(atoms=atomlist, func_form=self._functional_forms[4]))
+                            mol_bonds.append(
+                                Bond(
+                                    atoms=atomlist,
+                                    func_form=self._functional_forms[4](circular_mean, circular_variance)
+                                )
+                            )
 
     @staticmethod
     def _create_angles(mol_bonds):
@@ -300,6 +333,9 @@ class BondSet:
         file_write_lines(filename, self.itp_text(mapping))
 
     def itp_text(self, mapping):
+        atom_template = {"nomass": "{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f}",
+                              "mass": "{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f} {7:8.3f}"}
+
         def write_bond_angle_dih(bonds, section_header, print_fconst=True, multiplicity=None, rad2deg=False):
             ret_lines = []
             if bonds:
@@ -339,20 +375,31 @@ class BondSet:
             ret_lines.append("{0:4s} {1:4d}".format(mol, 1))
 
             ret_lines.append("\n[ atoms ]")
+
             for i, bead in enumerate(mapping[mol], start=1):
                 #                 atnum   type resnum resname atname c-group charge (mass)
-                ret_lines.append("{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f}".format(
-                    i, bead.type, 1, mol, bead.name, i, bead.charge
-                ))
+                if isinstance(bead, VirtualMap):
+                    ret_lines.append(atom_template["mass"].format(
+                        i, bead.type, 1, mol, bead.name, i, bead.charge, bead.mass
+                    ))
+                else:
+                    ret_lines.append(atom_template["nomass"].format(
+                        i, bead.type, 1, mol, bead.name, i, bead.charge
+                    ))
 
             virtual_beads = self.get_virtual_beads(mapping[mol])
             if len(virtual_beads) != 0:
                 ret_lines.append("\n[ virtual_sitesn ]")
+                excl_lines = ["\n[ exclusions ]"]  # Exclusions section for virtual sites
 
                 for vbead in virtual_beads:
                     cg_ids = sorted([bead.num + 1 for bead in mapping[mol] if bead.name in vbead.atoms])
                     cg_ids_string = " ".join(map(str, cg_ids))
                     ret_lines.append("{0:^6d} {1:^6d} {2}".format(vbead.num+1, vbead.gromacs_type_id, cg_ids_string))
+                    vsite_exclusions = "{} ".format(vbead.num + 1) + cg_ids_string
+                    excl_lines.append(vsite_exclusions)
+
+                ret_lines.extend(excl_lines)
 
             ret_lines.extend(write_bond_angle_dih(self.get_bond_lengths(mol), "bonds"))
             ret_lines.extend(write_bond_angle_dih(self.get_bond_angles(mol), "angles", rad2deg=True))
@@ -383,7 +430,6 @@ class BondSet:
 
             c1 = vector_cross(veca, vecb)
             c2 = vector_cross(vecb, vecc)
-
             return vector_angle_signed(c1, c2, vecb)
 
         calc = {2: calc_length,

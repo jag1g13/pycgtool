@@ -52,12 +52,12 @@ class BondSetTest(unittest.TestCase):
         ( 1.453592079716,    945.32633,   25),
         ( 2.504189933347,    771.63691,   25),
         ( 1.733002945619,    799.82825,   25),
-        (-1.446051810383,    253.75691,   50),
-        ( 1.067436470329,    125.04591,   50),
-        (-0.373528903861,    135.50927,   50),
-        ( 0.927837103158,     51.13975,   50),
-        (-1.685096988856,     59.38162,   50),
-        ( 1.315458354592,    279.80889,   50)
+        ( 1.695540843207,    253.75691,   50),
+        (-2.074156183261,    125.04591,   50),
+        ( 2.768063749729,    135.50927,   50),
+        (-2.213755550432,     51.13975,   50),
+        ( 1.456495664734,     59.38162,   50),
+        (-1.826134298998,    279.80889,   50)
     ]
 
     def test_bondset_create(self):
@@ -209,7 +209,7 @@ class BondSetTest(unittest.TestCase):
         logging.disable(logging.NOTSET)
 
         self.assertTrue(cmp_file_whitespace_float("sugar_out.itp", "test/data/sugar_out.itp",
-                                                  rtol=0.001, verbose=True))
+                                                  rtol=0.005, verbose=True))
 
     def test_duplicate_atoms_in_bond(self):
         with self.assertRaises(ValueError):
@@ -232,7 +232,7 @@ class BondSetTest(unittest.TestCase):
         filenames = ("ALLA_length.dat", "ALLA_angle.dat", "ALLA_dihedral.dat")
         for filename in filenames:
             self.assertTrue(cmp_file_whitespace_float(os.path.join("test/data", filename), filename,
-                                                      rtol=0.005, verbose=True))
+                                                      rtol=0.008, verbose=True))
 
     def test_get_lines_for_bond_dump(self):
         expected = [

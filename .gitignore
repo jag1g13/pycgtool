@@ -1,9 +1,9 @@
-
 # Data
 /*.gro*
 /*.itp*
 /*.xtc*
 /fftest.ff/
+*.offsets
 
 # Dependencies and runtime
 /env/
@@ -12,14 +12,18 @@
 *.pyc
 
 # Development and Testing
+.cache
 .coverage
-.idea/
-.vscode/
 /cover/
 /dist/
-/tmp/
 /doc/build/
+/tmp/
 /nose2-junit.xml
+
+# IDE files
+.idea/
+.vscode/
+settings.json
 
 # Misc
 .cache/

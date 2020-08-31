@@ -11,6 +11,7 @@ from pycgtool.util import tuple_equivalent, extend_graph_chain, stat_moments, tr
 from pycgtool.util import dir_up, backup_file, sliding, r_squared, dist_with_pbc
 from pycgtool.util import SimpleEnum, FixedFormatUnpacker
 from pycgtool.util import file_write_lines, cmp_whitespace_float
+from pycgtool.util import circular_mean, circular_variance
 
 
 class UtilTest(unittest.TestCase):
@@ -220,6 +221,24 @@ class UtilTest(unittest.TestCase):
         self.assertTrue(cmp_whitespace_float(ref, test))
         test = ["8.3 1.00 -3.001 0"]
         self.assertTrue(cmp_whitespace_float(ref, test))
+
+    def test_circular_mean(self):
+        values = np.deg2rad(np.array([-175, 165], dtype=np.float32))
+        test = np.deg2rad(175.)
+        self.assertAlmostEqual(circular_mean(values),  test, delta=test / 500.)
+
+        values = np.deg2rad(np.array([165, 145], dtype=np.float32))
+        test = np.deg2rad(155.)
+        self.assertAlmostEqual(circular_mean(values), test, delta=test / 500.)
+
+    def test_circular_variance(self):
+        values = np.deg2rad(np.array([165, 145], dtype=np.float32))
+        test_var = np.var(values)
+        self.assertAlmostEqual( circular_variance(values), test_var, delta=test_var / 500.)
+
+        values = np.deg2rad(np.array([-175, 165], dtype=np.float32))
+        self.assertAlmostEqual(circular_variance(values), test_var, delta=test_var / 500.)
+
 
 
 # TODO test backing up
