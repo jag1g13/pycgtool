@@ -9,6 +9,7 @@ import math
 import filecmp
 import logging
 import re
+import functools
 
 from collections import namedtuple
 
@@ -296,47 +297,77 @@ def r_squared(ref, fit):
         return 0
 
 
-def cmp_whitespace_float(ref_filename, test_filename, float_rel_error=0.01):
+def cmp_file_whitespace_float(ref_filename, test_filename, rtol=0.01, verbose=False):
     """
     Compare two files ignoring spacing on a line and using a tolerance on floats
 
     :param ref_filename: Name of reference file
     :param test_filename: Name of test file
-    :param float_rel_error: Acceptable relative error on floating point numbers
+    :param float rtol: Acceptable relative error on floating point numbers
+    :param bool verbose: Print failing lines
     :return: True if files are the same, else False
     """
-    def float_or_string(string):
-        try:
-            int(string)
-            return string
-        except ValueError:
-            try:
-                return float(string)
-            except ValueError:
-                return string
-
     if filecmp.cmp(ref_filename, test_filename):
         return True
-    with open(ref_filename) as ref_file, open(test_filename) as test_file:
-        for ref_line, test_line in itertools.zip_longest(ref_file, test_file):
-            if ref_line is None or test_line is None:
-                return False
-            if ref_line == test_line:
-                continue
 
-            ref_toks = ref_line.split()
-            test_toks = test_line.split()
-            if len(ref_toks) != len(test_toks):
-                return False
-            for ref_tok, test_tok in zip(map(float_or_string, ref_toks),
-                                         map(float_or_string, test_toks)):
-                if ref_tok != test_tok:
-                    if float == type(ref_tok) and float == type(test_tok):
-                        if abs(ref_tok - test_tok) > ref_tok * float_rel_error:
-                            return False
-                    else:
-                        return False
-    return True
+    with open(ref_filename) as ref, open(test_filename) as test:
+        ref_lines = ref.readlines()
+        test_lines = test.readlines()
+
+        return cmp_whitespace_float(ref_lines, test_lines, rtol=rtol, verbose=verbose)
+
+
+def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
+    """
+    Compare two iterables of lines ignoring spacing on a line and using a tolerance on floats
+
+    :param ref_lines: Iterable of reference lines
+    :param test_lines: Iterable of test lines
+    :param float rtol: Acceptable relative error on floating point numbers
+    :param bool verbose: Print failing lines
+    :return: True if all lines are the same, else False
+    """
+    def number_or_string(string):
+        try:
+            as_float = float(string)
+            as_int = int(as_float)
+            if as_int == as_float:
+                return as_int
+            return as_float
+        except ValueError:
+            return string
+
+    diff_lines = []
+    for i, (ref_line, test_line) in enumerate(itertools.zip_longest(ref_lines, test_lines)):
+        # Shortcut trivial comparisons
+        if ref_line is None or test_line is None:
+            diff_lines.append((i, ref_line, test_line))
+        if ref_line == test_line:
+            continue
+
+        ref_toks = ref_line.split()
+        test_toks = test_line.split()
+        if len(ref_toks) != len(test_toks):
+            diff_lines.append((i, ref_line, test_line))
+
+        # Check for float comparison
+        for ref_tok, test_tok in zip(map(number_or_string, ref_toks),
+                                     map(number_or_string, test_toks)):
+            if ref_tok != test_tok:
+                try:
+                    if abs(ref_tok - test_tok) > abs(ref_tok) * rtol:
+                        diff_lines.append((i, ref_line, test_line))
+                except TypeError:
+                    diff_lines.append((i, ref_line, test_line))
+
+    if verbose and diff_lines:
+            print("Lines fail comparison:")
+            for i, ref_line, test_line in diff_lines:
+                print("Line {}".format(i))
+                print("Ref:  {0}".format(ref_line))
+                print("Test: {0}".format(test_line))
+
+    return len(diff_lines) == 0
 
 
 def once_wrapper(func):
@@ -357,6 +388,7 @@ def once_wrapper(func):
     return wrap
 
 
+# TODO this gives code analysis warnings from PyCharm when committing changes
 class SimpleEnum(object):
     class Enum(object):
         def __iter__(self):
@@ -508,3 +540,38 @@ class FixedFormatUnpacker(object):
 
 def tqdm_dummy(iterable, **kwargs):
     return iterable
+
+
+def file_write_lines(filename, lines=None, backup=True, append=False):
+    """
+    Open a file and write lines to it.
+
+    :param str filename: Name of file to open
+    :param iterable[str] lines: Iterable of lines to write
+    :param bool backup: Should the file be backed up if it exists?  Disabled if appending
+    :param bool append: Should lines be appended to an existing file?
+    """
+    if backup and not append:
+        backup_file(filename)
+
+    mode = "a" if append else "w"
+    with open(filename, mode) as f:
+        if lines is not None:
+            for line in lines:
+                print(line, file=f)
+
+
+def any_starts_with(iterable, char):
+    """
+    Return True if any string(s) in nested iterable starts with 'char'.
+
+    :param iterable iterable: Nested iterable of strings to check
+    :param str char: Char to check each string
+    :return bool: True if any string in nested iterable starts with char, else False
+    """
+    recurse = functools.partial(any_starts_with, char=char)
+    if type(iterable) is str:
+        return iterable.startswith(char)
+    else:
+        return any(map(recurse, iterable))
+

@@ -2,11 +2,12 @@ import unittest
 
 import logging
 import math
+import os
 
 from pycgtool.bondset import BondSet
 from pycgtool.frame import Frame
 from pycgtool.mapping import Mapping
-from pycgtool.util import cmp_whitespace_float
+from pycgtool.util import cmp_file_whitespace_float
 
 try:
     import mdtraj
@@ -23,6 +24,18 @@ class DummyOptions:
     generate_dihedrals = False
 
 
+class DummyBond:
+    def __init__(self, atoms, eqm, fconst, values=None):
+        self.atoms = atoms
+        self.eqm = eqm
+        self.fconst = fconst
+        self.values = [] if values is None else values
+
+    def __iter__(self):
+        return iter(self.atoms)
+
+
+# TODO add setup and teardown to put all files in a tmp directory
 class BondSetTest(unittest.TestCase):
     # Columns are: eqm value, standard fc, MARTINI defaults fc
     invert_test_ref_data = [
@@ -194,8 +207,71 @@ class BondSetTest(unittest.TestCase):
         measure.write_itp("sugar_out.itp", mapping)
         logging.disable(logging.NOTSET)
 
-        self.assertTrue(cmp_whitespace_float("sugar_out.itp", "test/data/sugar_out.itp", float_rel_error=0.001))
+        self.assertTrue(cmp_file_whitespace_float("sugar_out.itp", "test/data/sugar_out.itp",
+                                                  rtol=0.001, verbose=True))
 
     def test_duplicate_atoms_in_bond(self):
         with self.assertRaises(ValueError):
             bondset = BondSet("test/data/duplicate_atoms.bnd", DummyOptions)
+
+    def test_dump_bonds(self):
+        measure = BondSet("test/data/sugar.bnd", DummyOptions)
+        frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
+        mapping = Mapping("test/data/sugar.map", DummyOptions)
+        cgframe = mapping.apply(frame)
+
+        while frame.next_frame():
+            cgframe = mapping.apply(frame, cgframe=cgframe)
+            measure.apply(cgframe)
+
+        measure.boltzmann_invert()
+
+        measure.dump_values()
+
+        filenames = ("ALLA_length.dat", "ALLA_angle.dat", "ALLA_dihedral.dat")
+        for filename in filenames:
+            self.assertTrue(cmp_file_whitespace_float(os.path.join("test/data", filename), filename,
+                                                      rtol=0.005, verbose=True))
+
+    def test_get_lines_for_bond_dump(self):
+        expected = [
+            "     0.00000     1.00000     2.00000",
+            "     1.00000     2.00000     3.00000",
+            "     2.00000     3.00000     4.00000",
+            "     3.00000     4.00000     5.00000"
+        ]
+
+        bonds = [
+            DummyBond(None, None, None, values=[0, 1, 2, 3]),
+            DummyBond(None, None, None, values=[1, 2, 3, 4]),
+            DummyBond(None, None, None, values=[2, 3, 4, 5])
+        ]
+
+        output = BondSet._get_lines_for_bond_dump(bonds)
+
+        self.assertListEqual(expected, output)
+
+    def test_get_lines_for_bond_dump_sample(self):
+        expected = [
+            "     0.00000     1.00000     2.00000",
+            "     1.00000     2.00000     3.00000",
+            "     2.00000     3.00000     4.00000",
+            "     3.00000     4.00000     5.00000"
+        ]
+
+        bonds = [
+            DummyBond(None, None, None, values=[0, 1, 2, 3]),
+            DummyBond(None, None, None, values=[1, 2, 3, 4]),
+            DummyBond(None, None, None, values=[2, 3, 4, 5])
+        ]
+
+        nlines = 2
+        output = BondSet._get_lines_for_bond_dump(bonds, target_number=nlines)
+
+        self.assertEqual(nlines, len(output))
+
+        seen = set()
+        for line in output:
+            self.assertIn(line, expected)
+            self.assertNotIn(line, seen)
+            seen.add(line)

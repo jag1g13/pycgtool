@@ -300,6 +300,7 @@ class Progress:
         if not self._quiet:
             time_elapsed = int(time.process_time() - self._start_time)
             print(self._bar + " took {0}s".format(time_elapsed))
+            print(self._bar + " took {0} seconds".format(time_elapsed))
 
         raise StopIteration
 
@@ -311,5 +312,4 @@ class Progress:
 
         except ZeroDivisionError:
             time_remain = "-"
-
-        print(self._bar + " {0}s left".format(time_remain), end="\r")
+        print(self._bar + " {0}s left    ".format(time_remain), end="\r")

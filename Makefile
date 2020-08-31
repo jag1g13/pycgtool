@@ -17,3 +17,8 @@ publish:
 	poetry version prerelease
 	poetry build
 	poetry publish -r testpypi
+
+.PHONY: clean
+clean:
+	rm -f *.itp* *.gro* *.dat* *.json* *.xtc*
+	rm -rf *.ff

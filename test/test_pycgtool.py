@@ -16,7 +16,7 @@ except ImportError:
     mdtraj_present = False
 
 from pycgtool.interface import Options
-from pycgtool.util import cmp_whitespace_float
+from pycgtool.util import cmp_file_whitespace_float
 from pycgtool.__main__ import full_run, map_only
 
 
@@ -101,13 +101,13 @@ class PycgtoolTest(unittest.TestCase):
             self.assertEqual(0, return_code)
 
             self.assertTrue(
-                cmp_whitespace_float(tmp_path.joinpath("out.itp"),
-                                     data_dir.joinpath("sugar_out.itp"),
-                                     float_rel_error=0.001))
+                cmp_file_whitespace_float(tmp_path.joinpath("out.itp"),
+                                          data_dir.joinpath("sugar_out.itp"),
+                                          rtol=0.001))
             self.assertTrue(
-                cmp_whitespace_float(tmp_path.joinpath("out.gro"),
-                                     data_dir.joinpath("sugar_out.gro"),
-                                     float_rel_error=0.001))
+                cmp_file_whitespace_float(tmp_path.joinpath("out.gro"),
+                                          data_dir.joinpath("sugar_out.gro"),
+                                          rtol=0.001))
 
     # TODO more tests
 
