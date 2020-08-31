@@ -130,7 +130,9 @@ def map_only(args, config):
 
         numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
         logger.info("Beginning analysis of {0} frames".format(numframes))
-        its = Progress(numframes, dowhile=main_loop, quiet=args.quiet).run()
+
+        # Run main loop with progress bar - ignore returned value
+        _ = Progress(numframes, dowhile=main_loop, quiet=args.quiet).run()
 
 
 def main():
@@ -171,7 +173,8 @@ def main():
                              default=-1,
                              help="Frame number to end")
 
-    func_forms = FunctionalForms()
+    # Populate functional forms dictionary - ignore returned value
+    _ = FunctionalForms()
 
     args = parser.parse_args()
     config = Options(

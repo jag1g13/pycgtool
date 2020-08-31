@@ -178,7 +178,7 @@ class Options:
                         self._set_by_num(pos, val)
                     except ValueError:
                         errscr.addstr(0, 0, "Invalid value '{0}' for option".format(val))
-                        errscr.addstr(1, 0, "Value has been reset".format(val))
+                        errscr.addstr(1, 0, "Value has been reset")
 
                 text_edit_wins[pos].erase()
                 text_edit_wins[pos].addstr(0, 0, str(self[pos]))
