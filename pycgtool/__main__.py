@@ -3,7 +3,6 @@
 import argparse
 import logging
 import pathlib
-import sys
 
 from .frame import Frame
 from .mapping import Mapping
@@ -141,75 +140,103 @@ def main():
     input_files = parser.add_argument_group("Input files")
 
     # yapf: disable
-    input_files.add_argument('-g', '--gro', type=str, required=True, help="GROMACS GRO file")
-    input_files.add_argument('-m', '--map', type=str, help="Mapping file")
-    input_files.add_argument('-x', '--xtc', type=str, help="GROMACS XTC file")
-    input_files.add_argument('-b', '--bnd', type=str, help="Bonds file")
-    input_files.add_argument('-i', '--itp', type=str, help="GROMACS ITP file")
-    # yapf: enable
+    input_files.add_argument('-g', '--gro', type=str, required=True,
+                             help="GROMACS GRO file")
+    input_files.add_argument('-m', '--map', type=str,
+                             help="Mapping file")
+    input_files.add_argument('-x', '--xtc', type=str,
+                             help="GROMACS XTC file")
+    input_files.add_argument('-b', '--bnd', type=str,
+                             help="Bonds file")
+    input_files.add_argument('-i', '--itp', type=str,
+                             help="GROMACS ITP file")
 
-    parser.add_argument('--advanced',
-                        default=False,
-                        action='store_true',
-                        help="Show advanced options menu")
-    parser.add_argument('--out-dir',
-                        default='.',
-                        type=str,
-                        help="Directory where output files should be placed")
-    parser.add_argument('--outputxtc',
-                        default=False,
-                        action='store_true',
-                        help="Output a pseudo-CG trajectory")
-    parser.add_argument('--quiet',
-                        default=False,
-                        action='store_true',
-                        help="Hide progress bars")
-    input_files.add_argument('--begin',
-                             type=int,
-                             default=0,
+    input_files.add_argument('--begin', type=int, default=0,
                              help="Frame number to begin")
-    input_files.add_argument('--end',
-                             type=int,
-                             default=-1,
+    input_files.add_argument('--end', type=int, default=-1,
                              help="Frame number to end")
+
+    parser.add_argument('--out-dir', default='.', type=str,
+                        help="Directory where output files should be placed")
+    parser.add_argument('--outputxtc', default=False, action='store_true',
+                        help="Output a pseudo-CG trajectory")
+    parser.add_argument('--quiet', default=False, action='store_true',
+                        help="Hide progress bars")
+
+    # Advanced options
+    advanced_arguments = parser.add_argument_group("Advanced options")
+
+    advanced_arguments.add_argument("--output_name", default="out",
+                                    help="Base name of output files")
+    advanced_arguments.add_argument("--output", default="gro",
+                                    help="Coordinate output format")
+    advanced_arguments.add_argument("--map_only", default=False, action="store_true",
+                                    help="Run in mapping-only mode")
+    advanced_arguments.add_argument("--map_center", default="geom",
+                                    choices=["geom", "mass", "first"],
+                                    help="Mapping method")
+    advanced_arguments.add_argument("--virtual_map_center", default="geom",
+                                    choices=["geom", "mass"],
+                                    help="Virtual site mapping method")
+    advanced_arguments.add_argument("--constr_threshold", type=float, default=100000,
+                                    help="Convert stiff bonds to contraints over [value]")
+    advanced_arguments.add_argument("--dump_measurements", default=False, action="store_true",
+                                    help="Whether to output bond measurements")
+    advanced_arguments.add_argument("--dump_n_values", type=int, default=10000,
+                                    help="How many measurements to output")
+    advanced_arguments.add_argument("--output_forcefield", default=False, action='store_true',
+                                    help="Output GROMACS forefield directory?")
+    advanced_arguments.add_argument("--temperature", type=float, default=310,
+                                    help="Temperature of reference simulation")
+    advanced_arguments.add_argument("--default_fc", default=False, action='store_true',
+                                    help="Use default MARTINI force constants?")
+    advanced_arguments.add_argument("--generate_angles", default=True, action='store_false',
+                                    help="Generate angles from bonds")
+    advanced_arguments.add_argument("--generate_dihedrals", default=False, action="store_true",
+                                    help="Generate dihedrals from bonds")
+    advanced_arguments.add_argument("--length_form", default="harmonic",
+                                    help="Form of bond potential")
+    advanced_arguments.add_argument("--angle_form", default="cosharmonic",
+                                    help="Form of angle potential")
+    advanced_arguments.add_argument("--dihedral_form", default="harmonic",
+                                    help="Form of dihedral potential")
+    # yapf: enable
 
     # Populate functional forms dictionary - ignore returned value
     _ = FunctionalForms()
 
     args = parser.parse_args()
+
+    if not args.dump_measurements:
+        args.dump_measurements = bool(args.bnd) and not bool(args.map)
+    if not args.map_only:
+        args.map_only = not bool(args.bnd)
+
     config = Options([
-        ("output_name", "out"),
-        ("output", "gro"),
+        ("output_name", args.output_name),
+        ("output", args.output),
         ("output_xtc", args.outputxtc),
-        ("map_only", not bool(args.bnd)),
-        ("map_center", "geom"),
-        ("virtual_map_center", "geom"),
-        ("constr_threshold", 100000),
-        ("dump_measurements", bool(args.bnd) and not bool(args.map)),
-        ("dump_n_values", 10000),
-        ("output_forcefield", False),
-        ("temperature", 310),
-        ("default_fc", False),
-        ("generate_angles", True),
-        ("generate_dihedrals", False),
-        ("length_form", "harmonic"),
-        ("angle_form", "cosharmonic"),
-        ("dihedral_form", "harmonic")
+        ("map_only", args.map_only),
+        ("map_center", args.map_center),
+        ("virtual_map_center", args.virtual_map_center),
+        ("constr_threshold", args.constr_threshold),
+        ("dump_measurements", args.dump_measurements),
+        ("dump_n_values", args.dump_n_values),
+        ("output_forcefield", args.output_forcefield),
+        ("temperature", args.temperature),
+        ("default_fc", args.default_fc),
+        ("generate_angles", args.generate_angles),
+        ("generate_dihedrals", args.generate_dihedrals),
+        ("length_form", args.length_form),
+        ("angle_form", args.angle_form),
+        ("dihedral_form", args.dihedral_form)
     ], args)  # yapf: disable
 
     if not args.map and not args.bnd:
         parser.error("One or both of -m and -b is required.")
 
-    if args.advanced:
-        try:
-            config.interactive()
-
-        except KeyboardInterrupt:
-            sys.exit(0)
-
-    else:
-        print("Using GRO: {0}".format(args.gro))
-        print("Using XTC: {0}".format(args.xtc))
+    print("Using GRO: {0}".format(args.gro))
+    print("Using XTC: {0}".format(args.xtc))
 
     if config.map_only:
         map_only(args, config)

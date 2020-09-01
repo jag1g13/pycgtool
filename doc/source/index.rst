@@ -96,7 +96,7 @@ can be included in the mapping file for naphthalene (see ``/test/data/martini3/n
 described mapping syntax, a virtual site is defined with a prefix of ``@v`` as follows ``@v [name] [type] [charge] [constructing beads]``.
 The constructing beads refer to a list of space delimited coarse grained bead names from which the position of the
 virtual site will be calculated. Currently virtual sites can be constructed from either the center of geometry or mass of
-the constructing sites via the --advanced flag.::
+the constructing sites via the ``--virtual_map_center`` flag.::
 
    [ NAPH ]
    R1 TC4 C8 H8 C9 H9
@@ -111,7 +111,7 @@ An example bond definition file for the monosaccharide allose taken from ``test/
 
 As in the mapping definition file, molecule names are used as section headers inside square brackets.  The following lines define bonds lengths, angles and dihedrals between coarse-grained beads.  Each line is a list of bead names, using the names defined in the mapping file.  Two bead names on a line defines a bond length, three defines an angle, and four defines a dihedral.
 
-If no angles are defined for a molecule, PyCGTOOL will construct all angles from the list of bonds.  This may also be enabled for dihedrals via the ``--advanced`` flag, but is not recommended as in most cases coarse-grained models do not require dihedrals.  Additionally, any angles inside a triangle of bond lengths are excluded from the output as they often cause simulation stability issues when used in conjunction with LINCS. ::
+If no angles are defined for a molecule, PyCGTOOL will construct all angles from the list of bonds.  This may also be enabled for dihedrals via the ``--generate_dihedrals`` flag, but is not recommended as in most cases coarse-grained models do not require dihedrals.  Additionally, any angles inside a triangle of bond lengths are excluded from the output as they often cause simulation stability issues when used in conjunction with LINCS. ::
 
    ; comments begin with a semicolon
    [ALLA]
@@ -170,7 +170,6 @@ This mode may be invoked by::
 
 Advanced Options
 ~~~~~~~~~~~~~~~~
-By passing the flag ``--advanced`` to PyCGTOOL several advanced options are accessible.  The arrow keys may be used to navigate through the menu.  Enter selects an option to be edited, or if the option is boolean toggles it.  Once you have edited an option press enter again.  When all options are satisfactory, press q to proceed.
 
 ==================   ==========================================   =======================
 Option               Description                                  Values
