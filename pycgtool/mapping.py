@@ -11,7 +11,7 @@ import json
 import os
 
 from .frame import Atom, Residue, Frame
-from .parsers.cfg import CFG
+from .parsers import CFG, ITP
 from .util import dir_up
 
 try:
@@ -145,40 +145,46 @@ class Mapping:
 
                     molmap.append(newbead)
 
-        # TODO this only works with one moleculetype in one itp - extend this
         if itp is not None:
-            with CFG(itp) as itp:
-                atoms = {}
-                for toks in itp["atoms"]:
-                    # Store charge and mass
-                    atoms[toks[4]] = (float(toks[6]), float(toks[7]))
+            with ITP(itp) as itp:
+                for molname in self._mappings:
+                    try:
+                        molentry = itp[molname]
+                        atoms = {}
+                        for toks in molentry["atoms"]:
+                            # Store charge and mass
+                            atoms[toks[4]] = (float(toks[6]), float(toks[7]))
+                        for bead in self._mappings[molname]:
+                            if not isinstance(bead, VirtualMap):
+                                mass_array = np.array([[atoms[atom][1]] for atom in bead], dtype=np.float32)
+                                bead.mass = sum(mass_array)
+                                print(mass_array, sum(mass_array))
+                                mass_array /= bead.mass
+                                bead.weights_dict["mass"] = mass_array
 
-                molname = itp["moleculetype"][0][0]
-                for bead in self._mappings[molname]:
-                    if not isinstance(bead, VirtualMap):
-                        mass_array = np.array([[atoms[atom][1]] for atom in bead], dtype=np.float32)
-                        bead.mass = sum(mass_array)
-                        mass_array /= bead.mass
-                        bead.weights_dict["mass"] = mass_array
+                                for atom in bead:
+                                    if self._manual_charges[molname]:
+                                        logger.warning("Charges assigned in mapping for molecule {0}, "
+                                                       "ignoring itp charges.".format(molname))
+                                    else:
+                                        bead.charge += atoms[atom][0]
 
-                        for atom in bead:
-                            if self._manual_charges[molname]:
-                                logger.warning("Charges assigned in mapping for molecule {0}, ignoring itp charges.".format(molname))
-                            else:
-                                bead.charge += atoms[atom][0]
+                        for bead in self._mappings[molname]:
+                            if isinstance(bead, VirtualMap):
+                                mass_array = np.array([real_bead.mass for real_bead in self._mappings[molname]
+                                                       if real_bead.name in bead], dtype=np.float32)
+                                weights_array = mass_array / sum(mass_array)
+                                bead.weights_dict["mass"] = weights_array
+                                if self._manual_charges[molname]:
+                                    logger.warning("Charges assigned in mapping for molecule {0}, "
+                                                   "ignoring itp charges.".format(molname))
+                                else:
+                                    charges = [real_bead.charge for real_bead in self._mappings[molname]
+                                               if real_bead.name in bead]
+                                    bead.charge = sum(charges)
+                    except KeyError:
+                        logger.warning("No itp information for molecule {0} found in {1}".format(molname, itp.filename))
 
-                for bead in self._mappings[molname]:
-                    if isinstance(bead, VirtualMap):
-                        mass_array = np.array(
-                            [real_bead.mass for real_bead in self._mappings[molname] if real_bead.name in bead], dtype=np.float32)
-                        weights_array = mass_array / sum(mass_array)
-                        bead.weights_dict["mass"] = weights_array
-                        if self._manual_charges[molname]:
-                            logger.warning(
-                                "Charges assigned in mapping for molecule {0}, ignoring itp charges.".format(molname))
-                        else:
-                            charges = [real_bead.charge for real_bead in self._mappings[molname] if real_bead.name in bead]
-                            bead.charge = sum(charges)
                 self._masses_are_set = True
 
         if ((self._map_center == "mass" or self._virtual_map_center == "mass")

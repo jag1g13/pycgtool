@@ -55,6 +55,7 @@ class ResidueTest(unittest.TestCase):
         self.assertTrue(atom is residue.atoms[0])
 
 
+# TODO add ITP parsing tests
 class FrameTest(unittest.TestCase):
     def helper_read_xtc(self, frame, first_only=False, skip_names=False):
         self.assertEqual(663, frame.natoms)
