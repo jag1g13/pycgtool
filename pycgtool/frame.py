@@ -6,7 +6,9 @@ Both Frame and Residue are iterable. Residue is indexable with either atom numbe
 """
 
 import logging
+import typing
 
+import mdtraj
 import numpy as np
 
 from .parsers.cfg import CFG
@@ -17,15 +19,18 @@ logger = logging.getLogger(__name__)
 np.seterr(all="raise")
 
 
-# Create FileNotFoundError if using older version of Python
-try:
-    try:
-        raise FileNotFoundError
-    except FileNotFoundError:
-        pass
-except NameError:
-    class FileNotFoundError(OSError):
-        pass
+class UnsupportedFormatException(Exception):
+    def __init__(self, msg=None):
+        if msg is None:
+            msg = "Topology/Trajectory format not supported by this reader"
+        super(UnsupportedFormatException, self).__init__(msg)
+
+
+class NonMatchingSystemError(ValueError):
+    def __init__(self, msg=None):
+        if msg is None:
+            msg = "Number of atoms does not match between topology and trajectory files"
+        super(NonMatchingSystemError, self).__init__(msg)
 
 
 class Atom:
@@ -68,7 +73,7 @@ class Atom:
 
 class Residue:
     """
-    Hold data for a residue - list of atoms
+    hold data for a residue - list of atoms
     """
     __slots__ = ["name", "num", "atoms", "name_to_num"]
 
@@ -107,6 +112,88 @@ class Residue:
         self.name_to_num[atom.name] = len(self.atoms) - 1
 
 
+class Trajectory:
+    def __init__(self,
+                 topology_file: typing.Optional[str] = None,
+                 trajectory_file: typing.Optional[str] = None,
+                 frame_start: int = 0):
+        self.frame_number = frame_start
+
+        if topology_file:
+            try:
+                self._trajectory = mdtraj.load(topology_file)
+                self._topology = self._trajectory.topology
+
+                if trajectory_file:
+                    try:
+                        new_trajectory = mdtraj.load(trajectory_file, top=self._topology)
+                        self._trajectory = self._trajectory.join(new_trajectory)
+                    
+                    except ValueError as exc:
+                        raise NonMatchingSystemError from exc
+
+                self._load_coords(self.frame_number)
+            
+            except OSError as exc:
+                if 'no loader' in str(exc):
+                    raise UnsupportedFormatException from exc
+                
+                raise
+        
+        else:
+            self._topology = mdtraj.Topology()
+
+    def _load_coords(self, frame_number) -> None:
+        for atom in self._topology.atoms:
+            atom.coords = self._trajectory.xyz[frame_number, atom.index]
+
+    def next_frame(self) -> bool:
+        try:
+            self._load_coords(self.frame_number + 1)
+        
+        except IndexError:
+            return False
+
+        self.frame_number += 1
+        return True
+
+    @property
+    def residues(self):
+        return self._topology.residues
+
+    def residue(self, *args, **kwargs) -> mdtraj.core.topology.Residue:
+        return self._topology.residue(*args, **kwargs)
+
+    @property
+    def natoms(self) -> int:
+        return self._topology.n_atoms
+
+    @property
+    def numframes(self) -> int:
+        # The MDTraj trajectory has the topology file as frame 0
+        return self._trajectory.n_frames - 1
+
+    def add_residue(self,
+                    name,
+                    chain: typing.Optional[mdtraj.core.topology.Residue] = None,
+                    **kwargs) -> mdtraj.core.topology.Residue:
+        if hasattr(self, '_trajectory'):
+            raise TypeError('Cannot edit residues if a trajectory has been loaded')
+
+        if chain is None:
+            try:
+                chain = self._topology.chain(0)
+            
+            except IndexError:
+                chain = self._topology.add_chain()
+
+        return self._topology.add_residue(name, chain, **kwargs)
+
+    @property
+    def box(self):
+        return self._trajectory.unitcell_lengths[self.frame_number]
+        
+
 class Frame:
     """
     Hold Atom data separated into Residues
@@ -142,6 +229,7 @@ class Frame:
 
             if itp is not None:
                 self._parse_itp(itp)
+
 
     @classmethod
     def instance_from_reader(cls, reader):

@@ -5,23 +5,9 @@ import logging
 
 import numpy as np
 
-from pycgtool.frame import Atom, Residue, Frame
-from pycgtool.framereader import FrameReaderSimpleTraj, FrameReaderMDAnalysis, FrameReaderMDTraj
-from pycgtool.framereader import FrameReader, get_frame_reader
-from pycgtool.framereader import UnsupportedFormatException, NonMatchingSystemError
-
-try:
-    import mdtraj
-    mdtraj_present = True
-except ImportError:
-    mdtraj_present = False
-
-try:
-    import MDAnalysis
-    mdanalysis_present = True
-except ImportError:
-    mdanalysis_present = False
-
+from pycgtool.frame import Atom, Residue
+from pycgtool.frame import NonMatchingSystemError, UnsupportedFormatException
+from pycgtool.frame import Trajectory as Frame
 
 class AtomTest(unittest.TestCase):
     def test_atom_create(self):
@@ -59,11 +45,15 @@ class ResidueTest(unittest.TestCase):
 class FrameTest(unittest.TestCase):
     def helper_read_xtc(self, frame, first_only=False, skip_names=False):
         self.assertEqual(663, frame.natoms)
-        self.assertEqual(221, len(frame.residues))
-        self.assertEqual(3, len(frame.residues[0].atoms))
+
+        residue = frame.residue(0)
+
+        self.assertEqual(221, len(list(frame.residues)))
+        self.assertEqual(3, residue.n_atoms)
+
         if not skip_names:  # MDTraj renames water
-            self.assertEqual("SOL", frame.residues[0].name)
-            self.assertEqual("OW", frame.residues[0].atoms[0].name)
+            self.assertEqual("SOL", residue.name)
+            self.assertEqual("OW", residue.atom(0).name)
 
         atom0_coords = np.array([
             [0.696, 1.330, 1.211],
@@ -78,7 +68,7 @@ class FrameTest(unittest.TestCase):
         ])
 
         for i in range(1 if first_only else len(atom0_coords)):
-            np.testing.assert_allclose(atom0_coords[i], frame.residues[0].atoms[0].coords)
+            np.testing.assert_allclose(atom0_coords[i], residue.atom(0).coords)
             np.testing.assert_allclose(box_vectors[i], frame.box, rtol=1e-4)  # PDB files are f9.3
             frame.next_frame()
 
@@ -86,56 +76,28 @@ class FrameTest(unittest.TestCase):
         Frame()
 
     def test_frame_add_residue(self):
-        residue = Residue()
         frame = Frame()
-        frame.add_residue(residue)
-        self.assertEqual(residue, frame.residues[0])
-        self.assertTrue(residue is frame.residues[0])
+        residue = frame.add_residue('TEST_RESIDUE')
 
-    def test_frame_simpletraj_read_gro(self):
-        frame = Frame("test/data/water.gro", xtc_reader="simpletraj")
+        self.assertTrue(residue is frame.residue(0))
 
-        self.helper_read_xtc(frame, first_only=True)
-
-    @unittest.skipIf(not mdtraj_present, "MDTraj or Scipy not present")
-    def test_frame_mdtraj_read_gro(self):
-        logging.disable(logging.WARNING)
-        frame = Frame("test/data/water.gro", xtc_reader="mdtraj")
-        logging.disable(logging.NOTSET)
+    def test_frame_read_gro(self):
+        # logging.disable(logging.WARNING)
+        frame = Frame('test/data/water.gro')
+        # logging.disable(logging.NOTSET)
 
         self.helper_read_xtc(frame, first_only=True, skip_names=True)
 
-    @unittest.skipIf(not mdanalysis_present, "MDAnalysis not present")
-    def test_frame_mdanalysis_read_gro(self):
-        reader = FrameReaderMDAnalysis("test/data/water.gro")
-        frame = Frame.instance_from_reader(reader)
-
-        self.helper_read_xtc(frame, first_only=True)
-
-    @unittest.skipIf(not mdtraj_present, "MDTraj or Scipy not present")
-    def test_frame_mdtraj_read_pdb(self):
-        reader = FrameReaderMDTraj("test/data/water.pdb")
-        frame = Frame.instance_from_reader(reader)
-
-        self.helper_read_xtc(frame, first_only=True, skip_names=True)
-
-    @unittest.skipIf(not mdtraj_present and not mdanalysis_present, "Neither MDTraj or MDAnalysis is present")
-    def test_frame_any_read_pdb(self):
-        reader = get_frame_reader("test/data/water.pdb")
-        frame = Frame.instance_from_reader(reader)
+    def test_frame_read_pdb(self):
+        # logging.disable(logging.WARNING)
+        frame = Frame("test/data/water.pdb")
+        # logging.disable(logging.NOTSET)
 
         self.helper_read_xtc(frame, first_only=True, skip_names=True)
 
     def test_frame_any_read_unsupported(self):
         with self.assertRaises(UnsupportedFormatException):
-            reader = get_frame_reader("test/data/dppc.map")
-
-    @unittest.skipIf(not mdanalysis_present, "MDAnalysis not present")
-    def test_frame_mdanalysis_read_pdb(self):
-        reader = FrameReaderMDAnalysis("test/data/water.pdb")
-        frame = Frame.instance_from_reader(reader)
-
-        self.helper_read_xtc(frame, first_only=True)
+            _ = Frame('test/data/dppc.map')
 
     def test_frame_output_gro(self):
         frame = Frame("test/data/water.gro")
@@ -143,99 +105,38 @@ class FrameTest(unittest.TestCase):
         self.assertTrue(filecmp.cmp("test/data/water.gro", "water-out.gro"))
         os.remove("water-out.gro")
 
-    def test_frame_read_xtc_simpletraj_numframes(self):
-        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
-                      xtc_reader="simpletraj")
-        self.assertEqual(11, frame.numframes)
-
-    @unittest.skipIf(not mdtraj_present, "MDTraj or Scipy not present")
-    def test_frame_read_xtc_mdtraj_numframes(self):
+    def test_frame_read_xtc_numframes(self):
         logging.disable(logging.WARNING)
-        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
-                      xtc_reader="mdtraj")
+        frame = Frame('test/data/water.gro',
+                      'test/data/water.xtc')
         logging.disable(logging.NOTSET)
         self.assertEqual(11, frame.numframes)
 
-    def test_frame_simpletraj_read_xtc(self):
-        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
-                      xtc_reader="simpletraj")
-        self.helper_read_xtc(frame)
-
-    @unittest.skipIf(not mdtraj_present, "MDTraj or Scipy not present")
-    def test_frame_mdtraj_read_xtc(self):
+    def test_frame_read_xtc(self):
         logging.disable(logging.WARNING)
-        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
-                      xtc_reader="mdtraj")
+        frame = Frame('test/data/water.gro',
+                      'test/data/water.xtc')
         logging.disable(logging.NOTSET)
 
         self.helper_read_xtc(frame, skip_names=True)
 
-    @unittest.skipIf(not mdanalysis_present, "MDAnalysis not present")
-    def test_frame_mdanalysis_read_xtc(self):
-        reader = FrameReaderMDAnalysis("test/data/water.gro", "test/data/water.xtc")
-        frame = Frame.instance_from_reader(reader)
-
-        self.helper_read_xtc(frame)
-
-    @unittest.skipIf(not mdtraj_present, "MDTraj or Scipy not present")
-    def test_frame_write_xtc_mdtraj(self):
+    def test_frame_write_xtc(self):
         try:
             os.remove("water_test2.xtc")
         except IOError:
             pass
 
         logging.disable(logging.WARNING)
-        frame = Frame(gro="test/data/water.gro", xtc="test/data/water.xtc",
-                      xtc_reader="mdtraj")
+        frame = Frame('test/data/water.gro', 'test/data/water.xtc')
         logging.disable(logging.NOTSET)
 
         while frame.next_frame():
             frame.write_xtc("water_test2.xtc")
 
-    def test_frame_instance_from_reader(self):
-        reader = FrameReaderSimpleTraj("test/data/water.gro")
-        frame = Frame.instance_from_reader(reader)
-
-        self.helper_read_xtc(frame, first_only=True)
-
-    def test_frame_instance_from_reader_dummy(self):
-        class DummyReader(FrameReader):
-            def _initialise_frame(self, frame):
-                frame.dummy_reader = True
-
-            def _read_frame_number(self, number):
-                return number * 10, [], None
-
-        reader = DummyReader(None)
-        frame = Frame.instance_from_reader(reader)
-        self.assertTrue(frame.dummy_reader)
-
-        frame.next_frame()
-        self.assertEqual(frame.number, 0)
-        self.assertEqual(frame.time, 0)
-        np.testing.assert_array_equal(np.zeros(3), frame.box)  # Reader replaces None with (0, 0, 0)
-
-        frame.next_frame()
-        self.assertEqual(frame.number, 1)
-        self.assertEqual(frame.time, 10)
-
-    def test_raise_nonmatching_system_all(self):
-        with self.assertRaises(NonMatchingSystemError):
-            reader = get_frame_reader("test/data/water.gro", "test/data/sugar.xtc")
-
-    def test_raise_nonmatching_system_simpletraj(self):
-        with self.assertRaises(NonMatchingSystemError):
-            reader = FrameReaderSimpleTraj("test/data/water.gro", "test/data/sugar.xtc")
-
-    @unittest.skipIf(not mdtraj_present, "MDTraj or Scipy not present")
     def test_raise_nonmatching_system_mdtraj(self):
         with self.assertRaises(NonMatchingSystemError):
-            reader = FrameReaderMDTraj("test/data/water.gro", "test/data/sugar.xtc")
+            _ = Frame('test/data/water.gro', 'test/data/sugar.xtc')
 
-    @unittest.skipIf(not mdanalysis_present, "MDAnalysis not present")
-    def test_raise_nonmatching_system_mdanalysis(self):
-        with self.assertRaises(NonMatchingSystemError):
-            reader = FrameReaderMDAnalysis("test/data/water.gro", "test/data/sugar.xtc")
 
 
 if __name__ == '__main__':
