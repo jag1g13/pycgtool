@@ -10,7 +10,7 @@ import logging
 import json
 import os
 
-from .frame import Atom, Residue, Frame
+from .frame import Frame
 from .parsers import CFG, ITP
 from .util import dir_up
 
@@ -23,11 +23,11 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-class BeadMap(Atom):
+class BeadMap:
     """
     POD class holding values relating to the AA->CG transformation for a single bead.
     """
-    __slots__ = ["name", "type", "atoms", "charge", "mass", "weights", "weights_dict"]
+    __slots__ = ["name", "num", "type", "atoms", "charge", "mass", "weights", "weights_dict"]
 
     def __init__(self, name, num, type=None, atoms=None, charge=0, mass=0):
         """
@@ -40,12 +40,30 @@ class BeadMap(Atom):
         :param float charge: The net charge on the bead
         :param float mass: The total bead mass
         """
-        super().__init__(name, num, type=type, charge=charge, mass=mass)
+        self.name = name
+        self.num = num
+        self.type = type
+        self.mass = mass
+        self.charge = charge
+
         self.atoms = atoms
         # NB: Mass weights are added in Mapping.__init__ if an itp file is provided
         self.weights_dict = {"geom": np.array([[1. / len(atoms)] for _ in atoms], dtype=np.float32),
                              "first": np.array([[1.]] + [[0.] for _ in atoms[1:]], dtype=np.float32)}
         self.weights = self.weights_dict["geom"]
+
+    def __repr__(self):
+        return "BeadMap #{0} {1} type: {2} mass: {3} charge: {4}".format(
+            self.num, self.name, self.type, self.mass, self.charge
+        )
+
+    def add_missing_data(self, other):
+        assert self.name == other.name
+        assert self.num == other.num
+
+        for attr in ("type", "mass", "charge"):
+            if getattr(self, attr) is None:
+                setattr(self, attr, getattr(other, attr))
 
     def __iter__(self):
         """

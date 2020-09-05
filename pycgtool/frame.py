@@ -33,85 +33,6 @@ class NonMatchingSystemError(ValueError):
         super(NonMatchingSystemError, self).__init__(msg)
 
 
-class Atom:
-    """
-    Hold data for a single atom
-    """
-    __slots__ = ["name", "num", "type", "mass", "charge", "coords"]
-
-    def __init__(self, name, num, type=None, mass=None, charge=None, coords=None):
-        """
-        Create an atom.
-
-        :param str name: The name of the atom
-        :param int num: The atom number
-        :param str type: The atom type
-        :param float mass: The mass of the atom
-        :param float charge: The charge of the atom
-        :param coords: The coordinates of the atom
-        """
-        self.name = name
-        self.num = num
-        self.type = type
-        self.mass = mass
-        self.charge = charge
-        self.coords = coords
-
-    def __repr__(self):
-        return "Atom #{0} {1} type: {2} mass: {3} charge: {4}".format(
-            self.num, self.name, self.type, self.mass, self.charge
-        )
-
-    def add_missing_data(self, other):
-        assert self.name == other.name
-        assert self.num == other.num
-
-        for attr in ("type", "mass", "charge", "coords"):
-            if getattr(self, attr) is None:
-                setattr(self, attr, getattr(other, attr))
-
-
-class Residue:
-    """
-    hold data for a residue - list of atoms
-    """
-    __slots__ = ["name", "num", "atoms", "name_to_num"]
-
-    def __init__(self, name=None, num=None):
-        self.atoms = []
-        self.name = name
-        self.num = num
-        self.name_to_num = {}
-
-    def __iter__(self):
-        return iter(self.atoms)
-
-    def __getitem__(self, item):
-        try:
-            return self.atoms[self.name_to_num[item]]
-        except KeyError:
-            pass
-
-        try:
-            return self.atoms[item]
-        except TypeError as e:
-            e.args = ("Atom {0} does not exist in residue {1}".format(item, self.name),)
-            raise
-
-    def __len__(self):
-        return len(self.atoms)
-
-    def add_atom(self, atom):
-        """
-        Add an Atom to this Residue and store location in index
-
-        :param atom: Atom to add to Residue
-        :return: None
-        """
-        self.atoms.append(atom)
-        self.name_to_num[atom.name] = len(self.atoms) - 1
-
-
 class Trajectory:
     def __init__(self,
                  topology_file: typing.Optional[str] = None,
@@ -126,8 +47,7 @@ class Trajectory:
 
                 if trajectory_file:
                     try:
-                        new_trajectory = mdtraj.load(trajectory_file, top=self._topology)
-                        self._trajectory = self._trajectory.join(new_trajectory)
+                        self._trajectory = mdtraj.load(trajectory_file, top=self._topology)
                     
                     except ValueError as exc:
                         raise NonMatchingSystemError from exc
@@ -165,6 +85,13 @@ class Trajectory:
         return self._topology.residue(*args, **kwargs)
 
     @property
+    def atoms(self):
+        return self._topology.atoms
+
+    def atom(self, *args, **kwargs) -> mdtraj.core.topology.Atom:
+        return self._topology.atom(*args, **kwargs)
+
+    @property
     def natoms(self) -> int:
         return self._topology.n_atoms
 
@@ -192,7 +119,9 @@ class Trajectory:
     @property
     def box(self):
         return self._trajectory.unitcell_lengths[self.frame_number]
-        
+
+    def save(self, filename, **kwargs):
+        self._trajectory.save(filename, **kwargs)
 
 class Frame:
     """
