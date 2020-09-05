@@ -3,8 +3,6 @@
 #include "AT_AA_POPG.itp"
 #include "PII_charmm36.itp"
 
-
-
 [ system ]
 ; name
 Martini system

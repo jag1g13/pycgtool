@@ -1,21 +1,30 @@
-# IDE files
-.idea/
-settings.json
-.vscode/
-
-# Input / Output files
-/fftest.ff
-/*.gro
-/*.itp
+# Data
+/*.gro*
+/*.itp*
+/*.xtc*
+/fftest.ff/
 *.offsets
 
-# Environment
-.cache/
-.coverage
-/cover
-/doc/build
-/env
-/minenv
-/nose2-junit.xml
+# Dependencies and runtime
+/env/
+/minenv/
+/venv/
 *.pyc
-/tmp
+
+# Development and Testing
+.cache
+.coverage
+/cover/
+/dist/
+/doc/build/
+/tmp/
+/nose2-junit.xml
+
+# IDE files
+.idea/
+.vscode/
+settings.json
+
+# Misc
+.cache/
+*.offsets

@@ -40,7 +40,7 @@ class BeadMap(Atom):
         :param float charge: The net charge on the bead
         :param float mass: The total bead mass
         """
-        Atom.__init__(self, name, num, type=type, charge=charge, mass=mass)
+        super().__init__(name, num, type=type, charge=charge, mass=mass)
         self.atoms = atoms
         # NB: Mass weights are added in Mapping.__init__ if an itp file is provided
         self.weights_dict = {"geom": np.array([[1. / len(atoms)] for _ in atoms], dtype=np.float32),
@@ -63,8 +63,9 @@ class BeadMap(Atom):
 
 
 class VirtualMap(BeadMap):
-    __slots__ = ["name", "type", "atoms", "charge", "mass", "weights", "weights_dict", "gromacs_type_id_dict",
-                                                                                       "gromacs_type_id"]
+    __slots__ = ["name", "type", "atoms", "charge", "mass", "weights", "weights_dict",
+                 "gromacs_type_id_dict", "gromacs_type_id"]
+
     def __init__(self, name, num, type=None, atoms=None, charge=0):
         """
         Create a single bead mapping.
@@ -75,8 +76,9 @@ class VirtualMap(BeadMap):
         :param List[str] atoms: The CG bead names from which the bead position is determined
         :param float charge: The net charge on the bead
         """
-        BeadMap.__init__(self, name, num, type=type, atoms=atoms, charge=charge, mass=0.)
-        self.gromacs_type_id_dict = {"geom":1, "mass":2}
+        super().__init__(name, num, type=type, atoms=atoms, charge=charge, mass=0.)
+
+        self.gromacs_type_id_dict = {"geom": 1, "mass": 2}
         self.gromacs_type_id = self.gromacs_type_id_dict["geom"]
 
 
@@ -100,40 +102,47 @@ class Mapping:
         :param filename: File from which to read mapping
         :return: Instance of Mapping
         """
+        self._manual_charges = {}
         self._mappings = {}
         self._map_center = options.map_center
         self._virtual_map_center = options.virtual_map_center
         self._masses_are_set = False
 
         with CFG(filename) as cfg:
-            self._manual_charges = {}
             for mol_name, mol_section in cfg.items():
                 self._mappings[mol_name] = []
                 self._manual_charges[mol_name] = False
-                virtual = False
                 molmap = self._mappings[mol_name]
+
                 for i, (name, typ, first, *atoms) in enumerate(mol_section):
                     virtual = False
                     charge = 0
+
                     if name.startswith('@'):
                         if name == '@v':
                             virtual = True
                             name, typ, first, *atoms=mol_section[i][1:]
-                        #TODO ADD CUSTOM ERROR HERE LATER?
+
                         else:
+                            #TODO ADD CUSTOM ERROR HERE LATER?
                             raise SyntaxError('"{}" line prefix invalid'.format(name))
 
                     try:
                         # Allow optional charge in mapping file
                         charge = float(first)
                         self._manual_charges[mol_name] = True
+
                     except ValueError:
                         atoms.insert(0, first)
+
                     assert atoms, "Bead {0} specification contains no atoms".format(name)
-                    if not virtual:
-                        newbead = BeadMap(name, i, type=typ, atoms=atoms, charge=charge)
-                    else:
+
+                    if virtual:
                         newbead = VirtualMap(name, i, type=typ, atoms=atoms, charge=charge)
+
+                    else:
+                        newbead = BeadMap(name, i, type=typ, atoms=atoms, charge=charge)
+
                     molmap.append(newbead)
 
         if itp is not None:
@@ -178,18 +187,16 @@ class Mapping:
 
                 self._masses_are_set = True
 
-        if not self._masses_are_set:
-            if self._map_center == "mass":
-                self._guess_atom_masses()
-
-            if self._virtual_map_center == "mass":
-                    self._guess_atom_masses()
+        if ((self._map_center == "mass" or self._virtual_map_center == "mass")
+                and not self._masses_are_set):
+            self._guess_atom_masses()
 
         for molname, mapping in self._mappings.items():
             for bmap in mapping:
                 if isinstance(bmap, VirtualMap):
                     bmap.weights = bmap.weights_dict[self._virtual_map_center]
                     bmap.gromacs_type_id = bmap.gromacs_type_id_dict[self._virtual_map_center]
+
                 else:
                     bmap.weights = bmap.weights_dict[self._map_center]
 

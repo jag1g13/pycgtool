@@ -30,7 +30,7 @@ Requirements
 ------------
 PyCGTOOL requires:
 
-- Python 3
+- Python 3.6 or greater
 - Numpy (http://www.numpy.org/)
 - simpletraj (https://github.com/arose/simpletraj)
 

@@ -69,7 +69,9 @@ def vector_cross(u, v):
 
 def circular_mean(values):
     """
-    return average of values on a cirle
+    Return average of angles on a cirle
+
+    See https://en.wikipedia.org/wiki/Mean_of_circular_quantities
 
     :param values: array values to average
     :return: average
@@ -80,12 +82,13 @@ def circular_mean(values):
     x = np.cos(values)
     y = np.sin(values)
     vec = np.array([x, y]).T
+
     x_av, y_av = np.nanmean(vec, axis=0)
     return np.arctan2(y_av, x_av)
 
 def circular_variance(values):
     """
-    return variance of values on a cirle
+    Return variance of angles on a cirle
 
     :param values: array values
     :return: average
@@ -95,6 +98,7 @@ def circular_variance(values):
 
     two_pi = 2 * np.pi
     mean = circular_mean(values)
+
     diff = values - mean
     diff -= np.rint(diff / two_pi ) * two_pi
     return np.nanmean(np.square(diff))

@@ -41,7 +41,7 @@ It is important to perform validation of any new parameter set; a brief example 
 
 ## Requirements
 PyCGTOOL requires:
-* Python3
+* Python 3.6 or greater
 * [NumPy](http://www.numpy.org/)
 * [simpletraj](https://github.com/arose/simpletraj)
 

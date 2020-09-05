@@ -9,9 +9,8 @@ import logging
 
 import numpy as np
 
-from .util import backup_file, file_write_lines
 from .parsers.cfg import CFG
-from .parsers.itp import ITP
+from .util import backup_file, file_write_lines
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +207,7 @@ class Frame:
                 raise
 
             backup_file(filename)
-            self._xtc_buffer = mdtraj.formats.XTCTrajectoryFile(filename, mode="w")
+            self._xtc_buffer = mdtraj.formats.XTCTrajectoryFile(str(filename), mode="w")
 
         xyz = np.ndarray((1, self.natoms, 3), dtype=np.float32)
         i = 0
@@ -234,6 +233,7 @@ class Frame:
 
         :param filename: Filename of GROMACS ITP to read
         """
+        # TODO replace with actual ITP parser
         with CFG(filename) as itp:
             for molecule in itp:
                 itpres = Residue(itp[molecule])

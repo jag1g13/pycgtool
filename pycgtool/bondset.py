@@ -79,15 +79,17 @@ class Bond:
 
         with np.errstate(divide="raise"):
             self.eqm = self._func_form.eqm(values, temp)
-            # if dihedral get value to shift cosine function by, NOT equilibrium value
+
+            # TODO: consider moving this correction to the functional form
+            # If dihedral, get value to shift cosine function by, NOT equilibrium value
             if len(self.atoms) == 4:
                 two_pi = 2 * np.pi
                 self.eqm -= np.pi
                 self.eqm = (((self.eqm + np.pi) % two_pi) - np.pi)
 
-
             try:
                 self.fconst = self._func_form.fconst(values, temp)
+
             except FloatingPointError:
                 # Happens when variance is 0, i.e. we only have one value
                 self.fconst = float("inf")
@@ -388,14 +390,15 @@ class BondSet:
             virtual_beads = self.get_virtual_beads(mapping[mol])
             if len(virtual_beads) != 0:
                 ret_lines.append("\n[ virtual_sitesn ]")
-                excl_lines = ["\n[ exclusions ]"]   #exlusions section for virtual sites
+                excl_lines = ["\n[ exclusions ]"]  # Exclusions section for virtual sites
+
                 for vbead in virtual_beads:
-                    CGids = [bead.num + 1 for bead in mapping[mol] if bead.name in vbead.atoms]
-                    CGids.sort()
-                    CGids_string = " ".join(map(str, CGids))
-                    ret_lines.append("{0:^6d} {1:^6d} {2}".format(vbead.num+1, vbead.gromacs_type_id, CGids_string))
-                    vsite_exclusions = "{} ".format(vbead.num + 1) + CGids_string
+                    cg_ids = sorted([bead.num + 1 for bead in mapping[mol] if bead.name in vbead.atoms])
+                    cg_ids_string = " ".join(map(str, cg_ids))
+                    ret_lines.append("{0:^6d} {1:^6d} {2}".format(vbead.num+1, vbead.gromacs_type_id, cg_ids_string))
+                    vsite_exclusions = "{} ".format(vbead.num + 1) + cg_ids_string
                     excl_lines.append(vsite_exclusions)
+
                 ret_lines.extend(excl_lines)
 
             ret_lines.extend(write_bond_angle_dih(self.get_bond_lengths(mol), "bonds"))

@@ -32,8 +32,6 @@ class MappingTest(unittest.TestCase):
         self.assertEqual("R1", mapping["NAPH"][2].atoms[0])
         self.assertEqual(1, [isinstance(bead, VirtualMap) for bead in mapping["NAPH"]].count(True))
 
-
-
     def test_mapping_apply(self):
         mapping = Mapping("test/data/water.map", DummyOptions)
         frame = Frame("test/data/water.gro")
@@ -106,7 +104,6 @@ class MappingTest(unittest.TestCase):
         np.testing.assert_allclose(np.array([2.83337, 2.83337, 2.83337], dtype=np.float32),
                                    cg[0][2].coords, rtol=0.01)
 
-
     def test_mapping_weights_first(self):
         frame = Frame("test/data/two.gro")
         options = DummyOptions()
@@ -117,12 +114,10 @@ class MappingTest(unittest.TestCase):
         np.testing.assert_allclose(np.array([1., 1., 1.]), cg[0][0].coords)
 
     def test_mapping_itp_multi(self):
-        mapping = Mapping("test/data/membrane/membrane.map", DummyOptions, itp="test/data/membrane/membrane.top")
+        mapping = Mapping("test/data/membrane/membrane.map",
+                          DummyOptions,
+                          itp="test/data/membrane/membrane.top")
         self.assertAlmostEqual( -1.2, mapping["POPE"][0].charge, delta=0.0001)
         self.assertAlmostEqual(0, mapping["POPG"][0].charge, delta=0.0001)
 
         self.assertAlmostEqual([94.9716], mapping["POPE"][0].mass, delta=0.0001)
-
-
-
-

@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "pycgtool"
+version = "2.0.0-alpha.4"
+description = "Generate coarse-grained MD models from atomistic trajectories"
+authors = ["James Graham <j.graham@soton.ac.uk>"]
+license = "GPL-3.0-only"
+
+readme = "README.md"
+homepage = "https://github.com/jag1g13/pycgtool"
+repository = "https://github.com/jag1g13/pycgtool"
+documentation = "https://pycgtool.readthedocs.io/en/master/"
+
+keywords = [
+    "molecular-dynamics",
+]
+
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+
+[tool.poetry.scripts]
+# The actual entrypoint that users will call
+pycgtool = "pycgtool.__main__:main"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+wheel = "^0.35.1"
+numpy = "^1.19.1"
+cython = "^0.29.21"
+simpletraj = "^0.5"
+
+# Optional extras to enable additional functionality
+mdtraj = { version = "^1.9.4", optional = true }
+
+[tool.poetry.dev-dependencies]
+prospector = "^1.3.0"
+pytest = "^6.0.1"
+pytest-cov = "^2.10.1"
+yapf = "^0.30.0"
+
+[tool.poetry.extras]
+mdtraj = ["mdtraj"]
+all = ["mdtraj"]
+test = ["pytest", "pytest-cov", "prospector", "flake8"]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

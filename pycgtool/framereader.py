@@ -58,7 +58,7 @@ def get_frame_reader(top, traj=None, frame_start=0, name=None):
                 r.warn()
                 print()
                 return r
-            except (UnsupportedFormatException, ImportError) as e2:
+            except (UnsupportedFormatException, ImportError):
                 print("Failed to read using '" + name + "' trajectory reader")
                 continue
             except NonMatchingSystemError:
