@@ -65,7 +65,12 @@ class Frame:
             atom.coords = self._trajectory.xyz[frame_number, atom.index]
 
         # TODO handle non-cubic boxes
-        self.unitcell_lengths = self._trajectory.unitcell_lengths[frame_number]
+        try:
+            self.unitcell_lengths = self._trajectory.unitcell_lengths[frame_number]
+        
+        except TypeError:
+            self.unitcell_lengths = None
+
         self.time = self._trajectory.time[frame_number]
 
     def next_frame(self) -> bool:

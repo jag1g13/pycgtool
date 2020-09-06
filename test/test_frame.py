@@ -75,6 +75,10 @@ class FrameTest(unittest.TestCase):
 
         self.check_reference_frame(frame)
 
+    def test_frame_read_zero_box(self):
+        frame = Frame('test/data/polyethene.gro')
+        self.assertIsNone(frame.unitcell_lengths)
+
     def test_frame_any_read_unsupported(self):
         with self.assertRaises(UnsupportedFormatException):
             _ = Frame('test/data/dppc.map')
