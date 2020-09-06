@@ -414,19 +414,33 @@ class BondSet:
 
         :param frame: Frame from which to calculate values
         """
+        # TODO: Clean these bond calculation functions
         def calc_length(atoms):
-            vec = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
+            if frame.unitcell_lengths is None:
+                vec = atoms[0].coords - atoms[1].coords
+            else:
+                vec = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.unitcell_lengths)
+
             return vector_len(vec)
 
         def calc_angle(atoms):
-            veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
-            vecb = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.box)
+            if frame.unitcell_lengths is None:
+                veca = atoms[0].coords - atoms[1].coords
+                vecb = atoms[1].coords - atoms[2].coords
+            else:
+                veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.unitcell_lengths)
+                vecb = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.unitcell_lengths)
             return math.pi - vector_angle(veca, vecb)
 
         def calc_dihedral(atoms):
-            veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.box)
-            vecb = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.box)
-            vecc = dist_with_pbc(atoms[2].coords, atoms[3].coords, frame.box)
+            if frame.unitcell_lengths is None:
+                veca = atoms[0].coords - atoms[1].coords
+                vecb = atoms[1].coords - atoms[2].coords
+                vecc = atoms[2].coords - atoms[3].coords
+            else:
+                veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.unitcell_lengths)
+                vecb = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.unitcell_lengths)
+                vecc = dist_with_pbc(atoms[2].coords, atoms[3].coords, frame.unitcell_lengths)
 
             c1 = vector_cross(veca, vecb)
             c2 = vector_cross(vecb, vecc)
@@ -436,7 +450,7 @@ class BondSet:
                 3: calc_angle,
                 4: calc_dihedral}
 
-        for prev_res, res, next_res in sliding(frame):
+        for prev_res, res, next_res in sliding(frame.residues):
             try:
                 mol_meas = self._molecules[res.name]
             except KeyError:
@@ -449,11 +463,11 @@ class BondSet:
             for bond in mol_meas:
                 try:
                     # TODO tidy this
-                    atoms = [adj_res.get(name[0], res)[name.lstrip("-+")] for name in bond.atoms]
+                    atoms = [adj_res.get(name[0], res).atom(name.lstrip("-+")) for name in bond.atoms]
                     val = calc[len(atoms)](atoms)
                     bond.values.append(val)
-                except (NotImplementedError, TypeError):
-                    # TypeError is raised when residues on end of chain calc bond to next
+                except (NotImplementedError, AttributeError):
+                    # AttributeError is raised when residues on end of chain calc bond to next
                     pass
                 except ZeroDivisionError as e:
                     e.args = ("Zero division in calculation of <{0}>".format(" ".join(bond.atoms)),)

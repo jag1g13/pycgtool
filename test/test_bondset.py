@@ -9,12 +9,6 @@ from pycgtool.frame import Frame
 from pycgtool.mapping import Mapping
 from pycgtool.util import cmp_file_whitespace_float
 
-try:
-    import mdtraj
-    mdtraj_present = True
-except ImportError:
-    mdtraj_present = False
-
 
 class DummyOptions:
     constr_threshold = 100000
@@ -70,6 +64,7 @@ class BondSetTest(unittest.TestCase):
         measure = BondSet("test/data/sugar.bnd", DummyOptions)
         frame = Frame("test/data/sugar-cg.gro")
         measure.apply(frame)
+
         # First six are bond lengths
         self.assertEqual(1, len(measure["ALLA"][0].values))
         self.assertAlmostEqual(0.2225376, measure["ALLA"][0].values[0],
@@ -105,14 +100,14 @@ class BondSetTest(unittest.TestCase):
                                    delta=abs(ref[i][fc_column_number] * accuracy))
 
     def test_bondset_boltzmann_invert(self):
-        measure = BondSet("test/data/sugar.bnd", DummyOptions)
-        frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
-        mapping = Mapping("test/data/sugar.map", DummyOptions)
+        measure = BondSet('test/data/sugar.bnd', DummyOptions)
+        frame = Frame('test/data/sugar.gro', 'test/data/sugar.xtc')
+        mapping = Mapping('test/data/sugar.map', DummyOptions)
 
-        cgframe = mapping.apply(frame)
+        cg_frame = mapping.apply(frame)
         while frame.next_frame():
-            cgframe = mapping.apply(frame, cgframe=cgframe)
-            measure.apply(cgframe)
+            cg_frame = mapping.apply(frame, cg_frame=cg_frame)
+            measure.apply(cg_frame)
 
         measure.boltzmann_invert()
         self.support_check_mean_fc(measure["ALLA"], 1)
@@ -121,14 +116,14 @@ class BondSetTest(unittest.TestCase):
         class DefaultOptions(DummyOptions):
             default_fc = True
 
-        measure = BondSet("test/data/sugar.bnd", DefaultOptions)
-        frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
-        mapping = Mapping("test/data/sugar.map", DefaultOptions)
+        measure = BondSet('test/data/sugar.bnd', DefaultOptions)
+        frame = Frame('test/data/sugar.gro', 'test/data/sugar.xtc')
+        mapping = Mapping('test/data/sugar.map', DefaultOptions)
 
-        cgframe = mapping.apply(frame)
+        cg_frame = mapping.apply(frame)
         while frame.next_frame():
-            cgframe = mapping.apply(frame, cgframe=cgframe)
-            measure.apply(cgframe)
+            cg_frame = mapping.apply(frame, cg_frame=cg_frame)
+            measure.apply(cg_frame)
 
         measure.boltzmann_invert()
         self.support_check_mean_fc(measure["ALLA"], 2)
@@ -139,35 +134,17 @@ class BondSetTest(unittest.TestCase):
             angle_form = "MartiniDefaultAngle"
             dihedral_form = "MartiniDefaultDihedral"
 
-        measure = BondSet("test/data/sugar.bnd", FuncFormOptions)
-        frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
-        mapping = Mapping("test/data/sugar.map", DummyOptions)
+        measure = BondSet('test/data/sugar.bnd', FuncFormOptions)
+        frame = Frame('test/data/sugar.gro', 'test/data/sugar.xtc')
+        mapping = Mapping('test/data/sugar.map', DummyOptions)
 
-        cgframe = mapping.apply(frame)
+        cg_frame = mapping.apply(frame)
         while frame.next_frame():
-            cgframe = mapping.apply(frame, cgframe=cgframe)
-            measure.apply(cgframe)
+            cg_frame = mapping.apply(frame, cg_frame=cg_frame)
+            measure.apply(cg_frame)
 
         measure.boltzmann_invert()
         self.support_check_mean_fc(measure["ALLA"], 2)
-
-    @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
-    def test_bondset_boltzmann_invert_mdtraj(self):
-        logging.disable(logging.WARNING)
-        frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc",
-                      xtc_reader="mdtraj")
-        logging.disable(logging.NOTSET)
-
-        measure = BondSet("test/data/sugar.bnd", DummyOptions)
-        mapping = Mapping("test/data/sugar.map", DummyOptions)
-
-        cgframe = mapping.apply(frame)
-        while frame.next_frame():
-            cgframe = mapping.apply(frame, cgframe=cgframe)
-            measure.apply(cgframe)
-
-        measure.boltzmann_invert()
-        self.support_check_mean_fc(measure["ALLA"], 1)
 
     def test_bondset_polymer(self):
         bondset = BondSet("test/data/polyethene.bnd", DummyOptions)
@@ -188,19 +165,20 @@ class BondSetTest(unittest.TestCase):
         frame = Frame("test/data/pbcpolyethene.gro")
         bondset.apply(frame)
         bondset.boltzmann_invert()
+
         for bond in bondset.get_bond_lengths("ETH", True):
             self.assertAlmostEqual(1., bond.eqm)
             self.assertEqual(float("inf"), bond.fconst)
 
     def test_full_itp_sugar(self):
-        measure = BondSet("test/data/sugar.bnd", DummyOptions)
-        frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
-        mapping = Mapping("test/data/sugar.map", DummyOptions)
-        cgframe = mapping.apply(frame)
+        measure = BondSet('test/data/sugar.bnd', DummyOptions)
+        frame = Frame('test/data/sugar.gro', 'test/data/sugar.xtc')
+        mapping = Mapping('test/data/sugar.map', DummyOptions)
+        cg_frame = mapping.apply(frame)
 
         while frame.next_frame():
-            cgframe = mapping.apply(frame, cgframe=cgframe)
-            measure.apply(cgframe)
+            cg_frame = mapping.apply(frame, cg_frame=cg_frame)
+            measure.apply(cg_frame)
 
         measure.boltzmann_invert()
 
@@ -216,14 +194,14 @@ class BondSetTest(unittest.TestCase):
             bondset = BondSet("test/data/duplicate_atoms.bnd", DummyOptions)
 
     def test_dump_bonds(self):
-        measure = BondSet("test/data/sugar.bnd", DummyOptions)
-        frame = Frame("test/data/sugar.gro", xtc="test/data/sugar.xtc")
-        mapping = Mapping("test/data/sugar.map", DummyOptions)
-        cgframe = mapping.apply(frame)
+        measure = BondSet('test/data/sugar.bnd', DummyOptions)
+        frame = Frame('test/data/sugar.gro', 'test/data/sugar.xtc')
+        mapping = Mapping('test/data/sugar.map', DummyOptions)
+        cg_frame = mapping.apply(frame)
 
         while frame.next_frame():
-            cgframe = mapping.apply(frame, cgframe=cgframe)
-            measure.apply(cgframe)
+            cg_frame = mapping.apply(frame, cg_frame=cg_frame)
+            measure.apply(cg_frame)
 
         measure.boltzmann_invert()
 
