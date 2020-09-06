@@ -11,7 +11,9 @@ import numpy as np
 import os
 import typing
 
-from .frame import Frame
+import mdtraj
+
+from .frame import Trajectory
 from .parsers import CFG, ITP
 from .util import dir_up
 
@@ -304,45 +306,36 @@ class Mapping:
 
         self._masses_are_set = True
 
-    def _cg_frame_setup(self, aa_residues, name=None):
+    def _cg_frame_setup(
+            self, aa_residues: typing.Iterable[mdtraj.core.topology.Residue]):
         """
         Create a new CG Frame and populate beads
         :param aa_residues: Iterable of atomistic residues to map from
-        :param name: Name of Frame
         :return: New CG Frame instance
         """
-        cgframe = Frame()
-        cgframe.name = name
-
+        cg_frame = Trajectory()
         missing_mappings = set()
-        cg_bead_num = 1
 
-        for aares in aa_residues:
+        for aa_res in aa_residues:
             try:
-                molmap = self._mappings[aares.name]
+                mol_map = self._mappings[aa_res.name]
+
             except KeyError:
-                if aares.name not in missing_mappings:
-                    missing_mappings.add(aares.name)
-                    logger.warning("A mapping has not been provided for '{0}' residues, they will not be mapped.".format(aares.name))
+                if aa_res.name not in missing_mappings:
+                    missing_mappings.add(aa_res.name)
+                    logger.warning(
+                        "A mapping has not been provided for '%s' residues, they will not be mapped",
+                        aa_res.name)
+
                 continue
 
-            cgres = Residue(name=aares.name, num=aares.num)
-            cgres.atoms = [Atom(bmap.name, bmap.num, type=bmap.type, charge=bmap.charge, mass=bmap.mass, coords=np.zeros(3)) for bmap in molmap]
+            cg_res = cg_frame.add_residue(aa_res.name)
+            for bmap in mol_map:
+                cg_frame.add_atom(bmap.name, None, cg_res)
 
-            for i, (bead, bmap) in enumerate(zip(cgres, molmap)):
-                cgres.name_to_num[bead.name] = i
-                bead.charge = bmap.charge
-                bead.mass = bmap.mass
-                bead.num = cg_bead_num
+        return cg_frame
 
-                cg_bead_num += 1
-
-            cgframe.add_residue(cgres)
-            cgframe.natoms += len(cgres)
-
-        return cgframe
-
-    def apply(self, frame, cgframe=None):
+    def apply(self, frame: Trajectory, cg_frame: typing.Optional[Trajectory] = None):
         """
         Apply the AA->CG mapping to an atomistic Frame.
 
@@ -350,17 +343,19 @@ class Mapping:
         :param cgframe: CG Frame to remap - optional
         :return: Frame instance containing the CG frame
         """
-        if cgframe is None:
+        if cg_frame is None:
             # Frame needs initialising
-            cgframe = self._cg_frame_setup(frame.yield_resname_in(self._mappings), frame.name)
+            # residues_to_map = (res for res in frame.residues if res.name in self._mappings)
+            # cgframe = self._cg_frame_setup(residues_to_map)
+            cg_frame = self._cg_frame_setup(frame.residues)
 
-        cgframe.time = frame.time
-        cgframe.number = frame.number
-        cgframe.box = frame.box
+        cg_frame.time = frame.time
+        cg_frame.number = frame.number
+        cg_frame.box = frame.box
 
         coord_func = calc_coords_weight if frame.box[0] * frame.box[1] * frame.box[2] else calc_coords_weight_nobox
 
-        for aares, cgres in zip(frame.yield_resname_in(self._mappings), cgframe):
+        for aares, cgres in zip(frame.yield_resname_in(self._mappings), cg_frame):
             molmap = self._mappings[aares.name]
 
             virtual_beads= []
@@ -377,13 +372,13 @@ class Mapping:
                     continue
 
                 coords = np.asarray([aares[atom].coords for atom in bmap], dtype=np.float32)
-                bead.coords = coord_func(ref_coords, coords, cgframe.box, bmap.weights)
+                bead.coords = coord_func(ref_coords, coords, cg_frame.box, bmap.weights)
 
             for bead, bmap in zip(virtual_beads, virtual_bmap):
                 coords = np.asarray([cgres[atom].coords for atom in bmap], dtype=np.float32)
-                bead.coords = coord_func(ref_coords, coords, cgframe.box, bmap.weights)
+                bead.coords = coord_func(ref_coords, coords, cg_frame.box, bmap.weights)
 
-        return cgframe
+        return cg_frame
 
 
 @numba.jit

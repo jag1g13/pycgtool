@@ -116,6 +116,14 @@ class Trajectory:
 
         return self._topology.add_residue(name, chain, **kwargs)
 
+    def add_atom(self, name: str,
+                element: typing.Optional[mdtraj.element.Element],
+                 residue: mdtraj.core.topology.Residue) -> mdtraj.core.topology.Atom:
+        if hasattr(self, '_trajectory'):
+            raise TypeError('Cannot edit atoms if a trajectory has been loaded')
+
+        return self._topology.add_atom(name, element, residue)
+
     @property
     def box(self):
         return self._trajectory.unitcell_lengths[self.frame_number]

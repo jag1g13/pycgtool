@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 from pycgtool.mapping import Mapping, VirtualMap
-from pycgtool.frame import Frame
+from pycgtool.frame import Trajectory as Frame
 
 
 class DummyOptions:
@@ -73,7 +73,7 @@ class MappingTest(unittest.TestCase):
         options = DummyOptions()
         options.map_center = "mass"
 
-        mapping = Mapping("test/data/two.map", options, itp="test/data/two.itp")
+        mapping = Mapping("test/data/two.map", options, itp_filename="test/data/two.itp")
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([2., 2., 2.]), cg[0][0].coords)
 
@@ -81,7 +81,7 @@ class MappingTest(unittest.TestCase):
         frame = Frame("test/data/martini3/four.gro")
         options = DummyOptions()
         options.virtual_map_center = "mass"
-        mapping = Mapping("test/data/martini3/four.map", options, itp="test/data/martini3/four.itp")
+        mapping = Mapping("test/data/martini3/four.map", options, itp_filename="test/data/martini3/four.itp")
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([3.0, 3.0, 3.0]), cg[0][2].coords)
 
@@ -109,14 +109,14 @@ class MappingTest(unittest.TestCase):
         options = DummyOptions()
         options.map_center = "first"
 
-        mapping = Mapping("test/data/two.map", options, itp="test/data/two.itp")
+        mapping = Mapping("test/data/two.map", options, itp_filename="test/data/two.itp")
         cg = mapping.apply(frame)
         np.testing.assert_allclose(np.array([1., 1., 1.]), cg[0][0].coords)
 
     def test_mapping_itp_multi(self):
         mapping = Mapping("test/data/membrane/membrane.map",
                           DummyOptions,
-                          itp="test/data/membrane/membrane.top")
+                          itp_filename="test/data/membrane/membrane.top")
         self.assertAlmostEqual( -1.2, mapping["POPE"][0].charge, delta=0.0001)
         self.assertAlmostEqual(0, mapping["POPG"][0].charge, delta=0.0001)
 
