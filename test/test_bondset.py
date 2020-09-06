@@ -211,6 +211,7 @@ class BondSetTest(unittest.TestCase):
         for filename in filenames:
             self.assertTrue(cmp_file_whitespace_float(os.path.join("test/data", filename), filename,
                                                       rtol=0.008, verbose=True))
+            os.remove(filename)
 
     def test_get_lines_for_bond_dump(self):
         expected = [
