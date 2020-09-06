@@ -2,16 +2,16 @@
 This module contains some general purpose utility functions used in PyCGTOOL.
 """
 
-import os
-import itertools
-import random
-import math
-import filecmp
-import logging
-import re
-import functools
-
 from collections import namedtuple
+import filecmp
+import functools
+import itertools
+import logging
+import math
+import os
+import random
+import re
+import typing
 
 import numpy as np
 
@@ -353,6 +353,20 @@ def cmp_file_whitespace_float(ref_filename, test_filename, rtol=0.01, verbose=Fa
         return cmp_whitespace_float(ref_lines, test_lines, rtol=rtol, verbose=verbose)
 
 
+def number_or_string(string: str) -> typing.Union[float, int, str]:
+    """Convert string into an int or float if possible."""
+    try:
+        as_float = float(string)
+        as_int = int(as_float)
+        if as_int == as_float:
+            return as_int
+
+        return as_float
+
+    except ValueError:
+        return string
+
+
 def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
     """
     Compare two iterables of lines ignoring spacing on a line and using a tolerance on floats
@@ -363,26 +377,19 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
     :param bool verbose: Print failing lines
     :return: True if all lines are the same, else False
     """
-    def number_or_string(string):
-        try:
-            as_float = float(string)
-            as_int = int(as_float)
-            if as_int == as_float:
-                return as_int
-            return as_float
-        except ValueError:
-            return string
-
     diff_lines = []
     for i, (ref_line, test_line) in enumerate(itertools.zip_longest(ref_lines, test_lines)):
         # Shortcut trivial comparisons
         if ref_line is None or test_line is None:
             diff_lines.append((i, ref_line, test_line))
+            continue
+
         if ref_line == test_line:
             continue
 
         ref_toks = ref_line.split()
         test_toks = test_line.split()
+
         if len(ref_toks) != len(test_toks):
             diff_lines.append((i, ref_line, test_line))
 
@@ -397,11 +404,11 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
                     diff_lines.append((i, ref_line, test_line))
 
     if verbose and diff_lines:
-            print("Lines fail comparison:")
-            for i, ref_line, test_line in diff_lines:
-                print("Line {}".format(i))
-                print("Ref:  {0}".format(ref_line))
-                print("Test: {0}".format(test_line))
+        print("Lines fail comparison:")
+        for i, ref_line, test_line in diff_lines:
+            print("Line {}".format(i))
+            print("Ref:  {0}".format(ref_line))
+            print("Test: {0}".format(test_line))
 
     return len(diff_lines) == 0
 
@@ -609,4 +616,3 @@ def any_starts_with(iterable, char):
         return iterable.startswith(char)
     else:
         return any(map(recurse, iterable))
-
