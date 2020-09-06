@@ -128,40 +128,10 @@ class Mapping:
 
         with CFG(filename) as cfg:
             for mol_name, mol_section in cfg.items():
-                self._mappings[mol_name] = []
-                self._manual_charges[mol_name] = False
-                molmap = self._mappings[mol_name]
+                mol_map, manual_charges = self._mol_map_from_section(mol_section)
 
-                for i, (name, typ, first, *atoms) in enumerate(mol_section):
-                    virtual = False
-                    charge = 0
-
-                    if name.startswith('@'):
-                        if name == '@v':
-                            virtual = True
-                            name, typ, first, *atoms=mol_section[i][1:]
-
-                        else:
-                            #TODO ADD CUSTOM ERROR HERE LATER?
-                            raise SyntaxError('"{}" line prefix invalid'.format(name))
-
-                    try:
-                        # Allow optional charge in mapping file
-                        charge = float(first)
-                        self._manual_charges[mol_name] = True
-
-                    except ValueError:
-                        atoms.insert(0, first)
-
-                    assert atoms, "Bead {0} specification contains no atoms".format(name)
-
-                    if virtual:
-                        newbead = VirtualMap(name, i, type=typ, atoms=atoms, charge=charge)
-
-                    else:
-                        newbead = BeadMap(name, i, type=typ, atoms=atoms, charge=charge)
-
-                    molmap.append(newbead)
+                self._mappings[mol_name] = mol_map
+                self._manual_charges[mol_name] = manual_charges
 
         if itp is not None:
             with ITP(itp) as itp:
@@ -217,6 +187,45 @@ class Mapping:
 
                 else:
                     bmap.weights = bmap.weights_dict[self._map_center]
+
+    @staticmethod
+    def _mol_map_from_section(mol_section):
+        mol_map = []
+        manual_charges = False
+
+        prefix_to_class = {'@v': VirtualMap}
+
+        for i, (name, typ, first, *atoms) in enumerate(mol_section):
+            bead_class = BeadMap
+            charge = 0
+
+            if name.startswith('@'):
+                try:
+                    bead_class = prefix_to_class[name]
+                    name, typ, first, *atoms = mol_section[i][1:]
+
+                except KeyError as exc:
+                    raise ValueError(
+                        '"{0}" line prefix invalid'.format(name)) from exc
+
+            try:
+                # Allow optional charge in mapping file
+                # Using this even once in a molecule enables it for the whole molecule
+                charge = float(first)
+                manual_charges = True
+
+            except ValueError:
+                # Is an atom name, not a charge
+                atoms.insert(0, first)
+
+            if not atoms:
+                # TODO should this stop execution?
+                logger.warning('Bead %s specification contains no atoms', name)
+
+            mol_map.append(
+                bead_class(name, i, type=typ, atoms=atoms, charge=charge))
+
+        return mol_map, manual_charges
 
     def __len__(self):
         return len(self._mappings)
