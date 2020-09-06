@@ -13,7 +13,7 @@ import typing
 
 import mdtraj
 
-from .frame import Trajectory
+from .frame import Frame
 from .parsers import CFG, ITP
 from .util import dir_up
 
@@ -313,7 +313,7 @@ class Mapping:
         :param aa_residues: Iterable of atomistic residues to map from
         :return: New CG Frame instance
         """
-        cg_frame = Trajectory()
+        cg_frame = Frame()
         missing_mappings = set()
 
         for aa_res in aa_residues:
@@ -335,7 +335,7 @@ class Mapping:
 
         return cg_frame
 
-    def apply(self, frame: Trajectory, cg_frame: typing.Optional[Trajectory] = None):
+    def apply(self, frame: Frame, cg_frame: typing.Optional[Frame] = None):
         """
         Apply the AA->CG mapping to an atomistic Frame.
 

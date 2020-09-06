@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 
 from pycgtool.frame import NonMatchingSystemError, UnsupportedFormatException
-from pycgtool.frame import Trajectory as Frame
+from pycgtool.frame import Frame
 
 
 def try_remove(filename) -> None:
@@ -37,7 +37,7 @@ class FrameTest(unittest.TestCase):
         box_vectors = np.array([1.89868, 1.89868, 1.89868])
 
         np.testing.assert_allclose(atom0_coords, frame.atom(0).coords)
-        np.testing.assert_allclose(box_vectors, frame.box,
+        np.testing.assert_allclose(box_vectors, frame.unitcell_lengths,
                                    rtol=1e-4)  # PDB files are f9.3
 
     def check_reference_trajectory(self, frame):
@@ -52,7 +52,7 @@ class FrameTest(unittest.TestCase):
         for _, (atom0_coords, box_vectors) in enumerate(
                 zip(atom0_coords_array, box_vectors_array)):
             np.testing.assert_allclose(atom0_coords, frame.atom(0).coords)
-            np.testing.assert_allclose(box_vectors, frame.box,
+            np.testing.assert_allclose(box_vectors, frame.unitcell_lengths,
                                        rtol=1e-4)  # PDB files are f9.3
             frame.next_frame()
 

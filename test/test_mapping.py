@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 from pycgtool.mapping import Mapping, VirtualMap
-from pycgtool.frame import Trajectory as Frame
+from pycgtool.frame import Frame
 
 
 class DummyOptions:
