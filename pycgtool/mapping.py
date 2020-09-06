@@ -5,10 +5,11 @@ The Mapping class contains a dictionary of lists of BeadMaps.
 Each list corresponds to a single molecule.
 """
 
-import numpy as np
-import logging
 import json
+import logging
+import numpy as np
 import os
+import typing
 
 from .frame import Frame
 from .parsers import CFG, ITP
@@ -16,6 +17,7 @@ from .util import dir_up
 
 try:
     import numba
+
 except ImportError:
     from .util import NumbaDummy
     numba = NumbaDummy()
@@ -113,12 +115,13 @@ class Mapping:
 
     Contains a dictionary of lists of BeadMaps.  Each list corresponds to a single molecule.
     """
-    def __init__(self, filename, options, itp=None):
+    def __init__(self, filename: str, options, itp_filename: str = None):
         """
         Read in the AA->CG mapping from a file.
 
         :param filename: File from which to read mapping
-        :return: Instance of Mapping
+        :param options: Options from command line
+        :param itp_filename: Optional GROMACS itp file for atom mass / charge
         """
         self._manual_charges = {}
         self._mappings = {}
@@ -128,50 +131,30 @@ class Mapping:
 
         with CFG(filename) as cfg:
             for mol_name, mol_section in cfg.items():
-                mol_map, manual_charges = self._mol_map_from_section(mol_section)
+                mol_map, manual_charges = self._mol_map_from_section(
+                    mol_section)
 
                 self._mappings[mol_name] = mol_map
                 self._manual_charges[mol_name] = manual_charges
 
-        if itp is not None:
-            with ITP(itp) as itp:
-                for molname in self._mappings:
+        if itp_filename is not None:
+            with ITP(itp_filename) as itp:
+                for mol_name, mol_map in self._mappings.items():
                     try:
-                        molentry = itp[molname]
-                        atoms = {}
-                        for toks in molentry["atoms"]:
-                            # Store charge and mass
-                            atoms[toks[4]] = (float(toks[6]), float(toks[7]))
-                        for bead in self._mappings[molname]:
-                            if not isinstance(bead, VirtualMap):
-                                mass_array = np.array([[atoms[atom][1]] for atom in bead], dtype=np.float32)
-                                bead.mass = sum(mass_array)
-                                print(mass_array, sum(mass_array))
-                                mass_array /= bead.mass
-                                bead.weights_dict["mass"] = mass_array
+                        itp_mol_entry = itp[mol_name]
+                        manual_charges = self._manual_charges[mol_name]
+                        if manual_charges:
+                            logger.warning(
+                                'Charges assigned in mapping for molecule %s, ignoring itp charges',
+                                mol_name)
 
-                                for atom in bead:
-                                    if self._manual_charges[molname]:
-                                        logger.warning("Charges assigned in mapping for molecule {0}, "
-                                                       "ignoring itp charges.".format(molname))
-                                    else:
-                                        bead.charge += atoms[atom][0]
+                        self._itp_section_into_mol_map(mol_map, itp_mol_entry,
+                                                       manual_charges)
 
-                        for bead in self._mappings[molname]:
-                            if isinstance(bead, VirtualMap):
-                                mass_array = np.array([real_bead.mass for real_bead in self._mappings[molname]
-                                                       if real_bead.name in bead], dtype=np.float32)
-                                weights_array = mass_array / sum(mass_array)
-                                bead.weights_dict["mass"] = weights_array
-                                if self._manual_charges[molname]:
-                                    logger.warning("Charges assigned in mapping for molecule {0}, "
-                                                   "ignoring itp charges.".format(molname))
-                                else:
-                                    charges = [real_bead.charge for real_bead in self._mappings[molname]
-                                               if real_bead.name in bead]
-                                    bead.charge = sum(charges)
                     except KeyError:
-                        logger.warning("No itp information for molecule {0} found in {1}".format(molname, itp.filename))
+                        logger.warning(
+                            "No itp information for molecule %s found in %s",
+                            mol_name, itp.filename)
 
                 self._masses_are_set = True
 
@@ -179,17 +162,55 @@ class Mapping:
                 and not self._masses_are_set):
             self._guess_atom_masses()
 
-        for molname, mapping in self._mappings.items():
-            for bmap in mapping:
+        for mol_map in self._mappings.values():
+            for bmap in mol_map:
                 if isinstance(bmap, VirtualMap):
                     bmap.weights = bmap.weights_dict[self._virtual_map_center]
-                    bmap.gromacs_type_id = bmap.gromacs_type_id_dict[self._virtual_map_center]
+                    bmap.gromacs_type_id = bmap.gromacs_type_id_dict[
+                        self._virtual_map_center]
 
                 else:
                     bmap.weights = bmap.weights_dict[self._map_center]
 
     @staticmethod
-    def _mol_map_from_section(mol_section):
+    def _itp_section_into_mol_map(mol_map: typing.List[BeadMap], itp_mol_entry,
+                                  manual_charges: bool) -> None:
+        atoms = {}
+        for toks in itp_mol_entry["atoms"]:
+            # Store charge and mass
+            atoms[toks[4]] = (float(toks[6]), float(toks[7]))
+
+        for bead in mol_map:
+            if not isinstance(bead, VirtualMap):
+                mass_array = np.array([[atoms[atom][1]] for atom in bead],
+                                      dtype=np.float32)
+                bead.mass = sum(mass_array)
+                mass_array /= bead.mass
+                bead.weights_dict["mass"] = mass_array
+
+                if not manual_charges:
+                    for atom in bead:
+                        bead.charge += atoms[atom][0]
+
+        for bead in mol_map:
+            if isinstance(bead, VirtualMap):
+                mass_array = np.array([
+                    real_bead.mass
+                    for real_bead in mol_map if real_bead.name in bead
+                ],
+                                      dtype=np.float32)
+                weights_array = mass_array / sum(mass_array)
+                bead.weights_dict["mass"] = weights_array
+
+                if not manual_charges:
+                    bead.charge = sum([
+                        real_bead.charge for real_bead in mol_map
+                        if real_bead.name in bead
+                    ])
+
+    @staticmethod
+    def _mol_map_from_section(
+            mol_section) -> typing.Tuple[typing.List[BeadMap], bool]:
         mol_map = []
         manual_charges = False
 
