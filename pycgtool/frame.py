@@ -52,7 +52,7 @@ class Trajectory:
                     except ValueError as exc:
                         raise NonMatchingSystemError from exc
 
-                self._load_coords(self.frame_number)
+                self._load_trajectory_frame(self.frame_number)
             
             except OSError as exc:
                 if 'no loader' in str(exc):
@@ -63,13 +63,17 @@ class Trajectory:
         else:
             self._topology = mdtraj.Topology()
 
-    def _load_coords(self, frame_number) -> None:
+    def _load_trajectory_frame(self, frame_number) -> None:
         for atom in self._topology.atoms:
             atom.coords = self._trajectory.xyz[frame_number, atom.index]
 
+        self.time = self._trajectory.time[self.frame_number]
+        # TODO handle non-cubic boxes
+        self.unitcell_lengths = self._trajectory.unitcell_lengths[self.frame_number]
+
     def next_frame(self) -> bool:
         try:
-            self._load_coords(self.frame_number + 1)
+            self._load_trajectory_frame(self.frame_number + 1)
         
         except IndexError:
             return False
@@ -123,10 +127,6 @@ class Trajectory:
             raise TypeError('Cannot edit atoms if a trajectory has been loaded')
 
         return self._topology.add_atom(name, element, residue)
-
-    @property
-    def box(self):
-        return self._trajectory.unitcell_lengths[self.frame_number]
 
     def save(self, filename, **kwargs):
         self._trajectory.save(filename, **kwargs)

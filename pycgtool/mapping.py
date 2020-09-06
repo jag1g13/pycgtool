@@ -345,38 +345,35 @@ class Mapping:
         """
         if cg_frame is None:
             # Frame needs initialising
-            # residues_to_map = (res for res in frame.residues if res.name in self._mappings)
             # cgframe = self._cg_frame_setup(residues_to_map)
             cg_frame = self._cg_frame_setup(frame.residues)
 
+        cg_frame.frame_number = frame.frame_number
         cg_frame.time = frame.time
-        cg_frame.number = frame.number
-        cg_frame.box = frame.box
+        cg_frame.unitcell_lengths = frame.unitcell_lengths
 
-        coord_func = calc_coords_weight if frame.box[0] * frame.box[1] * frame.box[2] else calc_coords_weight_nobox
+        coord_func = calc_coords_weight if np.all(frame.unitcell_lengths) else calc_coords_weight_nobox
 
-        for aares, cgres in zip(frame.yield_resname_in(self._mappings), cg_frame):
-            molmap = self._mappings[aares.name]
+        residues_to_map = (res for res in frame.residues if res.name in self._mappings)
+        for aa_res, cg_res in zip(residues_to_map, cg_frame.residues):
+            mol_map = self._mappings[aa_res.name]
 
-            virtual_beads= []
-            virtual_bmap = []
-            for i, (bead, bmap) in enumerate(zip(cgres, molmap)):
+            for bead, bmap in zip(cg_res.atoms, mol_map):
                 if isinstance(bmap, VirtualMap):
-                    virtual_beads.append(bead)
-                    virtual_bmap.append(bmap)
                     continue
 
-                ref_coords = aares[bmap[0]].coords
+                ref_coords = aa_res.atom(bmap[0]).coords
                 if len(bmap) == 1:
                     bead.coords = ref_coords
                     continue
 
-                coords = np.asarray([aares[atom].coords for atom in bmap], dtype=np.float32)
-                bead.coords = coord_func(ref_coords, coords, cg_frame.box, bmap.weights)
+                coords = np.asarray([aa_res.atom(atom).coords for atom in bmap], dtype=np.float32)
+                bead.coords = coord_func(ref_coords, coords, cg_frame.unitcell_lengths, bmap.weights)
 
-            for bead, bmap in zip(virtual_beads, virtual_bmap):
-                coords = np.asarray([cgres[atom].coords for atom in bmap], dtype=np.float32)
-                bead.coords = coord_func(ref_coords, coords, cg_frame.box, bmap.weights)
+            for bead, bmap in zip(cg_res.atoms, mol_map):
+                if isinstance(bmap, VirtualMap):
+                    coords = np.asarray([cg_res.atom(atom).coords for atom in bmap], dtype=np.float32)
+                    bead.coords = coord_func(ref_coords, coords, cg_frame.unitcell_lengths, bmap.weights)
 
         return cg_frame
 
