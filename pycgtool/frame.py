@@ -45,18 +45,18 @@ class Frame:
                 if trajectory_file:
                     try:
                         self._trajectory = mdtraj.load(trajectory_file, top=self._topology)
-                    
+
                     except ValueError as exc:
                         raise NonMatchingSystemError from exc
 
                 self._load_trajectory_frame(self.frame_number)
-            
+
             except OSError as exc:
                 if 'no loader' in str(exc):
                     raise UnsupportedFormatException from exc
-                
+
                 raise
-        
+
         else:
             self._topology = mdtraj.Topology()
 
@@ -67,16 +67,18 @@ class Frame:
         # TODO handle non-cubic boxes
         try:
             self.unitcell_lengths = self._trajectory.unitcell_lengths[frame_number]
-        
+            self.unitcell_angles = self._trajectory.unitcell_angles[frame_number]
+
         except TypeError:
             self.unitcell_lengths = None
+            self.unitcell_angles = None
 
         self.time = self._trajectory.time[frame_number]
 
     def next_frame(self) -> bool:
         try:
             self._load_trajectory_frame(self.frame_number + 1)
-        
+
         except IndexError:
             return False
 
@@ -116,7 +118,7 @@ class Frame:
         if chain is None:
             try:
                 chain = self._topology.chain(0)
-            
+
             except IndexError:
                 chain = self._topology.add_chain()
 
@@ -132,3 +134,17 @@ class Frame:
 
     def save(self, filename, **kwargs):
         self._trajectory.save(filename, **kwargs)
+
+    def add_frame_to_trajectory(self) -> None:
+        xyz = np.array([atom.coords for atom in self._topology.atoms])
+        new_frame = mdtraj.Trajectory(xyz,
+                                      topology=self._topology,
+                                      time=self.time,
+                                      unitcell_lengths=self.unitcell_lengths,
+                                      unitcell_angles=self.unitcell_angles)
+        
+        if hasattr(self, '_trajectory'):
+            self._trajectory += new_frame
+        
+        else:
+            self._trajectory = new_frame

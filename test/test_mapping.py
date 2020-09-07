@@ -15,12 +15,12 @@ class DummyOptions:
 
 class MappingTest(unittest.TestCase):
     def test_mapping_create(self):
-        mapping = Mapping("test/data/water.map", DummyOptions)
+        mapping = Mapping('test/data/water.map', DummyOptions)
         self.assertEqual(1, len(mapping))
-        self.assertTrue("SOL" in mapping)
-        self.assertEqual(1, len(mapping["SOL"]))
-        self.assertEqual(3, len(mapping["SOL"][0].atoms))
-        self.assertEqual("OW", mapping["SOL"][0].atoms[0])
+        self.assertTrue('HOH' in mapping)
+        self.assertEqual(1, len(mapping['HOH']))
+        self.assertEqual(3, len(mapping['HOH'][0].atoms))
+        self.assertEqual('O', mapping['HOH'][0].atoms[0])
 
     def test_virtual_mapping_create(self):
         mapping = Mapping("test/data/martini3/naphthalene.map", DummyOptions)
@@ -37,9 +37,9 @@ class MappingTest(unittest.TestCase):
         frame = Frame("test/data/water.gro")
         cg_frame = mapping.apply(frame)
 
-        self.assertEqual(frame.natoms, cg_frame.natoms)
+        self.assertEqual(frame.natoms / 3, cg_frame.natoms)
 
-        cg_frame.output("water-cg.gro", format="gro")
+        cg_frame.save("water-cg.gro")
 
         self.assertTrue(filecmp.cmp("test/data/water-cg.gro", "water-cg.gro"))
         os.remove("water-cg.gro")
@@ -106,7 +106,7 @@ class MappingTest(unittest.TestCase):
         cg_frame = mapping.apply(frame)
 
         np.testing.assert_allclose(np.array([1.922575,  1.922575,  1.922575], dtype=np.float32),
-                                   cg_frame.residue(0).atom(2).coords, rtol=0.01)
+                                   cg_frame.residue(0).atom(0).coords, rtol=0.01)
 
     def test_virtual_mapping_weights_guess_mass(self):
         frame = Frame("test/data/martini3/four.gro")

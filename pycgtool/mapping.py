@@ -351,6 +351,7 @@ class Mapping:
         cg_frame.frame_number = frame.frame_number
         cg_frame.time = frame.time
         cg_frame.unitcell_lengths = frame.unitcell_lengths
+        cg_frame.unitcell_angles = frame.unitcell_angles
 
         coord_func = calc_coords_weight if np.all(frame.unitcell_lengths) else calc_coords_weight_nobox
 
@@ -374,6 +375,8 @@ class Mapping:
                 if isinstance(bmap, VirtualMap):
                     coords = np.asarray([cg_res.atom(atom).coords for atom in bmap], dtype=np.float32)
                     bead.coords = coord_func(ref_coords, coords, cg_frame.unitcell_lengths, bmap.weights)
+
+        cg_frame.add_frame_to_trajectory()
 
         return cg_frame
 
