@@ -13,6 +13,7 @@ import random
 import re
 import typing
 
+import mdtraj
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -616,3 +617,33 @@ def any_starts_with(iterable, char):
         return iterable.startswith(char)
     else:
         return any(map(recurse, iterable))
+
+
+def compare_trajectories(*trajectory_files: typing.Iterable[str],
+                         topology_file: str,
+                         coords_only: bool = False) -> bool:
+    """Compare multiple trajectory files for equality.
+    
+    :param trajectory_files: Paths of trajectory file to compare
+    :param topology_file: Topology file path
+    :param coords_only: Only compare coordinates from trajectory - e.g. not box size
+    """
+    ref_traj = mdtraj.load(trajectory_files[0], top=topology_file)
+
+    for traj_file in trajectory_files[1:]:
+        try:
+            traj = mdtraj.load(traj_file, top=topology_file)
+
+        except ValueError:
+            # Trajectory doesn't match topology
+            return False
+
+        if coords_only:
+            if traj.xyz != ref_traj.xyz:
+                return False
+
+        else:
+            if traj != ref_traj:
+                return False
+
+    return True

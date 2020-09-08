@@ -7,6 +7,7 @@ import shutil
 import numpy as np
 import numpy.testing
 
+from pycgtool import util
 from pycgtool.util import tuple_equivalent, extend_graph_chain, stat_moments, transpose_and_sample
 from pycgtool.util import dir_up, backup_file, sliding, r_squared, dist_with_pbc
 from pycgtool.util import SimpleEnum, FixedFormatUnpacker
@@ -271,6 +272,36 @@ class UtilFileWriteLinesTest(unittest.TestCase):
         file_write_lines(filename, lines[2:], append=True)
         with open(filename) as f:
             self.assertListEqual(lines, f.read().splitlines())
+
+
+class CompareTrajectoryTest(unittest.TestCase):
+    def test_compare_trajectory_single(self):
+        self.assertTrue(util.compare_trajectories(
+            'test/data/sugar.gro',
+            'test/data/sugar.gro',
+            topology_file='test/data/sugar.gro'
+        ))
+
+    def test_compare_trajectory_single_false(self):
+        self.assertFalse(util.compare_trajectories(
+            'test/data/sugar.gro',
+            'test/data/water.gro',
+            topology_file='test/data/sugar.gro'
+        ))
+
+    def test_compare_trajectory(self):
+        self.assertTrue(util.compare_trajectories(
+            'test/data/sugar.xtc',
+            'test/data/sugar.xtc',
+            topology_file='test/data/sugar.gro'
+        ))
+
+    def test_compare_trajectory_false(self):
+        self.assertFalse(util.compare_trajectories(
+            'test/data/sugar.xtc',
+            'test/data/water.xtc',
+            topology_file='test/data/sugar.gro'
+        ))
 
 
 if __name__ == '__main__':
