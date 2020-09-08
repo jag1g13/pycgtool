@@ -133,7 +133,7 @@ class Frame:
         return self._topology.add_atom(name, element, residue)
 
     def save(self, filename, **kwargs):
-        self._trajectory.save(filename, **kwargs)
+        self._trajectory.save(str(filename), **kwargs)
 
     def add_frame_to_trajectory(self) -> None:
         xyz = np.array([atom.coords for atom in self._topology.atoms])

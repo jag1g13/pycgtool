@@ -27,9 +27,8 @@ def full_run(args):
     # Temporary shim while config options are refactored
     config = args
 
-    frame = Frame(gro=args.gro,
-                  xtc=args.xtc,
-                  itp=args.itp,
+    frame = Frame(topology_file=args.gro,
+                  trajectory_file=args.xtc,
                   frame_start=args.begin)
 
     out_dir = pathlib.Path(args.out_dir)
@@ -47,36 +46,36 @@ def full_run(args):
     if args.map:
         logger.info("Mapping will be performed")
 
-        mapping = Mapping(args.map, config, itp=args.itp)
-        cgframe = mapping.apply(frame)
-        cgframe.output(out_gro_file, format=config.output)
+        mapping = Mapping(args.map, config, itp_filename=args.itp)
+        cg_frame = mapping.apply(frame)
+        cg_frame.save(out_gro_file)
 
     else:
         logger.info("Mapping will not be performed")
-        cgframe = frame
+        cg_frame = frame
 
     # Only measure bonds from GRO frame if no XTC is provided
     # Allows the user to get a topology from a single snapshot
     if args.bnd and args.xtc is None:
-        bonds.apply(cgframe)
+        bonds.apply(cg_frame)
 
     # Main loop - perform mapping and measurement on every frame in XTC
     def main_loop():
-        nonlocal cgframe
+        nonlocal cg_frame
         if not frame.next_frame():
             return False
 
         if args.map:
-            cgframe = mapping.apply(frame, cgframe=cgframe)
+            cgframe = mapping.apply(frame, cg_frame=cg_frame)
 
             if config.output_xtc:
-                cgframe.write_xtc(out_xtc_file)
+                cgframe.save(out_xtc_file)
 
         else:
-            cgframe = frame
+            cg_frame = frame
 
         if args.bnd:
-            bonds.apply(cgframe)
+            bonds.apply(cg_frame)
 
         return True
 
@@ -113,25 +112,25 @@ def map_only(args):
     # Temporary shim while config options are refactored
     config = args
 
-    frame = Frame(gro=args.gro, xtc=args.xtc)
+    frame = Frame(topology_file=args.gro, trajectory_file=args.xtc)
     mapping = Mapping(args.map, config)
 
     out_dir = pathlib.Path(args.out_dir)
     out_gro_file = out_dir.joinpath(config.output_name + ".gro")
     out_xtc_file = out_dir.joinpath(config.output_name + ".xtc")
 
-    cgframe = mapping.apply(frame)
-    cgframe.output(out_gro_file, format=config.output)
+    cg_frame = mapping.apply(frame)
+    cg_frame.save(out_gro_file)
 
     if args.xtc and (config.output_xtc or args.outputxtc):
         # Main loop - perform mapping and measurement on every frame in XTC
         def main_loop():
-            nonlocal cgframe
+            nonlocal cg_frame
             if not frame.next_frame():
                 return False
 
-            cgframe = mapping.apply(frame, cgframe=cgframe)
-            cgframe.write_xtc(out_xtc_file)
+            cg_frame = mapping.apply(frame, cg_frame=cg_frame)
+            cg_frame.save(out_xtc_file)
             return True
 
         numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
