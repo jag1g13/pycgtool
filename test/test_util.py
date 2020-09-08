@@ -283,11 +283,12 @@ class CompareTrajectoryTest(unittest.TestCase):
         ))
 
     def test_compare_trajectory_single_false(self):
-        self.assertFalse(util.compare_trajectories(
-            'test/data/sugar.gro',
-            'test/data/water.gro',
-            topology_file='test/data/sugar.gro'
-        ))
+        with self.assertRaises(ValueError):
+            util.compare_trajectories(
+                'test/data/sugar.gro',
+                'test/data/water.gro',
+                topology_file='test/data/sugar.gro'
+            )
 
     def test_compare_trajectory(self):
         self.assertTrue(util.compare_trajectories(
@@ -297,11 +298,12 @@ class CompareTrajectoryTest(unittest.TestCase):
         ))
 
     def test_compare_trajectory_false(self):
-        self.assertFalse(util.compare_trajectories(
-            'test/data/sugar.xtc',
-            'test/data/water.xtc',
-            topology_file='test/data/sugar.gro'
-        ))
+        with self.assertRaises(ValueError):
+            util.compare_trajectories(
+                'test/data/sugar.xtc',
+                'test/data/water.xtc',
+                topology_file='test/data/sugar.gro'
+            )
 
 
 if __name__ == '__main__':

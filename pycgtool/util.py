@@ -9,6 +9,7 @@ import itertools
 import logging
 import math
 import os
+import pathlib
 import random
 import re
 import typing
@@ -619,31 +620,34 @@ def any_starts_with(iterable, char):
         return any(map(recurse, iterable))
 
 
-def compare_trajectories(*trajectory_files: typing.Iterable[str],
-                         topology_file: str,
-                         coords_only: bool = False) -> bool:
+def compare_trajectories(*trajectory_files: typing.Iterable[typing.Union[str, pathlib.Path]],
+                         topology_file: typing.Union[str, pathlib.Path],
+                         rtol: float = 0.001) -> bool:
     """Compare multiple trajectory files for equality.
     
     :param trajectory_files: Paths of trajectory file to compare
     :param topology_file: Topology file path
     :param coords_only: Only compare coordinates from trajectory - e.g. not box size
     """
-    ref_traj = mdtraj.load(trajectory_files[0], top=topology_file)
+    ref_traj = mdtraj.load(str(trajectory_files[0]), top=str(topology_file))
 
     for traj_file in trajectory_files[1:]:
         try:
-            traj = mdtraj.load(traj_file, top=topology_file)
+            traj = mdtraj.load(str(traj_file), top=str(topology_file))
+        
+        except ValueError as exc:
+            raise ValueError('Topology does not match') from exc
 
-        except ValueError:
-            # Trajectory doesn't match topology
-            return False
-
-        if coords_only:
-            if traj.xyz != ref_traj.xyz:
-                return False
-
-        else:
-            if traj != ref_traj:
-                return False
+        # Conditions from Trajectory.__hash__
+        if traj.topology != ref_traj.topology:
+            raise ValueError('Topology does not match')
+        if len(traj) != len(ref_traj):
+            raise ValueError('Length does not match')
+        if not np.allclose(traj.xyz, ref_traj.xyz, rtol=rtol):
+            raise ValueError('Coordinates do not match')
+        if not np.allclose(traj.time, ref_traj.time, rtol=rtol):
+            raise ValueError('Time does not match')
+        if not np.allclose(traj.unitcell_vectors, ref_traj.unitcell_vectors, rtol=rtol):
+            raise ValueError('Unitcell does not match')
 
     return True
