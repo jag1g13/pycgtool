@@ -15,12 +15,32 @@ class DummyOptions:
 
 class MappingTest(unittest.TestCase):
     def test_mapping_create(self):
+        """Test that a mapping can be correctly read from a file."""
         mapping = Mapping('test/data/water.map', DummyOptions)
-        self.assertEqual(1, len(mapping))
+        self.assertEqual(2, len(mapping))  # SOL and HOH
+        self.assertTrue('SOL' in mapping)
+
+        sol_map = mapping['SOL']
+
+        self.assertEqual(1, len(sol_map))
+        self.assertEqual(3, len(sol_map[0].atoms))
+        self.assertEqual('OW', sol_map[0].atoms[0])
+        self.assertEqual('HW1', sol_map[0].atoms[1])
+        self.assertEqual('HW2', sol_map[0].atoms[2])
+
+    def test_mapping_rename(self):
+        """Test that an alternate mapping is created using MDTraj conventions."""
+        mapping = Mapping('test/data/water.map', DummyOptions)
+        self.assertEqual(2, len(mapping))  # SOL and HOH
         self.assertTrue('HOH' in mapping)
-        self.assertEqual(1, len(mapping['HOH']))
-        self.assertEqual(3, len(mapping['HOH'][0].atoms))
-        self.assertEqual('O', mapping['HOH'][0].atoms[0])
+
+        sol_map = mapping['HOH']
+
+        self.assertEqual(1, len(sol_map))
+        self.assertEqual(3, len(sol_map[0].atoms))
+        self.assertEqual('O', sol_map[0].atoms[0])
+        self.assertEqual('H1', sol_map[0].atoms[1])
+        self.assertEqual('H2', sol_map[0].atoms[2])
 
     def test_virtual_mapping_create(self):
         mapping = Mapping("test/data/martini3/naphthalene.map", DummyOptions)

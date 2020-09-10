@@ -5,6 +5,7 @@ The Mapping class contains a dictionary of lists of BeadMaps.
 Each list corresponds to a single molecule.
 """
 
+import copy
 import json
 import logging
 import numpy as np
@@ -12,6 +13,7 @@ import os
 import typing
 
 import mdtraj
+from mdtraj.formats.pdb import PDBTrajectoryFile
 
 from .frame import Frame
 from .parsers import CFG, ITP
@@ -174,6 +176,8 @@ class Mapping:
                 else:
                     bmap.weights = bmap.weights_dict[self._map_center]
 
+        self.rename_atoms()
+
     @staticmethod
     def _itp_section_into_mol_map(mol_map: typing.List[BeadMap], itp_mol_entry,
                                   manual_charges: bool) -> None:
@@ -249,6 +253,37 @@ class Mapping:
                 bead_class(name, i, type=typ, atoms=atoms, charge=charge))
 
         return mol_map, manual_charges
+
+    def rename_atoms(self) -> None:
+        """Rename residues and atoms in mapping according to MDTraj conventions.
+
+        This means that users can create mappings using the same names as are
+        in the input topology file and not have this broken by MDTraj renaming
+        the residues and atoms.
+        """
+        PDBTrajectoryFile._loadNameReplacementTables()
+
+        atom_replacements = {}
+        for mol_name in list(self._mappings.keys()):
+            mol_map = copy.deepcopy(self._mappings[mol_name])
+
+            try:
+                mol_name = PDBTrajectoryFile._residueNameReplacements[mol_name]
+                atom_replacements = PDBTrajectoryFile._atomNameReplacements[mol_name]
+
+            except KeyError:
+                continue
+
+            self._mappings[mol_name] = mol_map
+
+            for bead in mol_map:
+                bead.atoms = [
+                    atom_replacements[atom]
+                    if atom in atom_replacements
+                    else atom
+                    for atom in bead.atoms
+                ]
+                pass
 
     def __len__(self):
         return len(self._mappings)
