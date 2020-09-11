@@ -5,8 +5,8 @@ from pycgtool.parsers import CFG
 
 
 class TestParsersCFG(unittest.TestCase):
-    water_name = 'HOH'
-    watline = ("W", "P4", "O", "H1", "H2")
+    water_name = 'SOL'
+    watline = ("W", "P4", "OW", "HW1", "HW2")
 
     def test_cfg_with(self):
         with CFG("test/data/water.map"):
