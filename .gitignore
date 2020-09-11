@@ -3,6 +3,7 @@
 /*.itp*
 /*.xtc*
 /fftest.ff/
+/gromacs/
 *.offsets
 
 # Dependencies and runtime
