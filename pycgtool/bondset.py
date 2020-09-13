@@ -9,6 +9,7 @@ import math
 import logging
 import numpy as np
 
+import mdtraj
 
 try:
     from tqdm import tqdm
@@ -72,7 +73,7 @@ class Bond:
 
         :param temp: Temperature at which the simulation was performed
         """
-        if not self.values:
+        if len(self.values) == 0:
             raise ValueError("No bonds were measured between atoms {0}".format(self.atoms))
 
         values = np.array(self.values)
@@ -410,68 +411,39 @@ class BondSet:
 
     def apply(self, frame):
         """
-        Calculate bond lengths/angles for a given Frame and store into Bonds.
+        Calculate bond lengths/angles for all trajectory frames with a Frame instance and store into Bonds.
 
         :param frame: Frame from which to calculate values
         """
-        # TODO: Clean these bond calculation functions
-        def calc_length(atoms):
-            if frame.unitcell_lengths is None:
-                vec = atoms[0].coords - atoms[1].coords
-            else:
-                vec = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.unitcell_lengths)
+        calc = {
+            2: mdtraj.compute_distances,
+            3: mdtraj.compute_angles,
+            4: mdtraj.compute_dihedrals
+        }
 
-            return vector_len(vec)
+        for mol_name, mol_bonds in self._molecules.items():
+            for bond in mol_bonds:
+                bond_indices = []
 
-        def calc_angle(atoms):
-            if frame.unitcell_lengths is None:
-                veca = atoms[0].coords - atoms[1].coords
-                vecb = atoms[1].coords - atoms[2].coords
-            else:
-                veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.unitcell_lengths)
-                vecb = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.unitcell_lengths)
-            return math.pi - vector_angle(veca, vecb)
+                for prev_residue, residue, next_residue in sliding(
+                        frame._topology.residues):
+                    adj_res = {"-": prev_residue, "+": next_residue}
 
-        def calc_dihedral(atoms):
-            if frame.unitcell_lengths is None:
-                veca = atoms[0].coords - atoms[1].coords
-                vecb = atoms[1].coords - atoms[2].coords
-                vecc = atoms[2].coords - atoms[3].coords
-            else:
-                veca = dist_with_pbc(atoms[0].coords, atoms[1].coords, frame.unitcell_lengths)
-                vecb = dist_with_pbc(atoms[1].coords, atoms[2].coords, frame.unitcell_lengths)
-                vecc = dist_with_pbc(atoms[2].coords, atoms[3].coords, frame.unitcell_lengths)
+                    # Need access to adjacent residues, so can't just iterate over these directly
+                    if residue.name == mol_name:
+                        try:
+                            bond_indices.append([
+                                adj_res.get(atom_name[0], residue).atom(
+                                    atom_name.lstrip('-+')).index
+                                for atom_name in bond.atoms
+                            ])
 
-            c1 = vector_cross(veca, vecb)
-            c2 = vector_cross(vecb, vecc)
-            return vector_angle_signed(c1, c2, vecb)
+                        except AttributeError:
+                            # AttributeError is raised when residues on end of chain calc bond to next
+                            pass
 
-        calc = {2: calc_length,
-                3: calc_angle,
-                4: calc_dihedral}
-
-        for prev_res, res, next_res in sliding(frame.residues):
-            try:
-                mol_meas = self._molecules[res.name]
-            except KeyError:
-                # Bonds have not been specified for molecule - probably water - ignore this residue
-                continue
-
-            adj_res = {"-": prev_res,
-                       "+": next_res}
-
-            for bond in mol_meas:
-                try:
-                    # TODO tidy this
-                    atoms = [adj_res.get(name[0], res).atom(name.lstrip("-+")) for name in bond.atoms]
-                    val = calc[len(atoms)](atoms)
-                    bond.values.append(val)
-                except (NotImplementedError, AttributeError):
-                    # AttributeError is raised when residues on end of chain calc bond to next
-                    pass
-                except ZeroDivisionError as e:
-                    e.args = ("Zero division in calculation of <{0}>".format(" ".join(bond.atoms)),)
-                    raise e
+                vals = calc[len(bond.atoms)](frame._trajectory, bond_indices)
+                bond.values = vals.flatten()
 
     def boltzmann_invert(self, progress=False):
         """
