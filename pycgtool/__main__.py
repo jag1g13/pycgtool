@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import cProfile
 import logging
 import pathlib
 import sys
@@ -74,9 +75,6 @@ def full_run(args):
         else:
             cg_frame = frame
 
-        if args.bnd:
-            bonds.apply(cg_frame)
-
         return True
 
     numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
@@ -84,6 +82,8 @@ def full_run(args):
     Progress(numframes, dowhile=main_loop, quiet=args.quiet).run()
 
     if args.bnd:
+        bonds.apply(cg_frame)
+
         if args.map:
             logger.info("Beginning Boltzmann inversion")
             bonds.boltzmann_invert(progress=(not args.quiet))
@@ -122,7 +122,7 @@ def map_only(args):
     cg_frame = mapping.apply(frame)
     cg_frame.save(out_gro_file)
 
-    if args.xtc and (config.output_xtc or args.outputxtc):
+    if args.xtc and config.output_xtc:
         # Main loop - perform mapping and measurement on every frame in XTC
         def main_loop():
             nonlocal cg_frame
@@ -146,10 +146,6 @@ def parse_arguments(arg_list):
         description="Perform coarse-grain mapping of atomistic trajectory")
 
     # yapf: disable
-
-    parser.add_argument('--quiet', default=False, action='store_true',
-                        help="Hide progress bars")
-
     # Input files
     input_files = parser.add_argument_group("input files")
 
@@ -217,6 +213,15 @@ def parse_arguments(arg_list):
                               help="Form of angle potential")
     bond_options.add_argument("--dihedral-form", default="harmonic",
                               help="Form of dihedral potential")
+
+    # Run options
+    run_options = parser.add_argument_group("run options")
+
+    run_options.add_argument('--quiet', default=False, action='store_true',
+                             help="Hide progress bars")
+
+    run_options.add_argument('--profile', default=False, action='store_true',
+                             help="Profile performance")
     # yapf: enable
 
     return validate_arguments(parser, arg_list)
@@ -251,11 +256,20 @@ def main():
     print("Using GRO: {0}".format(args.gro))
     print("Using XTC: {0}".format(args.xtc))
 
-    if args.map_only:
-        map_only(args)
+    def run():
+        if args.map_only:
+            map_only(args)
+
+        else:
+            full_run(args)
+
+    if args.profile:
+        with cProfile.Profile() as pr:
+            run()
+        pr.dump_stats('gprof.out')
 
     else:
-        full_run(args)
+        run()
 
 
 if __name__ == "__main__":

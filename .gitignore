@@ -18,8 +18,8 @@
 /cover/
 /dist/
 /doc/build/
+/pycgtool.egg-info/
 /tmp/
-/nose2-junit.xml
 
 # IDE files
 .idea/
