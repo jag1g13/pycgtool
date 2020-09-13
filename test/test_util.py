@@ -9,7 +9,6 @@ import numpy as np
 from pycgtool import util
 from pycgtool.util import extend_graph_chain, transpose_and_sample
 from pycgtool.util import dir_up, backup_file, sliding
-from pycgtool.util import SimpleEnum
 from pycgtool.util import file_write_lines, cmp_whitespace_float
 from pycgtool.util import circular_mean, circular_variance
 
@@ -84,53 +83,6 @@ class UtilTest(unittest.TestCase):
         l_t_test = transpose_and_sample(l, n=1)
         self.assertEqual(1, len(l_t_test))
         self.assertIn(l_t_test[0], l_t)
-
-    def test_simple_enum(self):
-        enum = SimpleEnum.enum("enum", ["one", "two", "three"])
-        self.assertTrue(enum.one == enum.one)
-        self.assertTrue(enum.one.compare_value(enum.one))
-
-        self.assertFalse(enum.two == enum.three)
-        self.assertFalse(enum.two.compare_value(enum.three))
-
-        with self.assertRaises(AttributeError):
-            _ = enum.four
-        with self.assertRaises(AttributeError):
-            enum.one = 2
-
-        enum2 = SimpleEnum.enum("enum2", ["one", "two", "three"])
-        with self.assertRaises(TypeError):
-            assert enum2.one == enum.one
-
-        self.assertTrue("one" in enum)
-        self.assertFalse("four" in enum)
-
-    def test_simple_enum_values(self):
-        enum = SimpleEnum.enum_from_dict("enum", {"one": 111,
-                                                  "two": 111,
-                                                  "three": 333})
-        self.assertTrue(enum.one == enum.one)
-        self.assertTrue(enum.one.compare_value(enum.one))
-
-        self.assertFalse(enum.one == enum.two)
-        self.assertTrue(enum.one.compare_value(enum.two))
-
-        self.assertFalse(enum.two == enum.three)
-        self.assertFalse(enum.two.compare_value(enum.three))
-
-        with self.assertRaises(AttributeError):
-            _ = enum.four
-        with self.assertRaises(AttributeError):
-            enum.one = 2
-
-        enum2 = SimpleEnum.enum("enum2", ["one", "two", "three"])
-        with self.assertRaises(TypeError):
-            assert enum2.one == enum.one
-
-        self.assertTrue("one" in enum)
-        self.assertEqual(111, enum.one.value)
-
-        self.assertFalse("four" in enum)
 
     def test_cmp_whitespace_text(self):
         ref = ["Hello World"]

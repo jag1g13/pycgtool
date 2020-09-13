@@ -10,7 +10,6 @@ from .frame import Frame
 from .mapping import Mapping
 from .bondset import BondSet
 from .forcefield import ForceField
-from .functionalforms import FunctionalForms
 from .interface import Progress
 
 logger = logging.getLogger(__name__)
@@ -207,11 +206,11 @@ def parse_arguments(arg_list):
                               help="Generate angles from bonds")
     bond_options.add_argument("--generate-dihedrals", default=False, action="store_true",
                               help="Generate dihedrals from bonds")
-    bond_options.add_argument("--length-form", default="harmonic",
+    bond_options.add_argument("--length-form", default="Harmonic",
                               help="Form of bond potential")
-    bond_options.add_argument("--angle-form", default="cosharmonic",
+    bond_options.add_argument("--angle-form", default="CosHarmonic",
                               help="Form of angle potential")
-    bond_options.add_argument("--dihedral-form", default="harmonic",
+    bond_options.add_argument("--dihedral-form", default="Harmonic",
                               help="Form of dihedral potential")
 
     # Run options
@@ -249,9 +248,6 @@ def validate_arguments(parser, arg_list):
 
 def main():
     args = parse_arguments(sys.argv[1:])
-
-    # Populate functional forms dictionary - ignore returned value
-    _ = FunctionalForms()
 
     print("Using GRO: {0}".format(args.gro))
     print("Using XTC: {0}".format(args.xtc))

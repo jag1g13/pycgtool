@@ -17,7 +17,7 @@ except ImportError:
     from .util import tqdm_dummy as tqdm
 
 from .mapping import VirtualMap
-from .functionalforms import FunctionalForms
+from .functionalforms import get_functional_forms
 from .parsers.cfg import CFG
 from .util import (
     circular_mean,
@@ -127,26 +127,28 @@ class BondSet:
             self._default_fc = False
 
         # Setup default functional forms
-        functional_forms_map = FunctionalForms()
+        # functional_forms_map = FunctionalForms()
+        functional_forms_map = get_functional_forms()
+
         if self._default_fc:
             default_forms = ["MartiniDefaultLength", "MartiniDefaultAngle", "MartiniDefaultDihedral"]
         else:
             default_forms = ["Harmonic", "CosHarmonic", "Harmonic"]
         self._functional_forms = [None, None]
-        self._functional_forms.extend(map(lambda x: functional_forms_map[x], default_forms))
+        self._functional_forms.extend(map(lambda x: functional_forms_map[x].value, default_forms))
 
         try:
-            self._functional_forms[2] = functional_forms_map[options.length_form]
+            self._functional_forms[2] = functional_forms_map[options.length_form].value
         except AttributeError:
             pass
 
         try:
-            self._functional_forms[3] = functional_forms_map[options.angle_form]
+            self._functional_forms[3] = functional_forms_map[options.angle_form].value
         except AttributeError:
             pass
 
         try:
-            self._functional_forms[4] = functional_forms_map[options.dihedral_form]
+            self._functional_forms[4] = functional_forms_map[options.dihedral_form].value
         except AttributeError:
             pass
 
@@ -163,18 +165,11 @@ class BondSet:
 
                     # Construct instance of Boltzmann Inversion function and
                     # inject dependencies for mean and variance functions
-                    try:
-                        # TODO consider best way to override default func form
-                        # On per bond, or per type basis
-                        func_form = functional_forms_map[atomlist[-1]](
-                            mean_function,
-                            variance_function
-                        )
-                    except AttributeError:
-                        func_form = self._functional_forms[len(atomlist)](
-                            mean_function,
-                            variance_function
-                        )
+                    # TODO: Should we allow overriding functional forms per bond?
+                    func_form = self._functional_forms[len(atomlist)](
+                        mean_function,
+                        variance_function
+                    )
 
                     if {x for x in atomlist if atomlist.count(x) > 1}:
                         raise ValueError("Defined bond '{0}' contains duplicate atoms".format(atomlist))
