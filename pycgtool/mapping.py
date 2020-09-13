@@ -63,14 +63,6 @@ class BeadMap:
             self.num, self.name, self.type, self.mass, self.charge
         )
 
-    def add_missing_data(self, other):
-        assert self.name == other.name
-        assert self.num == other.num
-
-        for attr in ("type", "mass", "charge"):
-            if getattr(self, attr) is None:
-                setattr(self, attr, getattr(other, attr))
-
     def __iter__(self):
         """
         Iterate through the atom names from which the bead is made up.

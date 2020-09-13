@@ -22,15 +22,10 @@ from .parsers.cfg import CFG
 from .util import (
     circular_mean,
     circular_variance,
-    dist_with_pbc,
     extend_graph_chain,
     file_write_lines,
     sliding,
     transpose_and_sample,
-    vector_angle,
-    vector_angle_signed,
-    vector_cross,
-    vector_len
 )
 
 logger = logging.getLogger(__name__)

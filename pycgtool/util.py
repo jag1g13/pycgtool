@@ -54,21 +54,6 @@ except ImportError:
     numba = NumbaDummy()
 
 
-@numba.jit(numba.float32[3](numba.float32[3], numba.float32[3]))
-def vector_cross(u, v):
-    """
-    Return vector cross product of two 3d vectors as numpy array.
-
-    :param u: First 3d vector
-    :param v: Second 3d vector
-    :return: Cross product of two vectors as numpy.array
-    """
-    res = np.empty_like(u)
-    res[0] = u[1] * v[2] - u[2] * v[1]
-    res[1] = u[2] * v[0] - u[0] * v[2]
-    res[2] = u[0] * v[1] - u[1] * v[0]
-    return res
-
 def circular_mean(values):
     """
     Return average of angles on a cirle
@@ -104,88 +89,6 @@ def circular_variance(values):
     diff = values - mean
     diff -= np.rint(diff / two_pi ) * two_pi
     return np.nanmean(np.square(diff))
-
-
-@numba.jit(numba.float32(numba.float32[3], numba.float32[3]))
-def vector_dot(u, v):
-    """
-    Return vector dot product of two 3d vectors.
-
-    :param u: First 3d vector
-    :param v: Second 3d vector
-    :return: Dot product of two vectors
-    """
-    return u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
-
-
-@numba.jit(numba.float32(numba.float32[3]))
-def vector_len(v):
-    return math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
-
-
-@numba.jit(numba.float32(numba.float32[3], numba.float32[3]))
-def vector_angle(a, b):
-    """
-    Calculate the angle between two vectors.
-
-    :param a: First vector
-    :param b: Second vector
-    :return: Angle in radians
-    """
-    mag = vector_len(a) * vector_len(b)
-    if mag == 0:
-        raise ZeroDivisionError("One or more bonds in angle calculation has length zero")
-    dot = vector_dot(a, b) / mag
-    # Previously checked to within 1%, but this prevented numba optimisation
-    ang = math.acos(max(-1, min(1, dot)))
-    return ang
-
-
-@numba.jit
-def vector_angle_signed(a, b, ref=np.array([0., 0., 1.])):
-    """
-    Calculate the signed angle between two vectors.
-
-    :param a: First vector
-    :param b: Second vector
-    :param ref: Optional reference vector, will use global z-axis if not provided
-    :return: Signed angle in radians
-    """
-    ang = vector_angle(a, b)
-    signum = math.copysign(1, vector_dot(vector_cross(a, b), ref))
-    return ang * signum
-
-
-def tuple_equivalent(tuple1, tuple2):
-    """
-    Check if two node tuples are equivalent. Assumes undirected edges.
-
-    :param tuple1: First tuple to compare
-    :param tuple2: Second tuple to compare
-    :return: True if tuples are equivalent, else False
-    """
-    if tuple1 == tuple2:
-        return True
-    elif tuple1[::-1] == tuple2:
-        return True
-    else:
-        return False
-
-
-@numba.jit
-def dist_with_pbc(pos1, pos2, box):
-    """
-    Calculate the distance between two points accounting for periodicity.
-
-    :param pos1: 3d vector position 1
-    :param pos2: 3d vector position 2
-    :param box: Cubic box vectors
-    :return: Vector between two points
-    """
-    d = pos2 - pos1
-    if box[0] * box[1] * box[2]:
-        d -= box * np.rint(d / box)
-    return d
 
 
 def extend_graph_chain(extend, pairs):
@@ -228,25 +131,6 @@ def extend_graph_chain(extend, pairs):
             chain = chain[::-1]
 
     return ret
-
-
-def stat_moments(vals, ignore_nan=True):
-    """
-    Return statistical (population) moments of data provided.
-
-    :param vals: The data for which to calculate moments
-    :param ignore_nan: Whether to exclude np.nan and infinity from calculation
-    :return: Tuple of moments - population mean and variance, both zero if input is empty list
-    """
-    if ignore_nan:
-        vals_tmp = [val for val in vals if np.isfinite(val)]
-    else:
-        vals_tmp = vals
-
-    try:
-        return np.mean(vals_tmp), np.var(vals_tmp)
-    except FloatingPointError:
-        return 0., 0.
 
 
 def transpose_and_sample(sequence, n=None):

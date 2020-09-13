@@ -8,33 +8,14 @@ import numpy as np
 import numpy.testing
 
 from pycgtool import util
-from pycgtool.util import tuple_equivalent, extend_graph_chain, stat_moments, transpose_and_sample
-from pycgtool.util import dir_up, backup_file, sliding, r_squared, dist_with_pbc
+from pycgtool.util import extend_graph_chain, transpose_and_sample
+from pycgtool.util import dir_up, backup_file, sliding, r_squared
 from pycgtool.util import SimpleEnum, FixedFormatUnpacker
 from pycgtool.util import file_write_lines, cmp_whitespace_float
 from pycgtool.util import circular_mean, circular_variance
 
 
 class UtilTest(unittest.TestCase):
-    def test_tuple_equivalent(self):
-        t1 = (0, 1, 2)
-        t2 = (0, 1, 2)
-        self.assertTrue(tuple_equivalent(t1, t2))
-        t2 = (2, 1, 0)
-        self.assertTrue(tuple_equivalent(t1, t2))
-        t2 = (2, 1, 3)
-        self.assertFalse(tuple_equivalent(t1, t2))
-
-    def test_dist_with_pbc(self):
-        pos_a = np.array([1., 1., 1.])
-        pos_b = np.array([9., 9., 9.])
-        numpy.testing.assert_equal(np.array([8., 8., 8.]),
-                                   dist_with_pbc(pos_a, pos_b, np.array([0., 0., 0.])))
-        numpy.testing.assert_equal(np.array([8., 8., 8.]),
-                                   dist_with_pbc(pos_a, pos_b, np.array([20., 20., 20.])))
-        numpy.testing.assert_equal(np.array([-2., -2., -2.]),
-                                   dist_with_pbc(pos_a, pos_b, np.array([10., 10., 10.])))
-
     def test_triplets_from_pairs(self):
         pairs = [(0, 1), (1, 2), (2, 3)]
         result = [(0, 1, 2), (1, 2, 3)]
@@ -57,12 +38,6 @@ class UtilTest(unittest.TestCase):
         triplets = extend_graph_chain(pairs, pairs)
         result = [(0, 1, 2, 3), (1, 0, 3, 2), (1, 2, 3, 0), (2, 1, 0, 3)]
         self.assertEqual(result, sorted(extend_graph_chain(triplets, pairs)))
-
-    def test_stat_moments(self):
-        t1 = [3, 3, 3, 3, 3]
-        t2 = [1, 2, 3, 4, 5]
-        np.testing.assert_allclose(np.array([3, 0]), stat_moments(t1))
-        np.testing.assert_allclose(np.array([3, 2]), stat_moments(t2))
 
     def test_dir_up(self):
         path = os.path.realpath(__file__)
