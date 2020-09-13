@@ -5,12 +5,11 @@ import tempfile
 import shutil
 
 import numpy as np
-import numpy.testing
 
 from pycgtool import util
 from pycgtool.util import extend_graph_chain, transpose_and_sample
-from pycgtool.util import dir_up, backup_file, sliding, r_squared
-from pycgtool.util import SimpleEnum, FixedFormatUnpacker
+from pycgtool.util import dir_up, backup_file, sliding
+from pycgtool.util import SimpleEnum
 from pycgtool.util import file_write_lines, cmp_whitespace_float
 from pycgtool.util import circular_mean, circular_variance
 
@@ -73,15 +72,6 @@ class UtilTest(unittest.TestCase):
         for res, pair in zip(res, sliding(l)):
             self.assertEqual(res, pair)
 
-    def test_r_squared(self):
-        ref = [i for i in range(5)]
-        fit = ref
-        self.assertEqual(1, r_squared(ref, fit))
-        fit = [2 for _ in range(5)]
-        self.assertEqual(0, r_squared(ref, fit))
-        fit = [i for i in range(1, 6)]
-        self.assertEqual(0.5, r_squared(ref, fit))
-
     def test_transpose_and_sample_no_sample(self):
         l = [(1, 2), (3, 4), (5, 6)]
         l_t = [(1, 3, 5), (2, 4, 6)]
@@ -141,42 +131,6 @@ class UtilTest(unittest.TestCase):
         self.assertEqual(111, enum.one.value)
 
         self.assertFalse("four" in enum)
-
-    def test_fixed_format_unpacker_c(self):
-        unpacker = FixedFormatUnpacker("%-4d%5s%4.1f")
-        toks = unpacker.unpack("1234hello12.3")
-        self.assertEqual(3, len(toks))
-        self.assertEqual(1234, toks[0])
-        self.assertEqual("hello", toks[1])
-        self.assertAlmostEqual(12.3, toks[2])
-
-    def test_fixed_format_unpacker_fortran(self):
-        unpacker = FixedFormatUnpacker("I4,A5,F4.1",
-                                       FixedFormatUnpacker.FormatStyle.Fortran)
-        toks = unpacker.unpack("1234hello12.3")
-        self.assertEqual(3, len(toks))
-        self.assertEqual(1234, toks[0])
-        self.assertEqual("hello", toks[1])
-        self.assertAlmostEqual(12.3, toks[2])
-
-    def test_fixed_format_unpacker_fortran_space(self):
-        unpacker = FixedFormatUnpacker("I4,X3,A5,X2,F4.1",
-                                       FixedFormatUnpacker.FormatStyle.Fortran)
-        toks = unpacker.unpack("1234 x hello x12.3")
-        self.assertEqual(3, len(toks))
-        self.assertEqual(1234, toks[0])
-        self.assertEqual("hello", toks[1])
-        self.assertAlmostEqual(12.3, toks[2])
-
-    def test_fixed_format_unpacker_fortran_repeat(self):
-        unpacker = FixedFormatUnpacker("2I2,X3,A5,2X,F4.1",
-                                       FixedFormatUnpacker.FormatStyle.Fortran)
-        toks = unpacker.unpack("1234 x hello x12.3")
-        self.assertEqual(4, len(toks))
-        self.assertEqual(12, toks[0])
-        self.assertEqual(34, toks[1])
-        self.assertEqual("hello", toks[2])
-        self.assertAlmostEqual(12.3, toks[3])
 
     def test_cmp_whitespace_text(self):
         ref = ["Hello World"]

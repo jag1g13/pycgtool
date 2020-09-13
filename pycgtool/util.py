@@ -2,16 +2,13 @@
 This module contains some general purpose utility functions used in PyCGTOOL.
 """
 
-from collections import namedtuple
 import filecmp
 import functools
 import itertools
 import logging
-import math
 import os
 import pathlib
 import random
-import re
 import typing
 
 import mdtraj
@@ -201,24 +198,6 @@ def sliding(vals):
     yield (prev, current, None)
 
 
-def r_squared(ref, fit):
-    """
-    Calculate residual R squared of fitted data against reference data by y values.
-    :param ref: Reference y values
-    :param fit: Fitted y values
-    :return: R squared
-    """
-    y_mean = sum(ref) / len(ref)
-    ss_res, ss_tot = 0, 0
-    for refpy, fitpy in zip(ref, fit):
-        ss_res += (fitpy - refpy)**2
-        ss_tot += (refpy - y_mean)**2
-    try:
-        return 1 - (ss_res / ss_tot)
-    except ZeroDivisionError:
-        return 0
-
-
 def cmp_file_whitespace_float(ref_filename, test_filename, rtol=0.01, verbose=False):
     """
     Compare two files ignoring spacing on a line and using a tolerance on floats
@@ -297,24 +276,6 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
             print("Test: {0}".format(test_line))
 
     return len(diff_lines) == 0
-
-
-def once_wrapper(func):
-    """
-    Wrap a function such that it runs only once, subsequent calls are ignored.
-
-    :param func: Function to wrap
-    :return: Wrapped function which will only run once.
-    """
-    called = False
-
-    def wrap(*args, **kwargs):
-        nonlocal called
-        if not called:
-            called = True
-            return func(*args, **kwargs)
-
-    return wrap
 
 
 class SimpleEnum(object):
@@ -399,71 +360,6 @@ class SimpleEnum(object):
     @classmethod
     def enum_from_dict(cls, name, key_val_dict):
         return cls.enum(name, key_val_dict.keys(), key_val_dict.values())
-
-
-class FixedFormatUnpacker(object):
-    """
-    Unpack strings printed in fixed format.
-    """
-    FormatItem = namedtuple("FormatItem", ["type", "width"])
-    FormatStyle = SimpleEnum.enum("FormatStyle", ["C", "Fortran"])
-
-    def __init__(self, format_string, format_style=FormatStyle.C):
-        """
-        Does not support format strings containing spaces
-        """
-        self._format_string = format_string
-        format_parsers = {self.FormatStyle.C:       self._parse_c_format,
-                          self.FormatStyle.Fortran: self._parse_fortran_format}
-        clean_format_string = self._clean_format_string(format_string)
-        self._format_items = format_parsers[format_style](clean_format_string)
-
-    @staticmethod
-    def _clean_format_string(format_string):
-        cleaned = format_string.lower()
-        cleaned = cleaned.strip("-+#/")
-        return cleaned
-
-    @classmethod
-    def _parse_c_format(cls, format_string):
-        """
-        Parse a C format specifier string.
-
-        :param format_string: C format string
-        :return: List of FormatItems
-        """
-        types = {"d": int, "s": str, "f": float}
-        p = re.compile(r'%-?(?P<width>[0-9]+)[.0-9]*(?P<type>[dsfDSF])')
-        items = [cls.FormatItem(types[match.group("type")], int(match.group("width"))) for match in p.finditer(format_string)]
-        return items
-
-    @classmethod
-    def _parse_fortran_format(cls, format_string):
-        """
-        Parse a Fortran format specifier string.
-
-        :param format_string: Fortran format string
-        :return: List of FormatItems
-        """
-        items = []
-        types = {"i": int, "a": str, "f": float, "x": None}
-        p = re.compile(r'\s*(?P<repeat>[0-9]*)(?P<type>[ixafIXAF])(?P<width>[0-9]*)\s*')
-        for match in p.finditer(format_string):
-            repeat = int(match.group("repeat")) if match.group("repeat") else 1
-            width = int(match.group("width")) if match.group("width") else 1
-            for _ in range(repeat):
-                items.append(cls.FormatItem(types[match.group("type")], width))
-        return items
-
-    def unpack(self, string):
-        items = []
-        start = 0
-        for format_item in self._format_items:
-            string_part = string[start:start+format_item.width]
-            start += format_item.width
-            if format_item.type is not None:
-                items.append(format_item.type(string_part.strip()))
-        return items
 
 
 def tqdm_dummy(iterable, **kwargs):
