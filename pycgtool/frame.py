@@ -61,8 +61,10 @@ class Frame:
             self._topology = mdtraj.Topology()
 
     def _load_trajectory_frame(self, frame_number) -> None:
+        # Improve performance by not double indexing repeatedly
+        xyz_frame = self._trajectory.xyz[frame_number]
         for atom in self._topology.atoms:
-            atom.coords = self._trajectory.xyz[frame_number, atom.index]
+            atom.coords = xyz_frame[atom.index]
 
         # TODO handle non-cubic boxes
         try:
@@ -139,9 +141,9 @@ class Frame:
         xyz = np.array([atom.coords for atom in self._topology.atoms])
         new_frame = mdtraj.Trajectory(xyz,
                                       topology=self._topology,
-                                      time=self.time,
-                                      unitcell_lengths=self.unitcell_lengths,
-                                      unitcell_angles=self.unitcell_angles)
+                                      time=[self.time],
+                                      unitcell_lengths=[self.unitcell_lengths],
+                                      unitcell_angles=[self.unitcell_angles])
         
         if hasattr(self, '_trajectory'):
             self._trajectory += new_frame
