@@ -19,13 +19,6 @@ from .frame import Frame
 from .parsers import CFG, ITP
 from .util import dir_up
 
-try:
-    import numba
-
-except ImportError:
-    from .util import NumbaDummy
-    numba = NumbaDummy()
-
 logger = logging.getLogger(__name__)
 
 
@@ -96,13 +89,6 @@ class VirtualMap(BeadMap):
 
         self.gromacs_type_id_dict = {"geom": 1, "mass": 2}
         self.gromacs_type_id = self.gromacs_type_id_dict["geom"]
-
-
-class EmptyBeadError(Exception):
-    """
-    Exception used to indicate that none of the required atoms are present.
-    """
-    pass
 
 
 class Mapping:
@@ -372,7 +358,6 @@ class Mapping:
         """
         if cg_frame is None:
             # Frame needs initialising
-            # cgframe = self._cg_frame_setup(residues_to_map)
             cg_frame = self._cg_frame_setup(frame.residues)
 
         cg_frame.frame_number = frame.frame_number
@@ -380,7 +365,9 @@ class Mapping:
         cg_frame.unitcell_lengths = frame.unitcell_lengths
         cg_frame.unitcell_angles = frame.unitcell_angles
 
-        coord_func = calc_coords_weight if np.all(frame.unitcell_lengths) else calc_coords_weight_nobox
+        unitcell_lengths = cg_frame.unitcell_lengths
+        if not np.all(unitcell_lengths):
+            unitcell_lengths = None
 
         residues_to_map = (res for res in frame.residues if res.name in self._mappings)
         for aa_res, cg_res in zip(residues_to_map, cg_frame.residues):
@@ -393,51 +380,35 @@ class Mapping:
                 ref_coords = aa_res.atom(bmap[0]).coords
                 if len(bmap) == 1:
                     bead.coords = ref_coords
-                    continue
 
-                coords = np.asarray([aa_res.atom(atom).coords for atom in bmap], dtype=np.float32)
-                bead.coords = coord_func(ref_coords, coords, cg_frame.unitcell_lengths, bmap.weights)
+                else:
+                    coords = np.array([aa_res.atom(atom).coords for atom in bmap], dtype=np.float32)
+                    bead.coords = calc_coords_weight(ref_coords, coords, bmap.weights, unitcell_lengths)
 
             for bead, bmap in zip(cg_res.atoms, mol_map):
                 if isinstance(bmap, VirtualMap):
-                    coords = np.asarray([cg_res.atom(atom).coords for atom in bmap], dtype=np.float32)
-                    bead.coords = coord_func(ref_coords, coords, cg_frame.unitcell_lengths, bmap.weights)
+                    coords = np.array([cg_res.atom(atom).coords for atom in bmap], dtype=np.float32)
+                    bead.coords = calc_coords_weight(ref_coords, coords, bmap.weights, unitcell_lengths)
 
         cg_frame.add_frame_to_trajectory()
 
         return cg_frame
 
 
-@numba.jit
-def calc_coords_weight(ref_coords, coords, box, weights):
-    """
-    Calculate the coordinates of a single CG bead from weighted component atom coordinates.
+# TODO: Use MDTraj instead
+def calc_coords_weight(ref_coords, coords, weights, box=None):
+    """Calculate the coordinates of a single CG bead from weighted component atom coordinates.
 
     :param ref_coords: Coordinates of reference atom, usually first atom in bead
     :param coords: Array of coordinates of component atoms
-    :param box: PBC box vectors
     :param weights: Array of atom weights, must sum to 1
+    :param box: PBC box vectors
     :return: Coordinates of CG bead
     """
     vectors = coords - ref_coords
-    vectors -= box * np.rint(vectors / box)
-    result = np.sum(weights * vectors, axis=0)
-    result += ref_coords
-    return result
+    if box is not None:
+        vectors -= box * np.rint(vectors / box)
 
-
-@numba.jit
-def calc_coords_weight_nobox(ref_coords, coords, box, weights):
-    """
-    Calculate the coordinates of a single CG bead from weighted component atom coordinates.
-
-    :param ref_coords: Coordinates of reference atom, usually first atom in bead
-    :param coords: Array of coordinates of component atoms
-    :param box: PBC box vectors
-    :param weights: Array of atom weights, must sum to 1
-    :return: Coordinates of CG bead
-    """
-    vectors = coords - ref_coords
     result = np.sum(weights * vectors, axis=0)
     result += ref_coords
     return result

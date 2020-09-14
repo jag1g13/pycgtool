@@ -17,40 +17,6 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-class NumbaDummy:
-    """
-    Dummy Numba module
-    """
-    def __getattr__(self, item):
-        if item == "jit":
-            return NumbaDummy.jit
-        return self
-
-    def __getitem__(self, item):
-        return self
-
-    def __call__(self, *args, **kwargs):
-        return None
-
-    @staticmethod
-    def jit(*args, **kwargs):
-        """
-        Dummy version of numba.jit decorator, does nothing
-        """
-        if len(args) == 1 and callable(args[0]):
-            return args[0]
-        else:
-            def wrap(func):
-                return func
-            return wrap
-
-try:
-    import numba
-except ImportError:
-    # If numba isn't installed, create dummy so we don't get NameErrors
-    numba = NumbaDummy()
-
-
 def circular_mean(values):
     """
     Return average of angles on a cirle

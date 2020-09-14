@@ -32,17 +32,13 @@ PyCGTOOL requires:
 
 - Python 3.6 or greater
 - Numpy (http://www.numpy.org/)
-- simpletraj (https://github.com/arose/simpletraj)
+- MDTraj (http://mdtraj.org/1.7.2/)
+- Scipy (https://www.scipy.org/)
+- Cython (http://cython.org/)
 
 Optional:
 
-- MDTraj for pseudo-CG XTC output (http://mdtraj.org/1.7.2/) with own dependencies:
-
-  - Scipy (https://www.scipy.org/)
-  - Cython (http://cython.org/)
-
 - Python testing framework (e.g. Nose2, py.test)
-- Numba for increased performance (http://numba.pydata.org/)
 - Sphinx to generate documentation yourself (http://www.sphinx-doc.org/en/stable/)
 
 Basic Usage
