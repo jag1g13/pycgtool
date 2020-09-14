@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import cProfile
 import logging
 import pathlib
 import sys
@@ -9,7 +10,6 @@ from .frame import Frame
 from .mapping import Mapping
 from .bondset import BondSet
 from .forcefield import ForceField
-from .functionalforms import FunctionalForms
 from .interface import Progress
 
 logger = logging.getLogger(__name__)
@@ -27,9 +27,8 @@ def full_run(args):
     # Temporary shim while config options are refactored
     config = args
 
-    frame = Frame(gro=args.gro,
-                  xtc=args.xtc,
-                  itp=args.itp,
+    frame = Frame(topology_file=args.gro,
+                  trajectory_file=args.xtc,
                   frame_start=args.begin)
 
     out_dir = pathlib.Path(args.out_dir)
@@ -47,36 +46,33 @@ def full_run(args):
     if args.map:
         logger.info("Mapping will be performed")
 
-        mapping = Mapping(args.map, config, itp=args.itp)
-        cgframe = mapping.apply(frame)
-        cgframe.output(out_gro_file, format=config.output)
+        mapping = Mapping(args.map, config, itp_filename=args.itp)
+        cg_frame = mapping.apply(frame)
+        cg_frame.save(out_gro_file)
 
     else:
         logger.info("Mapping will not be performed")
-        cgframe = frame
+        cg_frame = frame
 
     # Only measure bonds from GRO frame if no XTC is provided
     # Allows the user to get a topology from a single snapshot
     if args.bnd and args.xtc is None:
-        bonds.apply(cgframe)
+        bonds.apply(cg_frame)
 
     # Main loop - perform mapping and measurement on every frame in XTC
     def main_loop():
-        nonlocal cgframe
+        nonlocal cg_frame
         if not frame.next_frame():
             return False
 
         if args.map:
-            cgframe = mapping.apply(frame, cgframe=cgframe)
+            cgframe = mapping.apply(frame, cg_frame=cg_frame)
 
             if config.output_xtc:
-                cgframe.write_xtc(out_xtc_file)
+                cgframe.save(out_xtc_file)
 
         else:
-            cgframe = frame
-
-        if args.bnd:
-            bonds.apply(cgframe)
+            cg_frame = frame
 
         return True
 
@@ -85,6 +81,8 @@ def full_run(args):
     Progress(numframes, dowhile=main_loop, quiet=args.quiet).run()
 
     if args.bnd:
+        bonds.apply(cg_frame)
+
         if args.map:
             logger.info("Beginning Boltzmann inversion")
             bonds.boltzmann_invert(progress=(not args.quiet))
@@ -113,25 +111,25 @@ def map_only(args):
     # Temporary shim while config options are refactored
     config = args
 
-    frame = Frame(gro=args.gro, xtc=args.xtc)
+    frame = Frame(topology_file=args.gro, trajectory_file=args.xtc)
     mapping = Mapping(args.map, config)
 
     out_dir = pathlib.Path(args.out_dir)
     out_gro_file = out_dir.joinpath(config.output_name + ".gro")
     out_xtc_file = out_dir.joinpath(config.output_name + ".xtc")
 
-    cgframe = mapping.apply(frame)
-    cgframe.output(out_gro_file, format=config.output)
+    cg_frame = mapping.apply(frame)
+    cg_frame.save(out_gro_file)
 
-    if args.xtc and (config.output_xtc or args.outputxtc):
+    if args.xtc and config.output_xtc:
         # Main loop - perform mapping and measurement on every frame in XTC
         def main_loop():
-            nonlocal cgframe
+            nonlocal cg_frame
             if not frame.next_frame():
                 return False
 
-            cgframe = mapping.apply(frame, cgframe=cgframe)
-            cgframe.write_xtc(out_xtc_file)
+            cg_frame = mapping.apply(frame, cg_frame=cg_frame)
+            cg_frame.save(out_xtc_file)
             return True
 
         numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
@@ -147,10 +145,6 @@ def parse_arguments(arg_list):
         description="Perform coarse-grain mapping of atomistic trajectory")
 
     # yapf: disable
-
-    parser.add_argument('--quiet', default=False, action='store_true',
-                        help="Hide progress bars")
-
     # Input files
     input_files = parser.add_argument_group("input files")
 
@@ -212,12 +206,21 @@ def parse_arguments(arg_list):
                               help="Generate angles from bonds")
     bond_options.add_argument("--generate-dihedrals", default=False, action="store_true",
                               help="Generate dihedrals from bonds")
-    bond_options.add_argument("--length-form", default="harmonic",
+    bond_options.add_argument("--length-form", default="Harmonic",
                               help="Form of bond potential")
-    bond_options.add_argument("--angle-form", default="cosharmonic",
+    bond_options.add_argument("--angle-form", default="CosHarmonic",
                               help="Form of angle potential")
-    bond_options.add_argument("--dihedral-form", default="harmonic",
+    bond_options.add_argument("--dihedral-form", default="Harmonic",
                               help="Form of dihedral potential")
+
+    # Run options
+    run_options = parser.add_argument_group("run options")
+
+    run_options.add_argument('--quiet', default=False, action='store_true',
+                             help="Hide progress bars")
+
+    run_options.add_argument('--profile', default=False, action='store_true',
+                             help="Profile performance")
     # yapf: enable
 
     return validate_arguments(parser, arg_list)
@@ -246,17 +249,23 @@ def validate_arguments(parser, arg_list):
 def main():
     args = parse_arguments(sys.argv[1:])
 
-    # Populate functional forms dictionary - ignore returned value
-    _ = FunctionalForms()
-
     print("Using GRO: {0}".format(args.gro))
     print("Using XTC: {0}".format(args.xtc))
 
-    if args.map_only:
-        map_only(args)
+    def run():
+        if args.map_only:
+            map_only(args)
+
+        else:
+            full_run(args)
+
+    if args.profile:
+        with cProfile.Profile() as pr:
+            run()
+        pr.dump_stats('gprof.out')
 
     else:
-        full_run(args)
+        run()
 
 
 if __name__ == "__main__":

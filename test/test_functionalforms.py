@@ -2,15 +2,17 @@ import unittest
 
 import numpy as np
 
-from pycgtool.functionalforms import FunctionalForms, FunctionalForm
+from pycgtool.functionalforms import FunctionalForm, get_functional_forms
 from pycgtool.util import circular_mean, circular_variance
 
 
 class FunctionalFormTest(unittest.TestCase):
     def test_functional_form(self):
-        funcs = FunctionalForms()
+        funcs = get_functional_forms()
+
         harmonic_form = funcs.Harmonic
         self.assertIsNotNone(harmonic_form)
+
         cos_harmonic_form = funcs.CosHarmonic
         self.assertIsNotNone(cos_harmonic_form)
 
@@ -26,25 +28,26 @@ class FunctionalFormTest(unittest.TestCase):
             def fconst(values, temp):
                 return "TestResultFconst"
 
-        funcs = FunctionalForms()
-        self.assertIn("TestFunc", funcs)
-        self.assertEqual("TestResultEqm", funcs.TestFunc.eqm(None, None))
-        self.assertEqual("TestResultFconst", funcs.TestFunc.fconst(None, None))
+        funcs = get_functional_forms()
+        test_func = funcs['TestFunc'].value
+
+        self.assertEqual("TestResultEqm", test_func.eqm(None, None))
+        self.assertEqual("TestResultFconst", test_func.fconst(None, None))
 
     def test_inject_mean_function(self):
         """
         Test injecting mean function into Boltzmann Inversion
         """
-        funcs = FunctionalForms()
+        funcs = get_functional_forms()
         vals = [0.25 * np.pi, 1.75 * np.pi]
 
-        func = funcs["Harmonic"]()
+        func = funcs["Harmonic"].value()
 
         np.testing.assert_allclose(
             func.eqm(vals, None), np.pi
         )
 
-        func = funcs["Harmonic"](
+        func = funcs["Harmonic"].value(
             mean_func=circular_mean
         )
 
@@ -57,9 +60,9 @@ class FunctionalFormTest(unittest.TestCase):
         """
         Test injecting variance function into Boltzmann Inversion
         """
-        funcs = FunctionalForms()
+        funcs = get_functional_forms()
 
-        func = funcs["Harmonic"](
+        func = funcs["Harmonic"].value(
             variance_func=circular_variance
         )
 

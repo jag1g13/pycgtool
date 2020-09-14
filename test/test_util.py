@@ -5,35 +5,15 @@ import tempfile
 import shutil
 
 import numpy as np
-import numpy.testing
 
-from pycgtool.util import tuple_equivalent, extend_graph_chain, stat_moments, transpose_and_sample
-from pycgtool.util import dir_up, backup_file, sliding, r_squared, dist_with_pbc
-from pycgtool.util import SimpleEnum, FixedFormatUnpacker
+from pycgtool import util
+from pycgtool.util import extend_graph_chain, transpose_and_sample
+from pycgtool.util import dir_up, backup_file, sliding
 from pycgtool.util import file_write_lines, cmp_whitespace_float
 from pycgtool.util import circular_mean, circular_variance
 
 
 class UtilTest(unittest.TestCase):
-    def test_tuple_equivalent(self):
-        t1 = (0, 1, 2)
-        t2 = (0, 1, 2)
-        self.assertTrue(tuple_equivalent(t1, t2))
-        t2 = (2, 1, 0)
-        self.assertTrue(tuple_equivalent(t1, t2))
-        t2 = (2, 1, 3)
-        self.assertFalse(tuple_equivalent(t1, t2))
-
-    def test_dist_with_pbc(self):
-        pos_a = np.array([1., 1., 1.])
-        pos_b = np.array([9., 9., 9.])
-        numpy.testing.assert_equal(np.array([8., 8., 8.]),
-                                   dist_with_pbc(pos_a, pos_b, np.array([0., 0., 0.])))
-        numpy.testing.assert_equal(np.array([8., 8., 8.]),
-                                   dist_with_pbc(pos_a, pos_b, np.array([20., 20., 20.])))
-        numpy.testing.assert_equal(np.array([-2., -2., -2.]),
-                                   dist_with_pbc(pos_a, pos_b, np.array([10., 10., 10.])))
-
     def test_triplets_from_pairs(self):
         pairs = [(0, 1), (1, 2), (2, 3)]
         result = [(0, 1, 2), (1, 2, 3)]
@@ -56,12 +36,6 @@ class UtilTest(unittest.TestCase):
         triplets = extend_graph_chain(pairs, pairs)
         result = [(0, 1, 2, 3), (1, 0, 3, 2), (1, 2, 3, 0), (2, 1, 0, 3)]
         self.assertEqual(result, sorted(extend_graph_chain(triplets, pairs)))
-
-    def test_stat_moments(self):
-        t1 = [3, 3, 3, 3, 3]
-        t2 = [1, 2, 3, 4, 5]
-        np.testing.assert_allclose(np.array([3, 0]), stat_moments(t1))
-        np.testing.assert_allclose(np.array([3, 2]), stat_moments(t2))
 
     def test_dir_up(self):
         path = os.path.realpath(__file__)
@@ -97,15 +71,6 @@ class UtilTest(unittest.TestCase):
         for res, pair in zip(res, sliding(l)):
             self.assertEqual(res, pair)
 
-    def test_r_squared(self):
-        ref = [i for i in range(5)]
-        fit = ref
-        self.assertEqual(1, r_squared(ref, fit))
-        fit = [2 for _ in range(5)]
-        self.assertEqual(0, r_squared(ref, fit))
-        fit = [i for i in range(1, 6)]
-        self.assertEqual(0.5, r_squared(ref, fit))
-
     def test_transpose_and_sample_no_sample(self):
         l = [(1, 2), (3, 4), (5, 6)]
         l_t = [(1, 3, 5), (2, 4, 6)]
@@ -118,89 +83,6 @@ class UtilTest(unittest.TestCase):
         l_t_test = transpose_and_sample(l, n=1)
         self.assertEqual(1, len(l_t_test))
         self.assertIn(l_t_test[0], l_t)
-
-    def test_simple_enum(self):
-        enum = SimpleEnum.enum("enum", ["one", "two", "three"])
-        self.assertTrue(enum.one == enum.one)
-        self.assertTrue(enum.one.compare_value(enum.one))
-
-        self.assertFalse(enum.two == enum.three)
-        self.assertFalse(enum.two.compare_value(enum.three))
-
-        with self.assertRaises(AttributeError):
-            _ = enum.four
-        with self.assertRaises(AttributeError):
-            enum.one = 2
-
-        enum2 = SimpleEnum.enum("enum2", ["one", "two", "three"])
-        with self.assertRaises(TypeError):
-            assert enum2.one == enum.one
-
-        self.assertTrue("one" in enum)
-        self.assertFalse("four" in enum)
-
-    def test_simple_enum_values(self):
-        enum = SimpleEnum.enum_from_dict("enum", {"one": 111,
-                                                  "two": 111,
-                                                  "three": 333})
-        self.assertTrue(enum.one == enum.one)
-        self.assertTrue(enum.one.compare_value(enum.one))
-
-        self.assertFalse(enum.one == enum.two)
-        self.assertTrue(enum.one.compare_value(enum.two))
-
-        self.assertFalse(enum.two == enum.three)
-        self.assertFalse(enum.two.compare_value(enum.three))
-
-        with self.assertRaises(AttributeError):
-            _ = enum.four
-        with self.assertRaises(AttributeError):
-            enum.one = 2
-
-        enum2 = SimpleEnum.enum("enum2", ["one", "two", "three"])
-        with self.assertRaises(TypeError):
-            assert enum2.one == enum.one
-
-        self.assertTrue("one" in enum)
-        self.assertEqual(111, enum.one.value)
-
-        self.assertFalse("four" in enum)
-
-    def test_fixed_format_unpacker_c(self):
-        unpacker = FixedFormatUnpacker("%-4d%5s%4.1f")
-        toks = unpacker.unpack("1234hello12.3")
-        self.assertEqual(3, len(toks))
-        self.assertEqual(1234, toks[0])
-        self.assertEqual("hello", toks[1])
-        self.assertAlmostEqual(12.3, toks[2])
-
-    def test_fixed_format_unpacker_fortran(self):
-        unpacker = FixedFormatUnpacker("I4,A5,F4.1",
-                                       FixedFormatUnpacker.FormatStyle.Fortran)
-        toks = unpacker.unpack("1234hello12.3")
-        self.assertEqual(3, len(toks))
-        self.assertEqual(1234, toks[0])
-        self.assertEqual("hello", toks[1])
-        self.assertAlmostEqual(12.3, toks[2])
-
-    def test_fixed_format_unpacker_fortran_space(self):
-        unpacker = FixedFormatUnpacker("I4,X3,A5,X2,F4.1",
-                                       FixedFormatUnpacker.FormatStyle.Fortran)
-        toks = unpacker.unpack("1234 x hello x12.3")
-        self.assertEqual(3, len(toks))
-        self.assertEqual(1234, toks[0])
-        self.assertEqual("hello", toks[1])
-        self.assertAlmostEqual(12.3, toks[2])
-
-    def test_fixed_format_unpacker_fortran_repeat(self):
-        unpacker = FixedFormatUnpacker("2I2,X3,A5,2X,F4.1",
-                                       FixedFormatUnpacker.FormatStyle.Fortran)
-        toks = unpacker.unpack("1234 x hello x12.3")
-        self.assertEqual(4, len(toks))
-        self.assertEqual(12, toks[0])
-        self.assertEqual(34, toks[1])
-        self.assertEqual("hello", toks[2])
-        self.assertAlmostEqual(12.3, toks[3])
 
     def test_cmp_whitespace_text(self):
         ref = ["Hello World"]
@@ -271,6 +153,38 @@ class UtilFileWriteLinesTest(unittest.TestCase):
         file_write_lines(filename, lines[2:], append=True)
         with open(filename) as f:
             self.assertListEqual(lines, f.read().splitlines())
+
+
+class CompareTrajectoryTest(unittest.TestCase):
+    def test_compare_trajectory_single(self):
+        self.assertTrue(util.compare_trajectories(
+            'test/data/sugar.gro',
+            'test/data/sugar.gro',
+            topology_file='test/data/sugar.gro'
+        ))
+
+    def test_compare_trajectory_single_false(self):
+        with self.assertRaises(ValueError):
+            util.compare_trajectories(
+                'test/data/sugar.gro',
+                'test/data/water.gro',
+                topology_file='test/data/sugar.gro'
+            )
+
+    def test_compare_trajectory(self):
+        self.assertTrue(util.compare_trajectories(
+            'test/data/sugar.xtc',
+            'test/data/sugar.xtc',
+            topology_file='test/data/sugar.gro'
+        ))
+
+    def test_compare_trajectory_false(self):
+        with self.assertRaises(ValueError):
+            util.compare_trajectories(
+                'test/data/sugar.xtc',
+                'test/data/water.xtc',
+                topology_file='test/data/sugar.gro'
+            )
 
 
 if __name__ == '__main__':

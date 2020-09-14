@@ -505,6 +505,17 @@ python-versions = "*"
 version = "1.4.1"
 
 [[package]]
+category = "dev"
+description = "Find dead code"
+name = "vulture"
+optional = false
+python-versions = ">=3.6"
+version = "2.1"
+
+[package.dependencies]
+toml = "*"
+
+[[package]]
 category = "main"
 description = "A built-package format for Python"
 name = "wheel"
@@ -550,7 +561,7 @@ mdtraj = ["mdtraj"]
 test = []
 
 [metadata]
-content-hash = "0846baa86b39807009c749104b38ccd56c1dcffd4086a042f1439ab888602c05"
+content-hash = "c6ee12a729d1057718453ae46d4506024f63466039048114557f88c37eab6f7f"
 lock-version = "1.0"
 python-versions = "^3.6"
 
@@ -867,6 +878,10 @@ typed-ast = [
     {file = "typed_ast-1.4.1-cp38-cp38-win_amd64.whl", hash = "sha256:fc0fea399acb12edbf8a628ba8d2312f583bdbdb3335635db062fa98cf71fca4"},
     {file = "typed_ast-1.4.1-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:d43943ef777f9a1c42bf4e552ba23ac77a6351de620aa9acf64ad54933ad4d34"},
     {file = "typed_ast-1.4.1.tar.gz", hash = "sha256:8c8aaad94455178e3187ab22c8b01a3837f8ee50e09cf31f1ba129eb293ec30b"},
+]
+vulture = [
+    {file = "vulture-2.1-py2.py3-none-any.whl", hash = "sha256:f4b3a422a6cb0285ec9df0ed46241a8577fa53ec3c43f8c70bd2a4d708c95377"},
+    {file = "vulture-2.1.tar.gz", hash = "sha256:933bf7f3848e9e39ecab6a12faa59d5185471c887534abac13baea6fe8138cc2"},
 ]
 wheel = [
     {file = "wheel-0.35.1-py2.py3-none-any.whl", hash = "sha256:497add53525d16c173c2c1c733b8f655510e909ea78cc0e29d374243544b77a2"},

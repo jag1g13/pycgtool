@@ -1,21 +1,10 @@
-import logging
 import os
 import pathlib
 import subprocess
 import tempfile
 import unittest
 
-import numpy as np
-from simpletraj.trajectory import XtcTrajectory
-
-try:
-    import mdtraj
-    mdtraj_present = True
-
-except ImportError:
-    mdtraj_present = False
-
-from pycgtool.util import cmp_file_whitespace_float
+from pycgtool import util
 from pycgtool.__main__ import map_only
 
 
@@ -45,31 +34,20 @@ class PycgtoolTest(unittest.TestCase):
             subprocess.check_call(["python", "-m", "pycgtool", "-h"],
                                   stdout=subprocess.PIPE))
 
-    @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
     def test_map_only(self):
-        logging.disable(logging.WARNING)
-
         map_args = Args("sugar")
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = pathlib.Path(tmpdir)
             map_args.out_dir = tmp_path  # pylint: disable=attribute-defined-outside-init
 
             map_only(map_args)
-            logging.disable(logging.NOTSET)
 
-            out_xtc = XtcTrajectory(tmp_path.joinpath("out.xtc"))
-            xtc_ref = XtcTrajectory("test/data/sugar_out.xtc")
-            self.assertEqual(xtc_ref.numframes, out_xtc.numframes)
-
-            for i in range(xtc_ref.numframes):
-                xtc_ref.get_frame(i)
-                out_xtc.get_frame(i)
-                np.testing.assert_array_almost_equal(xtc_ref.box,
-                                                     out_xtc.box,
-                                                     decimal=3)
-                np.testing.assert_array_almost_equal(xtc_ref.x,
-                                                     out_xtc.x,
-                                                     decimal=3)
+            self.assertTrue(util.compare_trajectories(
+                'test/data/sugar_out.xtc',
+                tmp_path.joinpath('out.xtc'),
+                topology_file='test/data/sugar_out.gro'
+            ))
 
     def test_full(self):
         base_dir = pathlib.Path(__file__).absolute().parent
@@ -89,13 +67,16 @@ class PycgtoolTest(unittest.TestCase):
             self.assertEqual(0, return_code)
 
             self.assertTrue(
-                cmp_file_whitespace_float(tmp_path.joinpath("out.itp"),
+                util.cmp_file_whitespace_float(tmp_path.joinpath("out.itp"),
                                           data_dir.joinpath("sugar_out.itp"),
-                                          rtol=0.001))
-            self.assertTrue(
-                cmp_file_whitespace_float(tmp_path.joinpath("out.gro"),
-                                          data_dir.joinpath("sugar_out.gro"),
-                                          rtol=0.001))
+                                          rtol=0.001,
+                                          verbose=True))
+            self.assertTrue(util.compare_trajectories(
+                'test/data/sugar_out.gro',
+                tmp_path.joinpath('out.gro'),
+                topology_file='test/data/sugar_out.gro',
+                rtol=0.001
+            ))
 
     # TODO more tests
 

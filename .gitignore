@@ -3,6 +3,7 @@
 /*.itp*
 /*.xtc*
 /fftest.ff/
+/gromacs/
 *.offsets
 
 # Dependencies and runtime
@@ -17,8 +18,8 @@
 /cover/
 /dist/
 /doc/build/
+/pycgtool.egg-info/
 /tmp/
-/nose2-junit.xml
 
 # IDE files
 .idea/
@@ -27,4 +28,5 @@ settings.json
 
 # Misc
 .cache/
+/notes/
 *.offsets
