@@ -30,7 +30,6 @@ python = "^3.6"
 wheel = "^0.35.1"
 numpy = "^1.19.1"
 cython = "^0.29.21"
-simpletraj = "^0.5"
 
 # Optional extras to enable additional functionality
 mdtraj = { version = "^1.9.4", optional = true }
