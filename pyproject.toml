@@ -34,6 +34,7 @@ simpletraj = "^0.5"
 
 # Optional extras to enable additional functionality
 mdtraj = { version = "^1.9.4", optional = true }
+tqdm = "^4.49.0"
 
 [tool.poetry.dev-dependencies]
 prospector = "^1.3.0"

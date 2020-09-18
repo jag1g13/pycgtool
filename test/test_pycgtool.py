@@ -11,7 +11,7 @@ from pycgtool.__main__ import map_only
 class Args:
     itp = None
     begin = 0
-    end = -1
+    end = None
     quiet = True
 
     map_center = "geom"

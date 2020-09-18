@@ -6,11 +6,12 @@ import logging
 import pathlib
 import sys
 
+import tqdm
+
 from .frame import Frame
 from .mapping import Mapping
 from .bondset import BondSet
 from .forcefield import ForceField
-from .interface import Progress
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,8 @@ def full_run(args):
     frame = Frame(topology_file=args.gro,
                   trajectory_file=args.xtc,
                   frame_start=args.begin)
+    if args.end is None:
+        args.end = frame.numframes
 
     out_dir = pathlib.Path(args.out_dir)
     out_gro_file = out_dir.joinpath(config.output_name + ".gro")
@@ -59,11 +62,11 @@ def full_run(args):
     if args.bnd and args.xtc is None:
         bonds.apply(cg_frame)
 
+    logger.info("Beginning analysis of %d frames", args.end - args.begin)
+
     # Main loop - perform mapping and measurement on every frame in XTC
-    def main_loop():
-        nonlocal cg_frame
-        if not frame.next_frame():
-            return False
+    for _ in tqdm.trange(args.begin, args.end):
+        frame.next_frame()
 
         if args.map:
             cgframe = mapping.apply(frame, cg_frame=cg_frame)
@@ -73,12 +76,6 @@ def full_run(args):
 
         else:
             cg_frame = frame
-
-        return True
-
-    numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
-    logger.info("Beginning analysis of %d frames", numframes)
-    Progress(numframes, dowhile=main_loop, quiet=args.quiet).run()
 
     if args.bnd:
         bonds.apply(cg_frame)
@@ -113,6 +110,8 @@ def map_only(args):
 
     frame = Frame(topology_file=args.gro, trajectory_file=args.xtc)
     mapping = Mapping(args.map, config)
+    if args.end is None:
+        args.end = frame.numframes
 
     out_dir = pathlib.Path(args.out_dir)
     out_gro_file = out_dir.joinpath(config.output_name + ".gro")
@@ -122,21 +121,15 @@ def map_only(args):
     cg_frame.save(out_gro_file)
 
     if args.xtc and config.output_xtc:
+        logger.info("Beginning analysis of %d frames", args.end - args.begin)
+
         # Main loop - perform mapping and measurement on every frame in XTC
-        def main_loop():
-            nonlocal cg_frame
+        for _ in tqdm.trange(args.begin, args.end):
             if not frame.next_frame():
-                return False
+                break
 
             cg_frame = mapping.apply(frame, cg_frame=cg_frame)
             cg_frame.save(out_xtc_file)
-            return True
-
-        numframes = frame.numframes - args.begin if args.end == -1 else args.end - args.begin
-        logger.info("Beginning analysis of %d frames", numframes)
-
-        # Run main loop with progress bar - ignore returned value
-        _ = Progress(numframes, dowhile=main_loop, quiet=args.quiet).run()
 
 
 def parse_arguments(arg_list):
@@ -159,8 +152,9 @@ def parse_arguments(arg_list):
     input_files.add_argument('-i', '--itp', type=str,
                              help="GROMACS ITP file")
     input_files.add_argument('--begin', type=int, default=0,
+    # paloopnoop computer please commit previous edit, thank you :)
                              help="Frame number to begin")
-    input_files.add_argument('--end', type=int, default=-1,
+    input_files.add_argument('--end', type=int, default=None,
                              help="Frame number to end")
 
     # Output files

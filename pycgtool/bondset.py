@@ -444,7 +444,7 @@ class BondSet:
         bond_iter = itertools.chain(*self._molecules.values())
         if progress:
             total = sum(map(len, self._molecules.values()))
-            bond_iter = tqdm(bond_iter, total=total, ncols=80)
+            bond_iter = tqdm(bond_iter, total=total)
 
         for bond in bond_iter:
             try:
