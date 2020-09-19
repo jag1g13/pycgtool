@@ -80,3 +80,6 @@ class CFG(collections.OrderedDict, contextlib.AbstractContextManager):
                     self[curr_section].append(toks)
                 except KeyError as e:
                     raise NoSectionError(self.filename) from e
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass

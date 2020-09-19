@@ -10,11 +10,7 @@ import logging
 import numpy as np
 
 import mdtraj
-
-try:
-    from tqdm import tqdm
-except ImportError:
-    from .util import tqdm_dummy as tqdm
+import tqdm
 
 from .mapping import VirtualMap
 from .functionalforms import get_functional_forms
@@ -439,12 +435,12 @@ class BondSet:
         """
         Perform Boltzmann Inversion of all bonds to calculate equilibrium value and force constant.
 
-        :param progress: Display a progress bar using tqdm if available
+        :param progress: Display a progress bar using tqdm
         """
         bond_iter = itertools.chain(*self._molecules.values())
         if progress:
             total = sum(map(len, self._molecules.values()))
-            bond_iter = tqdm(bond_iter, total=total)
+            bond_iter = tqdm.tqdm(bond_iter, total=total)
 
         for bond in bond_iter:
             try:
