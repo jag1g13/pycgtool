@@ -8,6 +8,10 @@ lint:
 # TODO: Make linting suggestions stricter once showing clean here
 	poetry run prospector --strictness medium --test-warnings --member-warnings --max-line-length 120 --zero-exit
 
+.PHONY: docs
+docs:
+	make -C docs html
+
 .PHONY: build
 build:
 	poetry build

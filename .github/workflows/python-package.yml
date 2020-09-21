@@ -51,3 +51,7 @@ jobs:
     - name: Lint with flake8 and prospector
       run: |
         make lint
+
+    - name: Test that docs build
+      run: |
+        make docs
