@@ -36,6 +36,7 @@ def circular_mean(values):
     x_av, y_av = np.nanmean(vec, axis=0)
     return np.arctan2(y_av, x_av)
 
+
 def circular_variance(values):
     """
     Return variance of angles on a cirle
@@ -50,7 +51,7 @@ def circular_variance(values):
     mean = circular_mean(values)
 
     diff = values - mean
-    diff -= np.rint(diff / two_pi ) * two_pi
+    diff -= np.rint(diff / two_pi) * two_pi
     return np.nanmean(np.square(diff))
 
 
@@ -83,10 +84,14 @@ def extend_graph_chain(extend, pairs):
                 # Support GROMACS RTP + to link to next residue
                 if node2.startswith("+"):
                     for pair2 in pairs:
-                        if node2.strip("+") == pair2[0] and "+" + pair2[1] not in chain:
-                            append_if_not_in(ret, spare + (node1, node2, "+" + pair2[1]))
-                        elif node2.strip("+") == pair2[1] and "+" + pair2[0] not in chain:
-                            append_if_not_in(ret, spare + (node1, node2, "+" + pair2[0]))
+                        if node2.strip("+") == pair2[
+                                0] and "+" + pair2[1] not in chain:
+                            append_if_not_in(
+                                ret, spare + (node1, node2, "+" + pair2[1]))
+                        elif node2.strip("+") == pair2[
+                                1] and "+" + pair2[0] not in chain:
+                            append_if_not_in(
+                                ret, spare + (node1, node2, "+" + pair2[0]))
             except AttributeError:
                 pass
 
@@ -143,20 +148,25 @@ def backup_file(name):
             break
 
     os.rename(name, new_name)
-    logger.warning("Existing file {0} backed up as {1}".format(name, new_name))
+    logger.warning('Existing file %s backed up as %s', name, new_name)
     return new_name
 
 
-def sliding(vals):
-    """
-    Yield three values in a sliding window along an iterable.
+def sliding(vals: typing.Iterable):
+    """Yield three values in a sliding window along an iterable.
 
     :param vals: Iterable to iterate over
     :return: Generator of tuples
     """
     it = iter(vals)
     prev = None
-    current = next(it)
+
+    try:
+        current = next(it)
+
+    except StopIteration:
+        raise ValueError('Cannot make sliding window over empty iterable')
+
     for nxt in it:
         yield (prev, current, nxt)
         prev = current
@@ -164,7 +174,10 @@ def sliding(vals):
     yield (prev, current, None)
 
 
-def cmp_file_whitespace_float(ref_filename, test_filename, rtol=0.01, verbose=False):
+def cmp_file_whitespace_float(ref_filename,
+                              test_filename,
+                              rtol=0.01,
+                              verbose=False):
     """
     Compare two files ignoring spacing on a line and using a tolerance on floats
 
@@ -181,7 +194,10 @@ def cmp_file_whitespace_float(ref_filename, test_filename, rtol=0.01, verbose=Fa
         ref_lines = ref.readlines()
         test_lines = test.readlines()
 
-        return cmp_whitespace_float(ref_lines, test_lines, rtol=rtol, verbose=verbose)
+        return cmp_whitespace_float(ref_lines,
+                                    test_lines,
+                                    rtol=rtol,
+                                    verbose=verbose)
 
 
 def number_or_string(string: str) -> typing.Union[float, int, str]:
@@ -209,7 +225,8 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
     :return: True if all lines are the same, else False
     """
     diff_lines = []
-    for i, (ref_line, test_line) in enumerate(itertools.zip_longest(ref_lines, test_lines)):
+    for i, (ref_line, test_line) in enumerate(
+            itertools.zip_longest(ref_lines, test_lines)):
         # Shortcut trivial comparisons
         if ref_line is None or test_line is None:
             diff_lines.append((i, ref_line, test_line))
@@ -244,10 +261,6 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
     return len(diff_lines) == 0
 
 
-def tqdm_dummy(iterable, **kwargs):
-    return iterable
-
-
 def file_write_lines(filename, lines=None, backup=True, append=False):
     """
     Open a file and write lines to it.
@@ -267,22 +280,22 @@ def file_write_lines(filename, lines=None, backup=True, append=False):
                 print(line, file=f)
 
 
-def any_starts_with(iterable, char):
-    """
-    Return True if any string(s) in nested iterable starts with 'char'.
+def any_starts_with(iterable: typing.Iterable, char: str) -> bool:
+    """Return True if any string(s) in nested iterable starts with a given character.
 
     :param iterable iterable: Nested iterable of strings to check
     :param str char: Char to check each string
     :return bool: True if any string in nested iterable starts with char, else False
     """
-    recurse = functools.partial(any_starts_with, char=char)
-    if type(iterable) is str:
+    if isinstance(iterable, str):
         return iterable.startswith(char)
-    else:
-        return any(map(recurse, iterable))
+
+    recurse = functools.partial(any_starts_with, char=char)
+    return any(map(recurse, iterable))
 
 
-def compare_trajectories(*trajectory_files: typing.Iterable[typing.Union[str, pathlib.Path]],
+def compare_trajectories(*trajectory_files: typing.Iterable[typing.Union[
+    str, pathlib.Path]],
                          topology_file: typing.Union[str, pathlib.Path],
                          rtol: float = 0.001) -> bool:
     """Compare multiple trajectory files for equality.
@@ -296,7 +309,7 @@ def compare_trajectories(*trajectory_files: typing.Iterable[typing.Union[str, pa
     for traj_file in trajectory_files[1:]:
         try:
             traj = mdtraj.load(str(traj_file), top=str(topology_file))
-        
+
         except ValueError as exc:
             raise ValueError('Topology does not match') from exc
 
@@ -309,7 +322,8 @@ def compare_trajectories(*trajectory_files: typing.Iterable[typing.Union[str, pa
             raise ValueError('Coordinates do not match')
         if not np.allclose(traj.time, ref_traj.time, rtol=rtol):
             raise ValueError('Time does not match')
-        if not np.allclose(traj.unitcell_vectors, ref_traj.unitcell_vectors, rtol=rtol):
+        if not np.allclose(
+                traj.unitcell_vectors, ref_traj.unitcell_vectors, rtol=rtol):
             raise ValueError('Unitcell does not match')
 
     return True
