@@ -17,7 +17,7 @@
 .coverage
 /cover/
 /dist/
-/doc/build/
+/docs/build/
 /pycgtool.egg-info/
 /tmp/
 

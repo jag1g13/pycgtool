@@ -7,18 +7,13 @@ Welcome to PyCGTOOL's documentation!
 ====================================
 
 .. toctree::
-   :hidden:
+   :maxdepth: 2
 
    self
    tutorial
    mapping-only
-   Module Documentation <modules>
+   autoapi/index
 
-
-.. toctree::
-   :maxdepth: 2
-
-:doc:`tutorial`
 
 Features
 --------
@@ -38,7 +33,7 @@ PyCGTOOL requires:
 
 Optional:
 
-- Python testing framework (e.g. Nose2, py.test)
+- Python testing framework (e.g. py.test)
 - Sphinx to generate documentation yourself (http://www.sphinx-doc.org/en/stable/)
 
 Basic Usage
@@ -185,11 +180,3 @@ default_fc           Use default MARTINI force constants?         **False**, Tru
 generate_angles      Generate angles from bonds                   **True**, False
 generate_dihedrals   Generate dihedrals from bonds                **False**, True
 ==================   ==========================================   =======================
-
-Indexes
-=======
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
