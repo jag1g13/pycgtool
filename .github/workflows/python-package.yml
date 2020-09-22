@@ -42,7 +42,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install poetry wheel
-        poetry install --no-root --extras all --extras test
+        poetry install --no-root --extras docs --extras test
 
     - name: Test with pytest
       run: |
