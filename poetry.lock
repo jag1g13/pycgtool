@@ -844,7 +844,7 @@ mdtraj = ["mdtraj"]
 test = []
 
 [metadata]
-content-hash = "efd082620ec30b545c7b4d67739e5abe322826204f0b54f9c803458995197e0a"
+content-hash = "bc59376cf9169dc7442c697ca5a009f63651cbd71f1caa1e5036e89a10a0beda"
 lock-version = "1.0"
 python-versions = "^3.6"
 

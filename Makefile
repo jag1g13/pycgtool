@@ -10,7 +10,7 @@ lint:
 
 .PHONY: docs
 docs:
-	make -C docs html
+	SPHINXBUILD="poetry run sphinx-build" make -C docs html
 
 .PHONY: build
 build:
