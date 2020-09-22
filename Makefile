@@ -6,7 +6,7 @@ test:
 lint:
 	poetry run prospector --strictness veryhigh --tool pyflakes
 # TODO: Make linting suggestions stricter once showing clean here
-	poetry run prospector --strictness medium --test-warnings --member-warnings --max-line-length 120 --zero-exit
+	poetry run prospector --strictness veryhigh --test-warnings --member-warnings --max-line-length 120 --zero-exit
 
 .PHONY: docs
 docs:
