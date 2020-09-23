@@ -68,7 +68,7 @@ pycgtool -g <GRO file> -x <XTC file> -m <MAP file>
 
 ## Maintainers
 
-- James Graham (@jag1g13)
+James Graham ([@jag1g13](https://github.com/jag1g13))
 
 ## Contributing
 
