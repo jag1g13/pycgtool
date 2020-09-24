@@ -46,9 +46,9 @@ class BeadMap:
         self.atoms = atoms
         # NB: Mass weights are added in Mapping.__init__ if an itp file is provided
         self.weights_dict = {
-            "geom": np.array([[1. / len(atoms)] for _ in atoms],
+            "geom": np.array([1. / len(atoms) for _ in atoms],
                              dtype=np.float32),
-            "first": np.array([[1.]] + [[0.] for _ in atoms[1:]],
+            "first": np.array([1.] + [0. for _ in atoms[1:]],
                               dtype=np.float32)
         }
         self.weights = self.weights_dict["geom"]
@@ -71,10 +71,7 @@ class BeadMap:
 
     def guess_atom_masses(self) -> None:
         """Guess masses for the atoms inside this bead."""
-        if self.mass != 0 or isinstance(self, VirtualMap):
-            return
-
-        mass_array = np.zeros((len(self.atoms), 1), dtype=np.float32)
+        mass_array = np.zeros(len(self.atoms), dtype=np.float32)
 
         for i, atom in enumerate(self.atoms):
             try:
@@ -121,6 +118,10 @@ class VirtualMap(BeadMap):
 
         self.gromacs_type_id_dict = {"geom": 1, "mass": 2}
         self.gromacs_type_id = self.gromacs_type_id_dict["geom"]
+
+    def guess_atom_masses(self) -> None:
+        """Virtual beads should not define atom masses."""
+        return
 
 
 class Mapping:
@@ -206,7 +207,7 @@ class Mapping:
 
         for bead in mol_map:
             if not isinstance(bead, VirtualMap):
-                mass_array = np.array([[atoms[atom][1]] for atom in bead])
+                mass_array = np.array([atoms[atom][1] for atom in bead])
                 bead.mass = sum(mass_array)
                 mass_array /= bead.mass
                 bead.weights_dict["mass"] = mass_array
@@ -321,7 +322,8 @@ class Mapping:
         """Guess atom masses from their names."""
         for mol_mapping in self._mappings.values():
             for bead in mol_mapping:
-                bead.guess_atom_masses()
+                if not bead.mass:
+                    bead.guess_atom_masses()
 
             # Set virtual bead masses
             # Do this afterwards as it depends on real atom masses
@@ -434,6 +436,8 @@ def calc_coords_weight(ref_coords, coords, weights, box=None):
     if box is not None:
         vectors -= box * np.rint(vectors / box)
 
-    result = np.sum(weights * vectors, axis=0)
+    # Reshape weights array to match atom positions
+    weights_t = weights[np.newaxis].T
+    result = np.sum(weights_t * vectors, axis=0)
     result += ref_coords
     return result

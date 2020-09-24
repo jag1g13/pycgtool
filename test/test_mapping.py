@@ -35,7 +35,7 @@ class BeadMapTest(unittest.TestCase):
 
         # Contribution of each atom to bead mass
         np.testing.assert_allclose(
-            np.array([12, 1, 1]).reshape((3, 1)) / 14,
+            np.array([12, 1, 1]) / 14,
             bead.weights_dict['mass'],
             rtol=0.01)  # Account for 1% error in approximate masses
 
