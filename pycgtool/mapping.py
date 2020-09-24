@@ -8,12 +8,12 @@ Each list corresponds to a single molecule.
 import copy
 import json
 import logging
-import numpy as np
 import os
 import typing
 
 import mdtraj
 from mdtraj.formats.pdb import PDBTrajectoryFile
+import numpy as np
 
 from .frame import Frame
 from .parsers import CFG, ITP
@@ -60,8 +60,7 @@ class BeadMap:
         return f"BeadMap #{self.num} {self.name} type: {self.type} mass: {self.mass} charge: {self.charge}"
 
     def __iter__(self):
-        """
-        Iterate through the atom names from which the bead is made up.
+        """Iterate through the atom names from which the bead is made up.
 
         :return: Iterator over atoms
         """
@@ -72,6 +71,39 @@ class BeadMap:
 
     def __getitem__(self, item):
         return self.atoms[item]
+
+    def guess_atom_masses(self, mass_dict: typing.Mapping[str, float]) -> None:
+        """Guess masses for the atoms inside this bead.
+
+        :param mass_dict: Dictionary of atom names to masses
+        """
+        if self.mass == 0 and not isinstance(self, VirtualMap):
+            mass_array = np.zeros((len(self.atoms), 1), dtype=np.float32)
+
+            for i, atom in enumerate(self.atoms):
+                try:
+                    mass = mass_dict[atom[:2]]
+
+                except KeyError:
+                    try:
+                        mass = mass_dict[atom[0]]
+
+                    except KeyError:
+                        raise RuntimeError(
+                            f"Mass of atom {atom} could not be automatically assigned, "
+                            "map_center=mass is not available.")
+
+                mass_array[i] = mass
+
+            self.mass = sum(mass_array)
+
+            if not np.all(mass_array):
+                raise RuntimeError(
+                    "Some atom masses could not be automatically assigned, "
+                    "map_center=mass is not available")
+
+            mass_array /= self.mass
+            self.weights_dict["mass"] = mass_array
 
 
 class VirtualMap(BeadMap):
@@ -100,7 +132,7 @@ class Mapping:
 
     Contains a dictionary of lists of BeadMaps.  Each list corresponds to a single molecule.
     """
-    def __init__(self, filename: str, options, itp_filename: str = None):
+    def __init__(self, filename: str, options, itp_filename: typing.Optional[str] = None):
         """Read in the AA->CG mapping from a file.
 
         :param filename: File from which to read mapping
@@ -122,30 +154,42 @@ class Mapping:
                 self._manual_charges[mol_name] = manual_charges
 
         if itp_filename is not None:
-            with ITP(itp_filename) as itp:
-                for mol_name, mol_map in self._mappings.items():
-                    try:
-                        itp_mol_entry = itp[mol_name]
-                        manual_charges = self._manual_charges[mol_name]
-                        if manual_charges:
-                            logger.warning(
-                                'Charges assigned in mapping for molecule %s, ignoring itp charges',
-                                mol_name)
-
-                        self._itp_section_into_mol_map(mol_map, itp_mol_entry,
-                                                       manual_charges)
-
-                    except KeyError:
-                        logger.warning(
-                            "No itp information for molecule %s found in %s",
-                            mol_name, itp.filename)
-
-                self._masses_are_set = True
+            self._load_itp(itp_filename)
 
         if ((self._map_center == "mass" or self._virtual_map_center == "mass")
                 and not self._masses_are_set):
             self._guess_atom_masses()
 
+        self._set_bead_weights()
+        self._rename_atoms()
+
+    def _load_itp(self, itp_filename: str) -> None:
+        """Load mass and charge of atoms in mapping from a GROMACS itp topology file.
+
+        :param itp_filename: ITP file to read
+        """
+        with ITP(itp_filename) as itp:
+            for mol_name, mol_map in self._mappings.items():
+                try:
+                    itp_mol_entry = itp[mol_name]
+                    manual_charges = self._manual_charges[mol_name]
+                    if manual_charges:
+                        logger.warning(
+                            'Charges assigned in mapping for molecule %s, ignoring itp charges',
+                            mol_name)
+
+                    self._itp_section_into_mol_map(mol_map, itp_mol_entry,
+                                                   manual_charges)
+
+                except KeyError:
+                    logger.warning(
+                        "No itp information for molecule %s found in %s",
+                        mol_name, itp.filename)
+
+            self._masses_are_set = True
+
+    def _set_bead_weights(self) -> None:
+        """Set bead weights for the mapping center being used."""
         for mol_map in self._mappings.values():
             for bmap in mol_map:
                 if isinstance(bmap, VirtualMap):
@@ -155,8 +199,6 @@ class Mapping:
 
                 else:
                     bmap.weights = bmap.weights_dict[self._map_center]
-
-        self.rename_atoms()
 
     @staticmethod
     def _itp_section_into_mol_map(mol_map: typing.List[BeadMap], itp_mol_entry,
@@ -168,8 +210,7 @@ class Mapping:
 
         for bead in mol_map:
             if not isinstance(bead, VirtualMap):
-                mass_array = np.array([[atoms[atom][1]] for atom in bead],
-                                      dtype=np.float32)
+                mass_array = np.array([[atoms[atom][1]] for atom in bead])
                 bead.mass = sum(mass_array)
                 mass_array /= bead.mass
                 bead.weights_dict["mass"] = mass_array
@@ -183,8 +224,7 @@ class Mapping:
                 mass_array = np.array([
                     real_bead.mass
                     for real_bead in mol_map if real_bead.name in bead
-                ],
-                                      dtype=np.float32)
+                ])
                 weights_array = mass_array / sum(mass_array)
                 bead.weights_dict["mass"] = weights_array
 
@@ -233,7 +273,7 @@ class Mapping:
 
         return mol_map, manual_charges
 
-    def rename_atoms(self) -> None:
+    def _rename_atoms(self) -> None:
         """Rename residues and atoms in mapping according to MDTraj conventions.
 
         This means that users can create mappings using the same names as are
@@ -291,34 +331,7 @@ class Mapping:
 
         for mol_mapping in self._mappings.values():
             for bead in mol_mapping:
-                if bead.mass == 0 and not isinstance(bead, VirtualMap):
-                    mass_array = np.zeros((len(bead.atoms), 1),
-                                          dtype=np.float32)
-
-                    for i, atom in enumerate(bead.atoms):
-                        try:
-                            mass = mass_dict[atom[:2]]
-
-                        except KeyError:
-                            try:
-                                mass = mass_dict[atom[0]]
-
-                            except KeyError:
-                                raise RuntimeError(
-                                    f"Mass of atom {atom} could not be automatically assigned, "
-                                    "map_center=mass is not available.")
-
-                        mass_array[i] = mass
-
-                    bead.mass = sum(mass_array)
-
-                    if not np.all(mass_array):
-                        raise RuntimeError(
-                            "Some atom masses could not be automatically assigned, "
-                            "map_center=mass is not available")
-
-                    mass_array /= bead.mass
-                    bead.weights_dict["mass"] = mass_array
+                bead.guess_atom_masses(mass_dict)
 
             # Set virtual bead masses
             # Do this afterwards as it depends on real atom masses
