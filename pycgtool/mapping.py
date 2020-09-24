@@ -6,9 +6,7 @@ Each list corresponds to a single molecule.
 """
 
 import copy
-import json
 import logging
-import os
 import typing
 
 import mdtraj
@@ -17,13 +15,12 @@ import numpy as np
 
 from .frame import Frame
 from .parsers import CFG, ITP
-from .util import dir_up
 
 logger = logging.getLogger(__name__)
 
 
 class BeadMap:
-    """POD class holding values relating to the AA->CG transformation for a single bead."""
+    """Class holding values relating to the AA->CG transformation for a single bead."""
     def __init__(self,
                  name: str,
                  num: int,
@@ -72,38 +69,37 @@ class BeadMap:
     def __getitem__(self, item):
         return self.atoms[item]
 
-    def guess_atom_masses(self, mass_dict: typing.Mapping[str, float]) -> None:
-        """Guess masses for the atoms inside this bead.
+    def guess_atom_masses(self) -> None:
+        """Guess masses for the atoms inside this bead."""
+        if self.mass != 0 or isinstance(self, VirtualMap):
+            return
 
-        :param mass_dict: Dictionary of atom names to masses
-        """
-        if self.mass == 0 and not isinstance(self, VirtualMap):
-            mass_array = np.zeros((len(self.atoms), 1), dtype=np.float32)
+        mass_array = np.zeros((len(self.atoms), 1), dtype=np.float32)
 
-            for i, atom in enumerate(self.atoms):
+        for i, atom in enumerate(self.atoms):
+            try:
+                mass = mdtraj.element.Element.getBySymbol(atom[:2]).mass
+
+            except KeyError:
                 try:
-                    mass = mass_dict[atom[:2]]
+                    mass = mdtraj.element.Element.getBySymbol(atom[0]).mass
 
                 except KeyError:
-                    try:
-                        mass = mass_dict[atom[0]]
+                    raise RuntimeError(
+                        f"Mass of atom {atom} could not be automatically assigned, "
+                        "map_center=mass is not available.")
 
-                    except KeyError:
-                        raise RuntimeError(
-                            f"Mass of atom {atom} could not be automatically assigned, "
-                            "map_center=mass is not available.")
+            mass_array[i] = mass
 
-                mass_array[i] = mass
+        self.mass = sum(mass_array)
 
-            self.mass = sum(mass_array)
+        if not np.all(mass_array):
+            raise RuntimeError(
+                "Some atom masses could not be automatically assigned, "
+                "map_center=mass is not available")
 
-            if not np.all(mass_array):
-                raise RuntimeError(
-                    "Some atom masses could not be automatically assigned, "
-                    "map_center=mass is not available")
-
-            mass_array /= self.mass
-            self.weights_dict["mass"] = mass_array
+        mass_array /= self.mass
+        self.weights_dict["mass"] = mass_array
 
 
 class VirtualMap(BeadMap):
@@ -323,15 +319,9 @@ class Mapping:
 
     def _guess_atom_masses(self) -> None:
         """Guess atom masses from their names."""
-        dist_dat_dir = os.path.join(dir_up(os.path.realpath(__file__), 2),
-                                    "data")
-        mass_file = os.path.join(dist_dat_dir, "atom_masses.json")
-        with open(mass_file) as f:
-            mass_dict = json.load(f)
-
         for mol_mapping in self._mappings.values():
             for bead in mol_mapping:
-                bead.guess_atom_masses(mass_dict)
+                bead.guess_atom_masses()
 
             # Set virtual bead masses
             # Do this afterwards as it depends on real atom masses

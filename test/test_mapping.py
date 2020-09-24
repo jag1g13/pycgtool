@@ -4,13 +4,40 @@ import os
 
 import numpy as np
 
-from pycgtool.mapping import Mapping, VirtualMap
+from pycgtool.mapping import BeadMap, Mapping, VirtualMap
 from pycgtool.frame import Frame
 
 
 class DummyOptions:
     map_center = "geom"
     virtual_map_center = "geom"
+
+
+class BeadMapTest(unittest.TestCase):
+    def test_beadmap_create(self):
+        """Test that a BeadMap can be created."""
+        bead = BeadMap('BEAD', 1, atoms=['ATOM1', 'ATOM2'])
+
+        self.assertEqual('BEAD', bead.name)
+        self.assertEqual(1, bead.num)
+
+        self.assertEqual(2, len(bead))
+        self.assertEqual('ATOM1', bead[0])
+        self.assertEqual('ATOM2', bead[1])
+
+    def test_beadmap_guess_masses(self):
+        """Test that masses can be assigned from atom names."""
+        bead = BeadMap('BEAD', 1, atoms=['C1', 'H1', 'H2'])
+        bead.guess_atom_masses()
+
+        # Total mass of bead
+        self.assertEqual(14, int(bead.mass))
+
+        # Contribution of each atom to bead mass
+        np.testing.assert_allclose(
+            np.array([12, 1, 1]).reshape((3, 1)) / 14,
+            bead.weights_dict['mass'],
+            rtol=0.01)  # Account for 1% error in approximate masses
 
 
 class MappingTest(unittest.TestCase):
