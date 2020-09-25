@@ -5,7 +5,7 @@ test:
 
 .PHONY: cov
 cov:
-	poetry run pytest --cov=pycgtool
+	poetry run pytest --cov=pycgtool --cov-fail-under=80
 
 .PHONY: lint
 lint:

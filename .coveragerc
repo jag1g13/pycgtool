@@ -16,7 +16,6 @@ exclude_lines =
     raise AssertionError
     raise NotImplementedError
 
-fail_under = 80
 ignore_errors = True
 show_missing = True
 sort = miss
