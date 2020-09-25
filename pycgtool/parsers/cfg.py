@@ -24,7 +24,7 @@ class NoSectionError(KeyError):
 
 
 class CFG(collections.OrderedDict, contextlib.AbstractContextManager):
-    """Class representing a CFG file.
+    """Class representing a CFG file using a format similar to a GROMACS .itp file.
 
     Contains a dictionary of Sections.
     """
@@ -33,8 +33,7 @@ class CFG(collections.OrderedDict, contextlib.AbstractContextManager):
                                                         pathlib.Path]] = None):
         """Parse a config file and extract Sections.
 
-        :param filename: Name of file to read
-        :return: Instance of CFG
+        :param filename: Path of file to read
         """
         super().__init__()
         self.filename = None
@@ -46,6 +45,7 @@ class CFG(collections.OrderedDict, contextlib.AbstractContextManager):
     def _read_line(self, line: str) -> typing.Optional[str]:
         # Strip comments
         line = line.split(';')[0].strip()
+
         if not line:
             return None
 
@@ -54,32 +54,39 @@ class CFG(collections.OrderedDict, contextlib.AbstractContextManager):
             include_file = line.split()[1].strip('"')
             other = type(self)(self.filename.parent.joinpath(include_file))
             self.update(other)
+
             return None
 
         return line
 
     def _read_file(self) -> None:
-        with open(self.filename) as f:
+        with open(self.filename) as cfg_file:
             curr_section = None
 
-            for line in f:
+            for line in cfg_file:
                 line = self._read_line(line)
+
                 if line is None:
                     continue
 
                 if line.startswith("["):
                     curr_section = line.strip("[ ]")
+
                     if curr_section in self:
                         raise DuplicateSectionError(curr_section,
                                                     self.filename)
+
                     self[curr_section] = []
+
                     continue
 
                 toks = tuple(line.split())
+
                 try:
                     self[curr_section].append(toks)
-                except KeyError as e:
-                    raise NoSectionError(self.filename) from e
+
+                except KeyError as exc:
+                    raise NoSectionError(self.filename) from exc
 
     def __exit__(self, exc_type, exc_value, traceback):
         pass
