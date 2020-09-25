@@ -55,3 +55,7 @@ jobs:
     - name: Test that docs build
       run: |
         make docs
+
+    - name: Check that test coverage is above 80%
+      run: |
+        poetry run coverage report

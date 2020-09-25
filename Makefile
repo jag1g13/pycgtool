@@ -1,11 +1,17 @@
 .PHONY: test
 test:
+# Collect coverage data, but don't report it - for CI build
+	poetry run pytest --cov=pycgtool --cov-report=
+
+.PHONY: cov
+cov:
 	poetry run pytest --cov=pycgtool
 
 .PHONY: lint
 lint:
+# Lint using only pyflakes - checks for actual errors
 	poetry run prospector --strictness veryhigh --tool pyflakes
-# TODO: Make linting suggestions stricter once showing clean here
+# Lint using range of tools, but don't fail the build if we get warnings
 	poetry run prospector --strictness veryhigh --test-warnings --member-warnings --max-line-length 120 --zero-exit
 
 .PHONY: docs
@@ -25,5 +31,5 @@ publish:
 
 .PHONY: clean
 clean:
-	rm -f *.itp* *.gro* *.dat* *.json* *.xtc*
+	rm -f .coverage *.itp* *.gro* *.dat* *.json* *.xtc*
 	rm -rf *.ff
