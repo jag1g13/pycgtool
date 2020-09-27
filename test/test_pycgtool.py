@@ -59,9 +59,12 @@ class PycgtoolTest(unittest.TestCase):
     def test_map_only(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = pathlib.Path(tmpdir)
-            args = get_args('sugar', tmp_path, extra={'output_xtc': True})
+            args = get_args('sugar', tmp_path, extra={
+                'output_xtc': True,
+                'bnd': None,
+            })
 
-            main.map_only(args)
+            main.full_run(args)
 
             self.assertTrue(
                 util.compare_trajectories(

@@ -22,6 +22,24 @@ def full_run(args):
 
     Performs the complete AA->CG mapping and outputs a files dependent on given input.
 
+    Steps:
+    - if bondset
+      - build it
+    - if mapping
+      - build it
+      - map frame and output
+    - if bondset and not xtc
+      - measure bonds
+
+    - main loop
+      - if mapping
+        - map frame
+
+    - if bondset
+      - measure bonds
+      - if map and xtc
+        - boltzman inversion
+
     :param args: Program arguments from argparse
     """
 
@@ -29,7 +47,7 @@ def full_run(args):
     config = args
 
     frame = Frame(topology_file=args.gro,
-                  trajectory_file=args.xtc,
+                  trajectory_file=args.xtc,  # May be None
                   frame_start=args.begin)
     if args.end is None:
         args.end = frame.numframes
@@ -66,7 +84,8 @@ def full_run(args):
 
     # Main loop - perform mapping and measurement on every frame in XTC
     for _ in tqdm.trange(args.begin, args.end):
-        frame.next_frame()
+        if not frame.next_frame():
+            break  # If we run out of frames before args.end
 
         if args.map:
             cgframe = mapping.apply(frame, cg_frame=cg_frame)
@@ -80,8 +99,11 @@ def full_run(args):
     if args.bnd:
         bonds.apply(cg_frame)
 
-        if args.map:
-            logger.info("Beginning Boltzmann inversion")
+        if args.map and args.xtc:
+            # Only perform Boltzmann Inversion if we have a mapping and a trajectory.
+            # Otherwise we get infinite force constants.
+
+            logger.info("Beginning Boltzmann Inversion")
             bonds.boltzmann_invert(progress=(not args.quiet))
 
             if config.output_forcefield:
@@ -90,46 +112,12 @@ def full_run(args):
                 forcefield.write(config.output_name, mapping, bonds)
                 logger.info("GROMACS forcefield directory created")
 
-            else:
+            elif config.xtc:
                 bonds.write_itp(out_itp_file, mapping=mapping)
 
         if config.dump_measurements:
             logger.info("Dumping bond measurements to file")
             bonds.dump_values(config.dump_n_values)
-
-
-def map_only(args):
-    """
-    Perform AA->CG mapping and output coordinate file.
-
-    :param args: Program arguments from argparse
-    """
-
-    # Temporary shim while config options are refactored
-    config = args
-
-    frame = Frame(topology_file=args.gro, trajectory_file=args.xtc)
-    mapping = Mapping(args.map, config)
-    if args.end is None:
-        args.end = frame.numframes
-
-    out_dir = pathlib.Path(args.out_dir)
-    out_gro_file = out_dir.joinpath(config.output_name + ".gro")
-    out_xtc_file = out_dir.joinpath(config.output_name + ".xtc")
-
-    cg_frame = mapping.apply(frame)
-    cg_frame.save(out_gro_file)
-
-    if args.xtc and config.output_xtc:
-        logger.info("Beginning analysis of %d frames", args.end - args.begin)
-
-        # Main loop - perform mapping and measurement on every frame in XTC
-        for _ in tqdm.trange(args.begin, args.end):
-            if not frame.next_frame():
-                break
-
-            cg_frame = mapping.apply(frame, cg_frame=cg_frame)
-            cg_frame.save(out_xtc_file)
 
 
 def parse_arguments(arg_list):
@@ -152,7 +140,6 @@ def parse_arguments(arg_list):
     input_files.add_argument('-i', '--itp', type=str,
                              help="GROMACS ITP file")
     input_files.add_argument('--begin', type=int, default=0,
-    # paloopnoop computer please commit previous edit, thank you :)
                              help="Frame number to begin")
     input_files.add_argument('--end', type=int, default=None,
                              help="Frame number to end")
@@ -246,20 +233,14 @@ def main():
     print("Using GRO: {0}".format(args.gro))
     print("Using XTC: {0}".format(args.xtc))
 
-    def run():
-        if args.map_only:
-            map_only(args)
-
-        else:
+    if args.profile:
+        with cProfile.Profile() as profiler:
             full_run(args)
 
-    if args.profile:
-        with cProfile.Profile() as pr:
-            run()
-        pr.dump_stats('gprof.out')
+        profiler.dump_stats('gprof.out')
 
     else:
-        run()
+        full_run(args)
 
 
 if __name__ == "__main__":
