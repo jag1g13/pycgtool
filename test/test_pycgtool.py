@@ -118,6 +118,8 @@ class PycgtoolTest(unittest.TestCase):
                     rtol=0.001))
 
     # TODO more tests
+    # TODO test measure only
+    # TODO test wrong args.end
 
 
 if __name__ == '__main__':

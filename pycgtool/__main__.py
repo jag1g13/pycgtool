@@ -5,6 +5,7 @@ import cProfile
 import logging
 import pathlib
 import sys
+import typing
 
 import tqdm
 
@@ -16,108 +17,106 @@ from .forcefield import ForceField
 logger = logging.getLogger(__name__)
 
 
-def full_run(args):
+def get_output_filepath(ext: str, config) -> pathlib.Path:
+    """Get file path for an output file by extension.
+    
+    :param ext:
+    :param config: Program arguments from argparse
     """
-    Main function of the program PyCGTOOL.
+    out_dir = pathlib.Path(config.out_dir)
+    return out_dir.joinpath(config.output_name + '.' + ext)
+
+
+def measure_bonds(frame: Frame, mapping: typing.Optional[Mapping],
+                  config) -> None:
+    """Measure bonds at the end of a run.
+    
+    :param frame:
+    :param mapping:
+    :param config: Program arguments from argparse
+    """
+    bonds = BondSet(config.bnd, config)
+
+    logger.info("Bond measurements will be made")
+    bonds.apply(frame)
+
+    if config.map and config.xtc:
+        # Only perform Boltzmann Inversion if we have a mapping and a trajectory.
+        # Otherwise we get infinite force constants.
+        logger.info("Beginning Boltzmann Inversion")
+        bonds.boltzmann_invert(progress=(not config.quiet))
+
+        if config.output_forcefield:
+            logger.info("Creating GROMACS forcefield directory")
+            out_dir = pathlib.Path(config.out_dir)
+            forcefield = ForceField(config.output_name, dir_path=out_dir)
+            forcefield.write(config.output_name, mapping, bonds)
+            logger.info("GROMACS forcefield directory created")
+
+        else:
+            bonds.write_itp(get_output_filepath('itp', config),
+                            mapping=mapping)
+
+    if config.dump_measurements:
+        logger.info("Dumping bond measurements to file")
+        bonds.dump_values(config.dump_n_values)
+
+
+def mapping_loop(frame: Frame, config) -> typing.Tuple[Frame, Mapping]:
+    """Perform mapping loop over input trajectory.
+    
+    :param frame:
+    :param config: Program arguments from argparse
+    """
+    logger.info("Mapping will be performed")
+    mapping = Mapping(config.map, config, itp_filename=config.itp)
+
+    cg_frame = mapping.apply(frame)
+    cg_frame.save(get_output_filepath('gro', config))
+
+    logger.info("Beginning analysis of %d frames", config.end - config.begin)
+
+    if config.xtc:
+        # Main loop - perform mapping on every frame in trajectory
+        for _ in tqdm.trange(config.begin, config.end):
+            frame.next_frame()
+            mapping.apply(frame, cg_frame=cg_frame)
+
+    return cg_frame, mapping
+
+
+def full_run(config):
+    """Main function of the program PyCGTOOL.
 
     Performs the complete AA->CG mapping and outputs a files dependent on given input.
 
-    Steps:
-    - if bondset
-      - build it
-    - if mapping
-      - build it
-      - map frame and output
-    - if bondset and not xtc
-      - measure bonds
-
-    - main loop
-      - if mapping
-        - map frame
-
-    - if bondset
-      - measure bonds
-      - if map and xtc
-        - boltzman inversion
-
-    :param args: Program arguments from argparse
+    :param config: Program arguments from argparse
     """
+    frame = Frame(
+        topology_file=config.gro,
+        trajectory_file=config.xtc,  # May be None
+        frame_start=config.begin)
 
-    # Temporary shim while config options are refactored
-    config = args
+    try:
+        config.end = min(config.end, frame.numframes)
 
-    frame = Frame(topology_file=args.gro,
-                  trajectory_file=args.xtc,  # May be None
-                  frame_start=args.begin)
-    if args.end is None:
-        args.end = frame.numframes
+    except TypeError:
+        # Value of args.end was None
+        config.end = frame.numframes
 
-    out_dir = pathlib.Path(args.out_dir)
-    out_gro_file = out_dir.joinpath(config.output_name + ".gro")
-    out_xtc_file = out_dir.joinpath(config.output_name + ".xtc")
-    out_itp_file = out_dir.joinpath(config.output_name + ".itp")
-
-    if args.bnd:
-        logger.info("Bond measurements will be made")
-        bonds = BondSet(args.bnd, config)
-
-    else:
-        logger.info("Bond measurements will not be made")
-
-    if args.map:
-        logger.info("Mapping will be performed")
-
-        mapping = Mapping(args.map, config, itp_filename=args.itp)
-        cg_frame = mapping.apply(frame)
-        cg_frame.save(out_gro_file)
+    if config.map:
+        cg_frame, mapping = mapping_loop(frame, config)
 
     else:
         logger.info("Mapping will not be performed")
+        mapping = None
         cg_frame = frame
 
-    # Only measure bonds from GRO frame if no XTC is provided
-    # Allows the user to get a topology from a single snapshot
-    if args.bnd and args.xtc is None:
-        bonds.apply(cg_frame)
+    if config.output_xtc:
+        cg_frame.save(get_output_filepath('xtc', config))
 
-    logger.info("Beginning analysis of %d frames", args.end - args.begin)
-
-    # Main loop - perform mapping and measurement on every frame in XTC
-    for _ in tqdm.trange(args.begin, args.end):
-        if not frame.next_frame():
-            break  # If we run out of frames before args.end
-
-        if args.map:
-            cgframe = mapping.apply(frame, cg_frame=cg_frame)
-
-            if config.output_xtc:
-                cgframe.save(out_xtc_file)
-
-        else:
-            cg_frame = frame
-
-    if args.bnd:
-        bonds.apply(cg_frame)
-
-        if args.map and args.xtc:
-            # Only perform Boltzmann Inversion if we have a mapping and a trajectory.
-            # Otherwise we get infinite force constants.
-
-            logger.info("Beginning Boltzmann Inversion")
-            bonds.boltzmann_invert(progress=(not args.quiet))
-
-            if config.output_forcefield:
-                logger.info("Creating GROMACS forcefield directory")
-                forcefield = ForceField(config.output_name, dir_path=out_dir)
-                forcefield.write(config.output_name, mapping, bonds)
-                logger.info("GROMACS forcefield directory created")
-
-            elif config.xtc:
-                bonds.write_itp(out_itp_file, mapping=mapping)
-
-        if config.dump_measurements:
-            logger.info("Dumping bond measurements to file")
-            bonds.dump_values(config.dump_n_values)
+    if config.bnd:
+        measure_bonds(cg_frame, mapping, config)
 
 
 def parse_arguments(arg_list):
