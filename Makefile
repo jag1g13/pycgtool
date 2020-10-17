@@ -10,7 +10,7 @@ cov:
 .PHONY: lint
 lint:
 # Lint using only pyflakes - checks for actual errors
-	poetry run prospector --strictness veryhigh --tool pyflakes
+	poetry run prospector --strictness veryhigh --test-warnings --tool pyflakes
 # Lint using range of tools, but don't fail the build if we get warnings
 	poetry run prospector --strictness veryhigh --test-warnings --member-warnings --max-line-length 120 --zero-exit
 

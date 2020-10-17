@@ -19,12 +19,11 @@ logger = logging.getLogger(__name__)
 
 class ArgumentValidationError(ValueError):
     """Exception raised for invalid combinations of command line arguments."""
-    pass
 
 
 def get_output_filepath(ext: str, config) -> pathlib.Path:
     """Get file path for an output file by extension.
-    
+
     :param ext:
     :param config: Program arguments from argparse
     """
@@ -35,7 +34,7 @@ def get_output_filepath(ext: str, config) -> pathlib.Path:
 def measure_bonds(frame: Frame, mapping: typing.Optional[Mapping],
                   config) -> None:
     """Measure bonds at the end of a run.
-    
+
     :param frame:
     :param mapping:
     :param config: Program arguments from argparse
@@ -69,7 +68,7 @@ def measure_bonds(frame: Frame, mapping: typing.Optional[Mapping],
 
 def mapping_loop(frame: Frame, config) -> typing.Tuple[Frame, Mapping]:
     """Perform mapping loop over input trajectory.
-    
+
     :param frame:
     :param config: Program arguments from argparse
     """
@@ -212,9 +211,9 @@ def parse_arguments(arg_list):
 
     try:
         args = validate_arguments(args)
-    
+
     except ArgumentValidationError as exc:
-        parser.error(exc.message)
+        parser.error(exc)
 
     return args
 
