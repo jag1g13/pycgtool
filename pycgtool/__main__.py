@@ -63,7 +63,7 @@ def measure_bonds(frame: Frame, mapping: typing.Optional[Mapping],
 
     if config.dump_measurements:
         logger.info("Dumping bond measurements to file")
-        bonds.dump_values(config.dump_n_values)
+        bonds.dump_values(config.dump_n_values, config.out_dir)
 
 
 def mapping_loop(frame: Frame, config) -> typing.Tuple[Frame, Mapping]:
