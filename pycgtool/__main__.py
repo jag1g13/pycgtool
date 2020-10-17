@@ -17,6 +17,11 @@ from .forcefield import ForceField
 logger = logging.getLogger(__name__)
 
 
+class ArgumentValidationError(ValueError):
+    """Exception raised for invalid combinations of command line arguments."""
+    pass
+
+
 def get_output_filepath(ext: str, config) -> pathlib.Path:
     """Get file path for an output file by extension.
     
@@ -203,17 +208,22 @@ def parse_arguments(arg_list):
                              help="Profile performance")
     # yapf: enable
 
-    return validate_arguments(parser, arg_list)
-
-
-def validate_arguments(parser, arg_list):
-    """Check that arguments are not contradictory and modify where necessary.
-
-    :param parser: ArgumentParser which determines arguments
-    :param arg_list: List of arguments from command line
-    """
     args = parser.parse_args(arg_list)
 
+    try:
+        args = validate_arguments(args)
+    
+    except ArgumentValidationError as exc:
+        parser.error(exc.message)
+
+    return args
+
+
+def validate_arguments(args):
+    """Check that arguments are not contradictory and modify where necessary.
+
+    :param args: Parsed arguments from ArgumentParser
+    """
     if not args.dump_measurements:
         args.dump_measurements = bool(args.bnd) and not bool(args.map)
 
@@ -221,7 +231,7 @@ def validate_arguments(parser, arg_list):
         args.map_only = not bool(args.bnd)
 
     if not args.map and not args.bnd:
-        parser.error("One or both of -m and -b is required.")
+        raise ArgumentValidationError("One or both of -m and -b is required.")
 
     return args
 

@@ -29,7 +29,8 @@ def get_args(name, out_dir, extra: typing.Optional[typing.Mapping] = None):
         for key, value in extra.items():
             setattr(parsed_args, key, value)
 
-    return parsed_args
+    # Re-validate after manual changes
+    return main.validate_arguments(parsed_args)
 
 
 class PycgtoolTest(unittest.TestCase):
@@ -73,9 +74,6 @@ class PycgtoolTest(unittest.TestCase):
                     topology_file=self.data_dir.joinpath('sugar_out.gro')))
 
     def test_full(self):
-        base_dir = pathlib.Path(__file__).absolute().parent
-        data_dir = base_dir.joinpath('data')
-
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = pathlib.Path(tmpdir)
             args = get_args('sugar', tmp_path)
@@ -85,21 +83,18 @@ class PycgtoolTest(unittest.TestCase):
             self.assertTrue(
                 util.cmp_file_whitespace_float(
                     tmp_path.joinpath("out.itp"),
-                    data_dir.joinpath("sugar_out.itp"),
+                    self.data_dir.joinpath("sugar_out.itp"),
                     rtol=0.001,
                     verbose=True))
 
             self.assertTrue(
                 util.compare_trajectories(
-                    data_dir.joinpath('sugar_out.gro'),
+                    self.data_dir.joinpath('sugar_out.gro'),
                     tmp_path.joinpath('out.gro'),
-                    topology_file=data_dir.joinpath('sugar_out.gro'),
+                    topology_file=self.data_dir.joinpath('sugar_out.gro'),
                     rtol=0.001))
 
     def test_full_no_traj(self):
-        base_dir = pathlib.Path(__file__).absolute().parent
-        data_dir = base_dir.joinpath('data')
-
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = pathlib.Path(tmpdir)
             args = get_args('sugar', tmp_path, extra={
@@ -112,13 +107,49 @@ class PycgtoolTest(unittest.TestCase):
 
             self.assertTrue(
                 util.compare_trajectories(
-                    data_dir.joinpath('sugar_out.gro'),
+                    self.data_dir.joinpath('sugar_out.gro'),
                     tmp_path.joinpath('out.gro'),
-                    topology_file=data_dir.joinpath('sugar_out.gro'),
+                    topology_file=self.data_dir.joinpath('sugar_out.gro'),
                     rtol=0.001))
 
+    def test_measure_only(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+            args = get_args('sugar', tmp_path, extra={
+                'map': None,
+                'xtc': None,
+            })
+
+            main.full_run(args)
+
+            # Does not produce itp file
+            self.assertFalse(tmp_path.joinpath('out.itp').exists())
+
+    def test_forcefield(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+            args = get_args('sugar',
+                            tmp_path,
+                            extra={
+                                'output_forcefield': True,
+                            })
+
+            main.full_run(args)
+
+            # Does not produce itp file
+            self.assertFalse(tmp_path.joinpath('out.itp').exists())
+
+            out_ff_dir = tmp_path.joinpath('ffout.ff')
+            self.assertTrue(out_ff_dir.is_dir())
+
+            # Compare all files in ffout.ff to reference versions
+            for out_file in out_ff_dir.iterdir():
+                ref_file = self.data_dir.joinpath(out_file)
+
+                self.assertTrue(
+                    util.cmp_file_whitespace_float(ref_file, out_file))
+
     # TODO more tests
-    # TODO test measure only
     # TODO test wrong args.end
 
 
