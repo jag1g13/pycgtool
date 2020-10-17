@@ -125,6 +125,16 @@ class PycgtoolTest(unittest.TestCase):
             # Does not produce itp file
             self.assertFalse(tmp_path.joinpath('out.itp').exists())
 
+            # Check bond dump files against reference
+            for bond_type in ['length', 'angle', 'dihedral']:
+                out_file = tmp_path.joinpath(f'ALLA_{bond_type}.dat')
+                self.assertTrue(out_file.exists())
+
+                self.assertTrue(util.cmp_file_whitespace_float(
+                    self.data_dir.joinpath(f'ALLA_{bond_type}_one.dat'),
+                    out_file
+                ))
+
     def test_forcefield(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = pathlib.Path(tmpdir)
