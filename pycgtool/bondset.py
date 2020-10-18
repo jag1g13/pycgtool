@@ -53,9 +53,6 @@ class Bond:
         self._func_form = func_form
         self.gromacs_type_id = func_form.gromacs_type_id_by_natoms(len(atoms))
 
-    def __len__(self) -> int:
-        return len(self.atoms)
-
     def __iter__(self):
         return iter(self.atoms)
 
@@ -408,7 +405,7 @@ class BondSet:
             ret_lines.append("\n[ atoms ]")
 
             for i, bead in enumerate(mapping[mol], start=1):
-                #                 atnum   type resnum resname atname c-group charge (mass)
+                # atnum type resnum resname atname c-group charge (mass)
                 if isinstance(bead, VirtualMap):
                     ret_lines.append(atom_template["mass"].format(
                         i, bead.type, 1, mol, bead.name, i, bead.charge,

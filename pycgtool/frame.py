@@ -139,14 +139,18 @@ class Frame:
 
     def add_frame_to_trajectory(self) -> None:
         xyz = np.array([atom.coords for atom in self._topology.atoms])
+
+        optional_values = {
+            attr: None if getattr(self, attr) is None else [getattr(self, attr)]
+            for attr in {'time', 'unitcell_lengths', 'unitcell_angles'}
+        }
+
         new_frame = mdtraj.Trajectory(xyz,
                                       topology=self._topology,
-                                      time=[self.time],
-                                      unitcell_lengths=[self.unitcell_lengths],
-                                      unitcell_angles=[self.unitcell_angles])
-        
+                                      **optional_values)
+
         if hasattr(self, '_trajectory'):
             self._trajectory += new_frame
-        
+
         else:
             self._trajectory = new_frame
