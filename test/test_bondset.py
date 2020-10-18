@@ -192,9 +192,29 @@ class BondSetTest(unittest.TestCase):
         self.assertTrue(cmp_file_whitespace_float('sugar_out.itp', 'test/data/sugar_out.itp',
                                                   rtol=0.005, verbose=True))
 
+    def test_full_itp_vsites(self):
+        """Test full operation to output of .itp file for molecule with vsites."""
+        options = DummyOptions()
+        options.generate_angles = False
+
+        measure = BondSet('test/data/martini3/naphthalene.bnd', options)
+        frame = Frame('test/data/martini3/naphthalene.gro')
+        mapping = Mapping('test/data/martini3/naphthalene.map', options)
+        cg_frame = mapping.apply(frame)
+
+        measure.apply(cg_frame)
+        measure.boltzmann_invert()
+        measure.write_itp('naphthalene_out.itp', mapping)
+
+        self.assertTrue(
+            cmp_file_whitespace_float('naphthalene_out.itp',
+                                      'test/data/martini3/naphthalene_out.itp',
+                                      rtol=0.005,
+                                      verbose=True))
+
     def test_duplicate_atoms_in_bond(self):
         with self.assertRaises(ValueError):
-            bondset = BondSet('test/data/duplicate_atoms.bnd', DummyOptions)
+            _ = BondSet('test/data/duplicate_atoms.bnd', DummyOptions)
 
     def test_dump_bonds(self):
         measure = BondSet('test/data/sugar.bnd', DummyOptions)

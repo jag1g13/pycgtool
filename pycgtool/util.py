@@ -171,6 +171,7 @@ def sliding(vals: typing.Iterable):
         yield (prev, current, nxt)
         prev = current
         current = nxt
+
     yield (prev, current, None)
 
 
@@ -238,12 +239,10 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
         ref_toks = ref_line.split()
         test_toks = test_line.split()
 
-        if len(ref_toks) != len(test_toks):
-            diff_lines.append((i, ref_line, test_line))
-
-        # Check for float comparison
-        for ref_tok, test_tok in zip(map(number_or_string, ref_toks),
-                                     map(number_or_string, test_toks)):
+        # Check for float comparison of tokens on line
+        for ref_tok, test_tok in itertools.zip_longest(
+                map(number_or_string, ref_toks),
+                map(number_or_string, test_toks)):
             if ref_tok != test_tok:
                 try:
                     if abs(ref_tok - test_tok) > abs(ref_tok) * rtol:

@@ -1,0 +1,9 @@
+[ NAPH ]
+R1 R2  ; around outside
+R2 R5
+R5 R4
+R4 R1
+R1 R5  ; across diagonal
+
+; disabled because we use a single frame for testing
+; R2 R1 R5 R4  ; dihedral along diagonal

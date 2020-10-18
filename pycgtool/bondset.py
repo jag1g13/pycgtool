@@ -7,6 +7,7 @@ BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a sin
 import itertools
 import logging
 import math
+import pathlib
 import typing
 
 import numpy as np
@@ -51,9 +52,6 @@ class Bond:
 
         self._func_form = func_form
         self.gromacs_type_id = func_form.gromacs_type_id_by_natoms(len(atoms))
-
-    def __len__(self) -> int:
-        return len(self.atoms)
 
     def __iter__(self):
         return iter(self.atoms)
@@ -407,7 +405,7 @@ class BondSet:
             ret_lines.append("\n[ atoms ]")
 
             for i, bead in enumerate(mapping[mol], start=1):
-                #                 atnum   type resnum resname atname c-group charge (mass)
+                # atnum type resnum resname atname c-group charge (mass)
                 if isinstance(bead, VirtualMap):
                     ret_lines.append(atom_template["mass"].format(
                         i, bead.type, 1, mol, bead.name, i, bead.charge,
@@ -525,11 +523,19 @@ class BondSet:
             ret_lines.append((len(row) * '{:12.5f}').format(*row))
         return ret_lines
 
-    def dump_values(self, target_number: int = 10000):
+    def dump_values(self, target_number: int = 10000,
+                    output_dir: typing.Optional[typing.Union[pathlib.Path, str]] = None) -> None:
         """Output measured bond values to files for length, angles and dihedrals.
 
         :param int target_number: Approx number of sample measurements to output. If None, all samples will be output.
+        :param output_dir: Directory to write output files to.
         """
+        if output_dir is None:
+            output_dir = '.'
+
+        # Cast to Path type
+        output_dir = pathlib.Path(output_dir)
+
         for mol in self._molecules:
             if mol == 'SOL':
                 continue
@@ -537,21 +543,21 @@ class BondSet:
             bonds = self.get_bond_lengths(mol, with_constr=True)
             if bonds:
                 lines = BondSet._get_lines_for_bond_dump(bonds, target_number)
-                file_write_lines('{0}_length.dat'.format(mol), lines)
+                file_write_lines(output_dir.joinpath(f'{mol}_length.dat'), lines)
 
             bonds = self.get_bond_angles(mol)
             if bonds:
                 lines = BondSet._get_lines_for_bond_dump(bonds,
                                                          target_number,
                                                          rad2deg=True)
-                file_write_lines('{0}_angle.dat'.format(mol), lines)
+                file_write_lines(output_dir.joinpath(f'{mol}_angle.dat'), lines)
 
             bonds = self.get_bond_dihedrals(mol)
             if bonds:
                 lines = BondSet._get_lines_for_bond_dump(bonds,
                                                          target_number,
                                                          rad2deg=True)
-                file_write_lines('{0}_dihedral.dat'.format(mol), lines)
+                file_write_lines(output_dir.joinpath(f'{mol}_dihedral.dat'), lines)
 
     def __len__(self):
         return len(self._molecules)
