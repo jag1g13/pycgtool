@@ -71,6 +71,12 @@ class UtilTest(unittest.TestCase):
         for res, pair in zip(res, sliding(l)):
             self.assertEqual(res, pair)
 
+    def test_sliding_empty(self):
+        """Test that an exception is raised when trying to iterate over empty iterable."""
+        with self.assertRaises(ValueError):
+            for _, _ in sliding([]):
+                pass
+
     def test_transpose_and_sample_no_sample(self):
         l = [(1, 2), (3, 4), (5, 6)]
         l_t = [(1, 3, 5), (2, 4, 6)]
@@ -103,6 +109,13 @@ class UtilTest(unittest.TestCase):
         self.assertTrue(cmp_whitespace_float(ref, test))
         test = ["8.3 1.00 -3.001 0"]
         self.assertTrue(cmp_whitespace_float(ref, test))
+
+    def test_cmp_whitespace_float_diff_lengths(self):
+        """Test that lists of different lengths are considered different."""
+        ref = ['1']
+        test = ['1', '2']
+
+        self.assertFalse(cmp_whitespace_float(ref, test))
 
     def test_circular_mean(self):
         values = np.deg2rad(np.array([-175, 165], dtype=np.float32))
