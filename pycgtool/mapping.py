@@ -417,7 +417,7 @@ class Mapping:
                                                      bmap.weights,
                                                      unitcell_lengths)
 
-        cg_frame.add_frame_to_trajectory()
+        cg_frame.build_trajectory()
 
         return cg_frame
 
@@ -437,7 +437,7 @@ def calc_coords_weight(ref_coords, coords, weights, box=None):
         vectors -= box * np.rint(vectors / box)
 
     # Reshape weights array to match atom positions
-    weights_t = weights[np.newaxis].T
+    weights_t = weights[np.newaxis, np.newaxis].T
     result = np.sum(weights_t * vectors, axis=0)
     result += ref_coords
     return result

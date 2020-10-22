@@ -160,21 +160,25 @@ class Frame:
         """
         self._trajectory.save(str(filename), **kwargs)
 
-    def add_frame_to_trajectory(self) -> None:
-        """Add a new trajectory frame from the values stored as attributes on this frame."""
+    def build_trajectory(self) -> None:
+        """Build an MDTraj trajectory from atom coordinates and the values stored as attributes on this frame."""
         xyz = np.array([atom.coords for atom in self._topology.atoms])
 
+        # We currently have axes: 0 - each atom, 1 - timestep, 2 - xyz coords
+        # Need to convert to axes: 0 - timestep, 1 - each atom, 2 - xyz coords
+        xyz = xyz.swapaxes(0, 1)
+
         optional_values = {
-            attr: None if getattr(self, attr) is None else [getattr(self, attr)]
+            attr: getattr(self, attr, None)
             for attr in {'time', 'unitcell_lengths', 'unitcell_angles'}
         }  # yapf: disable
 
-        new_frame = mdtraj.Trajectory(xyz,
-                                      topology=self._topology,
-                                      **optional_values)
+        new_trajectory = mdtraj.Trajectory(xyz,
+                                           topology=self._topology,
+                                           **optional_values)
 
         if hasattr(self, '_trajectory'):
-            self._trajectory += new_frame
+            self._trajectory += new_trajectory
 
         else:
-            self._trajectory = new_frame
+            self._trajectory = new_trajectory
