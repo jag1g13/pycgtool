@@ -112,7 +112,7 @@ class FrameTest(unittest.TestCase):
 
     def test_frame_read_xtc_numframes(self):
         frame = Frame('test/data/water.gro', 'test/data/water.xtc')
-        self.assertEqual(10, frame.numframes)
+        self.assertEqual(11, frame.n_frames)
 
     def test_frame_read_xtc(self):
         frame = Frame('test/data/water.gro', 'test/data/water.xtc')

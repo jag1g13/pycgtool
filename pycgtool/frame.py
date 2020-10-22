@@ -136,10 +136,9 @@ class Frame:
         return self._topology.n_atoms
 
     @property
-    def numframes(self) -> int:
-        """Number of frames in the frame trajectory."""
-        # The MDTraj trajectory has the topology file as frame 0
-        return self._trajectory.n_frames - 1
+    def n_frames(self) -> int:
+        """Number of frames in the trajectory."""
+        return self._trajectory.n_frames
 
     def add_residue(self,
                     name,
