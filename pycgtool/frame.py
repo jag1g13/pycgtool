@@ -52,7 +52,7 @@ class Frame:
                     except ValueError as exc:
                         raise NonMatchingSystemError from exc
 
-                self._load_trajectory_frame(self.frame_number)
+                self._load_trajectory()
 
             except OSError as exc:
                 if 'no loader' in str(exc):
@@ -64,39 +64,24 @@ class Frame:
             # No topology - we're probably building a CG frame
             self._topology = mdtraj.Topology()
 
-    def _load_trajectory_frame(self, frame_number) -> None:
-        """Load a trajectory frame into the frame attributes."""
+    def _load_trajectory(self) -> None:
+        """Load a trajectory into the frame attributes."""
         # Improve performance by not double indexing repeatedly
         traj = self._trajectory
 
-        xyz_frame = traj.xyz[frame_number]
         for atom in self._topology.atoms:
-            atom.coords = xyz_frame[atom.index]
+            atom.coords = traj.xyz[:, atom.index]
 
         # TODO handle non-cubic boxes
         try:
-            self.unitcell_lengths = traj.unitcell_lengths[frame_number]
-            self.unitcell_angles = traj.unitcell_angles[frame_number]
+            self.unitcell_lengths = traj.unitcell_lengths
+            self.unitcell_angles = traj.unitcell_angles
 
         except TypeError:
             self.unitcell_lengths = None
             self.unitcell_angles = None
 
-        self.time = traj.time[frame_number]
-
-    def next_frame(self) -> bool:
-        """Load the next trajectory frame into the frame attributes.
-
-        :return: Loading next frame was successful?
-        """
-        try:
-            self._load_trajectory_frame(self.frame_number + 1)
-
-        except IndexError:
-            return False
-
-        self.frame_number += 1
-        return True
+        self.time = traj.time
 
     @property
     def residues(self):
