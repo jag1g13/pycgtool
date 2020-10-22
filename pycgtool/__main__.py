@@ -7,8 +7,6 @@ import pathlib
 import sys
 import typing
 
-import tqdm
-
 from .frame import Frame
 from .mapping import Mapping
 from .bondset import BondSet
@@ -76,15 +74,7 @@ def mapping_loop(frame: Frame, config) -> typing.Tuple[Frame, Mapping]:
     mapping = Mapping(config.map, config, itp_filename=config.itp)
 
     cg_frame = mapping.apply(frame)
-    cg_frame.save(get_output_filepath('gro', config))
-
-    logger.info("Beginning analysis of %d frames", config.end - config.begin)
-
-    if config.xtc:
-        # Main loop - perform mapping on every frame in trajectory
-        for _ in tqdm.trange(config.begin, config.end):
-            frame.next_frame()
-            mapping.apply(frame, cg_frame=cg_frame)
+    cg_frame.save(get_output_filepath('gro', config), frame_number=0)
 
     return cg_frame, mapping
 
@@ -99,14 +89,8 @@ def full_run(config):
     frame = Frame(
         topology_file=config.gro,
         trajectory_file=config.xtc,  # May be None
-        frame_start=config.begin)
-
-    try:
-        config.end = min(config.end, frame.numframes)
-
-    except TypeError:
-        # Value of args.end was None
-        config.end = frame.numframes
+        frame_start=config.begin,
+        frame_end=config.end)
 
     if config.map:
         cg_frame, mapping = mapping_loop(frame, config)

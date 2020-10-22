@@ -378,7 +378,6 @@ class Mapping:
             # Frame needs initialising
             cg_frame = self._cg_frame_setup(frame.residues)
 
-        cg_frame.frame_number = frame.frame_number
         cg_frame.time = frame.time
         cg_frame.unitcell_lengths = frame.unitcell_lengths
         cg_frame.unitcell_angles = frame.unitcell_angles

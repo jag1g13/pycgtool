@@ -36,9 +36,15 @@ class Frame:
     def __init__(self,
                  topology_file: typing.Optional[str] = None,
                  trajectory_file: typing.Optional[str] = None,
-                 frame_start: int = 0):
-        self.frame_number = frame_start
+                 frame_start: int = 0,
+                 frame_end: typing.Optional[int] = None):
+        """Load a simulation trajectory.
 
+        :param topology_file: File containing system topology
+        :param trajectory_file: File containing simulation trajectory
+        :param frame_start: First frame of trajectory to use
+        :param frame_end: Last frame of trajectory to use
+        """
         if topology_file:
             try:
                 self._trajectory = mdtraj.load(topology_file)
@@ -46,8 +52,11 @@ class Frame:
 
                 if trajectory_file:
                     try:
-                        self._trajectory = mdtraj.load(trajectory_file,
-                                                       top=self._topology)
+                        self._trajectory = mdtraj.load(
+                            trajectory_file,
+                            top=self._topology)
+
+                        self._slice_trajectory(frame_start, frame_end)
 
                     except ValueError as exc:
                         raise NonMatchingSystemError from exc
@@ -63,6 +72,26 @@ class Frame:
         else:
             # No topology - we're probably building a CG frame
             self._topology = mdtraj.Topology()
+
+    def _slice_trajectory(
+            self,
+            frame_start: int = 0,
+            frame_end: typing.Optional[int] = None) -> mdtraj.Trajectory:
+        """Slice input simulation trajectory to a subset of frames.
+
+        :param frame_start: First frame of trajectory to use
+        :param frame_end: Last frame of trajectory to use
+        """
+        traj = self._trajectory
+
+        if frame_start != 0:
+            if frame_end is not None:
+                traj = traj[frame_start:frame_end]
+
+            else:
+                traj = traj[frame_start:]
+
+        return traj
 
     def _load_trajectory(self) -> None:
         """Load a trajectory into the frame attributes."""
@@ -153,12 +182,19 @@ class Frame:
 
         return self._topology.add_atom(name, element, residue)
 
-    def save(self, filename, **kwargs) -> None:
+    def save(self,
+             filename: str,
+             frame_number: typing.Optional[int] = None,
+             **kwargs) -> None:
         """Write trajctory to file.
 
         :param filename: Name of output file
         """
-        self._trajectory.save(str(filename), **kwargs)
+        traj = self._trajectory
+        if frame_number is not None:
+            traj = traj.slice(frame_number)
+
+        traj.save(str(filename), **kwargs)
 
     def build_trajectory(self) -> None:
         """Build an MDTraj trajectory from atom coordinates and the values stored as attributes on this frame."""
