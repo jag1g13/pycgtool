@@ -1,9 +1,8 @@
 [![Build Status](https://travis-ci.org/jag1g13/pycgtool.svg?branch=master)](https://travis-ci.org/jag1g13/pycgtool) [![Documentation Status](https://readthedocs.org/projects/pycgtool/badge/?version=master)](http://pycgtool.readthedocs.io/en/master/?badge=master) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.259330.svg)](https://doi.org/10.5281/zenodo.259330)
 
-
 # PyCGTOOL
-Please see http://pycgtool.readthedocs.io/en/master/ for full documentation.
 
+Please see http://pycgtool.readthedocs.io/en/master/ for full documentation.
 
 A Python program for automated generation of coarse-grained molecular dynamics models from atomistic simulation trajectories.
 
@@ -22,7 +21,23 @@ This version has several advantages over the original C++ implementation CGTOOL:
 
 If you experience problems or wish to see a new feature added please [file an issue](https://github.com/jag1g13/pycgtool/issues).
 
-If you find this useful, please cite as : `Graham, J. (2017). PyCGTOOL, https://doi.org/10.5281/zenodo.259330`
+If you find PyCGTOOL useful, please cite our JCIM paper https://doi.org/10.1021/acs.jcim.7b00096.
+
+```bibtex
+@article{Graham2017,
+   author = {James A. Graham and Jonathan W. Essex and Syma Khalid},
+   doi = {10.1021/acs.jcim.7b00096},
+   issn = {1549-9596},
+   issue = {4},
+   journal = {Journal of Chemical Information and Modeling},
+   month = {4},
+   pages = {650-656},
+   title = {PyCGTOOL: Automated Generation of Coarse-Grained Molecular Dynamics Models from Atomistic Trajectories},
+   volume = {57},
+   url = {https://pubs.acs.org/doi/10.1021/acs.jcim.7b00096},
+   year = {2017},
+}
+```
 
 ## Usage
 Input to PyCGTOOL is GROMACS GRO and XTC files, along with two custom files: MAP and BND.  These files provide the atomistic-to-CG mapping and bonded topology respectively.  Example files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/master/test/data) directory.  The format of these files is described in the [full documentation](http://pycgtool.readthedocs.io/en/master/).
