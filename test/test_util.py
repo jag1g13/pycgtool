@@ -172,16 +172,14 @@ class CompareTrajectoryTest(unittest.TestCase):
     def test_compare_trajectory_single(self):
         self.assertTrue(util.compare_trajectories(
             'test/data/sugar.gro',
-            'test/data/sugar.gro',
-            topology_file='test/data/sugar.gro'
+            'test/data/sugar.gro'
         ))
 
     def test_compare_trajectory_single_false(self):
         with self.assertRaises(ValueError):
             util.compare_trajectories(
                 'test/data/sugar.gro',
-                'test/data/water.gro',
-                topology_file='test/data/sugar.gro'
+                'test/data/water.gro'
             )
 
     def test_compare_trajectory(self):

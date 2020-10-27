@@ -1,6 +1,4 @@
-"""
-This module contains some general purpose utility functions used in PyCGTOOL.
-"""
+"""This module contains some general purpose utility functions used in PyCGTOOL."""
 
 import filecmp
 import functools
@@ -293,21 +291,37 @@ def any_starts_with(iterable: typing.Iterable, char: str) -> bool:
     return any(map(recurse, iterable))
 
 
-def compare_trajectories(*trajectory_files: typing.Iterable[typing.Union[
-    str, pathlib.Path]],
-                         topology_file: typing.Union[str, pathlib.Path],
-                         rtol: float = 0.001) -> bool:
+def load_optional_topology(
+    trajfile: typing.Union[str, pathlib.Path],
+    topfile: typing.Optional[typing.Union[str, pathlib.Path]] = None
+) -> mdtraj.Trajectory:
+    """Load an MDTraj trajectory with or without a separate topology file.
+
+    :param trajfile: Trajectory file
+    :param topfile: Corresponding topology file
+    :return: MDTraj trajectory
+    """
+    if topfile is None:
+        return mdtraj.load(str(trajfile))
+
+    return mdtraj.load(str(trajfile), top=str(topfile))
+
+
+def compare_trajectories(
+        *trajectory_files: typing.Iterable[typing.Union[str, pathlib.Path]],
+        topology_file: typing.Optional[typing.Union[str, pathlib.Path]] = None,
+        rtol: float = 0.001) -> bool:
     """Compare multiple trajectory files for equality.
-    
+
     :param trajectory_files: Paths of trajectory file to compare
     :param topology_file: Topology file path
     :param coords_only: Only compare coordinates from trajectory - e.g. not box size
     """
-    ref_traj = mdtraj.load(str(trajectory_files[0]), top=str(topology_file))
+    ref_traj = load_optional_topology(trajectory_files[0], topology_file)
 
     for traj_file in trajectory_files[1:]:
         try:
-            traj = mdtraj.load(str(traj_file), top=str(topology_file))
+            traj = load_optional_topology(traj_file, topology_file)
 
         except ValueError as exc:
             raise ValueError('Topology does not match') from exc

@@ -91,7 +91,6 @@ class PycgtoolTest(unittest.TestCase):
                 util.compare_trajectories(
                     self.data_dir.joinpath('sugar_out.gro'),
                     tmp_path.joinpath('out.gro'),
-                    topology_file=self.data_dir.joinpath('sugar_out.gro'),
                     rtol=0.001))
 
     def test_full_no_traj(self):
@@ -109,7 +108,6 @@ class PycgtoolTest(unittest.TestCase):
                 util.compare_trajectories(
                     self.data_dir.joinpath('sugar_out.gro'),
                     tmp_path.joinpath('out.gro'),
-                    topology_file=self.data_dir.joinpath('sugar_out.gro'),
                     rtol=0.001))
 
     def test_measure_only(self):
