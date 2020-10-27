@@ -110,7 +110,7 @@ class MappingTest(unittest.TestCase):
         mapping = Mapping("test/data/two.map", DummyOptions)
         cg_frame = mapping.apply(frame)
 
-        np.testing.assert_allclose(np.array([1.5, 1.5, 1.5]),
+        np.testing.assert_allclose(np.array([[1.5, 1.5, 1.5]]),
                                    cg_frame.residue(0).atom(0).coords)
 
     def test_virtual_mapping_weights_geom(self):
@@ -119,7 +119,7 @@ class MappingTest(unittest.TestCase):
         mapping = Mapping("test/data/martini3/four.map", DummyOptions)
         cg_frame = mapping.apply(frame)
 
-        np.testing.assert_allclose(np.array([2.5, 2.5, 2.5]), 
+        np.testing.assert_allclose(np.array([[2.5, 2.5, 2.5]]), 
                                    cg_frame.residue(0).atom(2).coords)
 
     def test_mapping_weights_mass(self):
@@ -130,7 +130,7 @@ class MappingTest(unittest.TestCase):
         mapping = Mapping("test/data/two.map", options, itp_filename="test/data/two.itp")
         cg_frame = mapping.apply(frame)
 
-        np.testing.assert_allclose(np.array([2., 2., 2.]),
+        np.testing.assert_allclose(np.array([[2., 2., 2.]]),
                                    cg_frame.residue(0).atom(0).coords)
 
     def test_virtual_mapping_weights_mass(self):
@@ -141,7 +141,7 @@ class MappingTest(unittest.TestCase):
         mapping = Mapping("test/data/martini3/four.map", options, itp_filename="test/data/martini3/four.itp")
         cg_frame = mapping.apply(frame)
 
-        np.testing.assert_allclose(np.array([3.0, 3.0, 3.0]),
+        np.testing.assert_allclose(np.array([[3.0, 3.0, 3.0]]),
                                    cg_frame.residue(0).atom(2).coords)
 
     def test_mapping_weights_guess_mass(self):
@@ -152,7 +152,7 @@ class MappingTest(unittest.TestCase):
         mapping = Mapping("test/data/two.map", options)
         cg_frame = mapping.apply(frame)
 
-        np.testing.assert_allclose(np.array([1.922575,  1.922575,  1.922575], dtype=np.float32),
+        np.testing.assert_allclose(np.array([[1.922575,  1.922575,  1.922575]], dtype=np.float32),
                                    cg_frame.residue(0).atom(0).coords, rtol=0.01)
 
     def test_virtual_mapping_weights_guess_mass(self):
@@ -163,7 +163,7 @@ class MappingTest(unittest.TestCase):
         mapping = Mapping("test/data/martini3/four.map", options)
         cg_frame = mapping.apply(frame)
 
-        np.testing.assert_allclose(np.array([2.83337, 2.83337, 2.83337], dtype=np.float32),
+        np.testing.assert_allclose(np.array([[2.83337, 2.83337, 2.83337]], dtype=np.float32),
                                    cg_frame.residue(0).atom(2).coords, rtol=0.01)
 
     def test_mapping_weights_first(self):
@@ -174,7 +174,7 @@ class MappingTest(unittest.TestCase):
         mapping = Mapping("test/data/two.map", options, itp_filename="test/data/two.itp")
         cg_frame = mapping.apply(frame)
 
-        np.testing.assert_allclose(np.array([1., 1., 1.]),
+        np.testing.assert_allclose(np.array([[1., 1., 1.]]),
                                    cg_frame.residue(0).atom(0).coords)
 
     def test_mapping_itp_multi(self):
