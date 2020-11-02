@@ -27,24 +27,25 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Get pip cache dir
-      id: pip-cache
-      run: |
-        echo "::set-output name=dir::$(pip cache dir)"
-
-    - name: pip cache
-      uses: actions/cache@v2
-      with:
-        path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-
-    - name: Install dependencies
+    - name: Install pre-install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install poetry wheel
-        poetry install --extras docs --extras test
+
+    - name: Get venv dir
+      id: venv-cache
+      run: |
+        echo "::set-output name=dir::$(poetry env info -p)"
+
+    - name: Cache venv
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.venv-cache.outputs.dir }}
+        key: ${{ matrix.os }}-${{ matrix.python-version }}-venv-${{ hashFiles('poetry.lock') }}
+
+    - name: Install project dependencies
+      run: |
+        poetry install --no-root --extras docs --extras test
 
     - name: Test with pytest
       run: |
