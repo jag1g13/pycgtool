@@ -5,6 +5,7 @@ Both Frame and Residue are iterable. Residue is indexable with either atom numbe
 """
 
 import logging
+import pathlib
 import typing
 
 import mdtraj
@@ -34,8 +35,10 @@ class NonMatchingSystemError(ValueError):
 class Frame:
     """Load and store data from a simulation trajectory."""
     def __init__(self,
-                 topology_file: typing.Optional[str] = None,
-                 trajectory_file: typing.Optional[str] = None,
+                 topology_file: typing.Optional[typing.Union[pathlib.Path,
+                                                             str]] = None,
+                 trajectory_file: typing.Optional[typing.Union[pathlib.Path,
+                                                               str]] = None,
                  frame_start: int = 0,
                  frame_end: typing.Optional[int] = None):
         """Load a simulation trajectory.
@@ -45,16 +48,15 @@ class Frame:
         :param frame_start: First frame of trajectory to use
         :param frame_end: Last frame of trajectory to use
         """
-        if topology_file:
+        if topology_file is not None:
             try:
-                self._trajectory = mdtraj.load(topology_file)
+                self._trajectory = mdtraj.load(str(topology_file))
                 self._topology = self._trajectory.topology
 
-                if trajectory_file:
+                if trajectory_file is not None:
                     try:
-                        self._trajectory = mdtraj.load(
-                            trajectory_file,
-                            top=self._topology)
+                        self._trajectory = mdtraj.load(str(trajectory_file),
+                                                       top=self._topology)
 
                         self._slice_trajectory(frame_start, frame_end)
 

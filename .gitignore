@@ -15,6 +15,7 @@
 # Development and Testing
 .cache
 .coverage
+.python-version
 /cover/
 /dist/
 /docs/build/

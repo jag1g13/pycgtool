@@ -1,11 +1,14 @@
 import filecmp
 import os
+import pathlib
 import unittest
+import tempfile
 
 import numpy as np
 
 from pycgtool.frame import NonMatchingSystemError, UnsupportedFormatException
 from pycgtool.frame import Frame
+from pycgtool import util
 
 
 def try_remove(filename) -> None:
@@ -18,6 +21,9 @@ def try_remove(filename) -> None:
 
 # TODO add ITP parsing tests
 class FrameTest(unittest.TestCase):
+    base_dir = pathlib.Path(__file__).absolute().parent
+    data_dir = base_dir.joinpath('data')
+
     def check_reference_topology(self, frame, skip_names=True):
         self.assertEqual(663, frame.natoms)
 
@@ -105,10 +111,14 @@ class FrameTest(unittest.TestCase):
 
     def test_frame_output_gro(self):
         frame = Frame('test/data/water.gro')
-        frame.save('water-out.gro')
-        self.assertTrue(filecmp.cmp('test/data/water.gro', 'water-out.gro'))
 
-        try_remove('water-out.gro')
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+
+            frame.save(tmp_path.joinpath('water-out.gro'))
+            self.assertTrue(
+                filecmp.cmp(self.data_dir.joinpath('water.gro'),
+                            tmp_path.joinpath('water-out.gro')))
 
     def test_frame_read_xtc_numframes(self):
         frame = Frame('test/data/water.gro', 'test/data/water.xtc')
@@ -119,11 +129,25 @@ class FrameTest(unittest.TestCase):
 
         self.check_reference_trajectory(frame)
 
-    def test_frame_write_xtc(self):
-        try_remove('water_test2.xtc')
+    def test_frame_accept_path(self):
+        """Test that Frame accepts :class:`pathlib.Path` arguments."""
+        _ = Frame(self.data_dir.joinpath('water.gro'),
+                  self.data_dir.joinpath('water.xtc'))
 
-        frame = Frame('test/data/water.gro', 'test/data/water.xtc')
-        frame.save('water_test2.xtc')
+    def test_frame_write_xtc(self):
+        """Test that :class:`Frame` can save a trajectory file."""
+        frame = Frame(self.data_dir.joinpath('water.gro'),
+                      self.data_dir.joinpath('water.xtc'))
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+
+            frame.save(tmp_path.joinpath('water.xtc'))
+            self.assertTrue(
+                util.compare_trajectories(
+                    self.data_dir.joinpath('water.xtc'),
+                    tmp_path.joinpath('water.xtc'),
+                    topology_file=self.data_dir.joinpath('water.gro')))
 
     def test_raise_nonmatching_system_mdtraj(self):
         with self.assertRaises(NonMatchingSystemError):
