@@ -35,6 +35,13 @@ PyCGTOOL requires Python 3.6 or higher and may be installed using pip:
 pip install pycgtool
 ```
 
+### MDTraj on macOS
+
+On some macOS builds, with some versions of the Clang compiler, MDTraj fails to load GROMACS XTC simulation trajectories.
+If you encounter this issue, try using Conda to install MDTraj.
+
+For more information see this issue: [MDTraj/#1572](https://github.com/mdtraj/mdtraj/issues/1572).
+
 ## Usage
 
 Input to PyCGTOOL is GROMACS GRO and XTC files, along with two custom files: MAP and BND.  These files provide the atomistic-to-CG mapping and bonded topology respectively.  Example files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/master/test/data) directory.  The format of these files is described in the [full documentation](https://pycgtool.readthedocs.io/en/master/index.html).
