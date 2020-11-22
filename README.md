@@ -37,10 +37,10 @@ pip install pycgtool
 
 ### MDTraj on macOS
 
-On some macOS builds, with some versions of the Clang compiler, MDTraj fails to load GROMACS XTC simulation trajectories.
-If you encounter this issue, try using Conda to install MDTraj.
+On some versions macOS, with some versions of the Clang compiler, MDTraj may fail to load GROMACS XTC simulation trajectories.
+If you encounter this issue, make sure you have the latest version of MDTraj.
 
-For more information see this issue: [MDTraj/#1572](https://github.com/mdtraj/mdtraj/issues/1572).
+For more information see [MDTraj/#1572](https://github.com/mdtraj/mdtraj/issues/1572).
 
 ## Usage
 
