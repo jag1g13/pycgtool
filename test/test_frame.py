@@ -1,11 +1,14 @@
 import filecmp
 import os
+import pathlib
 import unittest
+import tempfile
 
 import numpy as np
 
 from pycgtool.frame import NonMatchingSystemError, UnsupportedFormatException
 from pycgtool.frame import Frame
+from pycgtool import util
 
 
 def try_remove(filename) -> None:
@@ -18,6 +21,9 @@ def try_remove(filename) -> None:
 
 # TODO add ITP parsing tests
 class FrameTest(unittest.TestCase):
+    base_dir = pathlib.Path(__file__).absolute().parent
+    data_dir = base_dir.joinpath('data')
+
     def check_reference_topology(self, frame, skip_names=True):
         self.assertEqual(663, frame.natoms)
 
@@ -33,8 +39,8 @@ class FrameTest(unittest.TestCase):
     def check_reference_frame(self, frame):
         self.check_reference_topology(frame)
 
-        atom0_coords = np.array([0.696, 1.330, 1.211])
-        box_vectors = np.array([1.89868, 1.89868, 1.89868])
+        atom0_coords = np.array([[0.696, 1.330, 1.211]])
+        box_vectors = np.array([[1.89868, 1.89868, 1.89868]])
 
         np.testing.assert_allclose(atom0_coords, frame.atom(0).coords)
         np.testing.assert_allclose(box_vectors, frame.unitcell_lengths,
@@ -43,18 +49,38 @@ class FrameTest(unittest.TestCase):
     def check_reference_trajectory(self, frame):
         self.check_reference_topology(frame)
 
-        atom0_coords_array = np.array([[1.176, 1.152, 1.586],
-                                       [1.122, 1.130, 1.534]])
+        atom0_coords = np.array([
+            [1.176     , 1.1520001 , 1.5860001 ],
+            [1.1220001 , 1.13      , 1.534     ],
+            [1.0580001 , 1.1620001 , 1.462     ],
+            [0.91600007, 1.276     , 1.5580001 ],
+            [0.73200005, 1.1240001 , 1.286     ],
+            [0.64000005, 1.2160001 , 1.258     ],
+            [0.632     , 1.312     , 1.2520001 ],
+            [0.606     , 1.284     , 1.246     ],
+            [0.582     , 1.312     , 1.1600001 ],
+            [0.68200004, 1.22      , 1.25      ],
+            [0.69600004, 1.33      , 1.21      ],
+        ], dtype=np.float32)  # yapf: disable
 
-        box_vectors_array = np.array([[1.9052, 1.9052, 1.9052],
-                                      [1.90325272, 1.90325272, 1.90325272]])
+        unitcell_lengths = np.array([
+            [1.9052   , 1.9052   , 1.9052   ],
+            [1.9032527, 1.9032527, 1.9032527],
+            [1.9040661, 1.9040661, 1.9040661],
+            [1.896811 , 1.896811 , 1.896811 ],
+            [1.8985983, 1.8985983, 1.8985983],
+            [1.9033976, 1.9033976, 1.9033976],
+            [1.8904614, 1.8904614, 1.8904614],
+            [1.9013108, 1.9013108, 1.9013108],
+            [1.8946321, 1.8946321, 1.8946321],
+            [1.898091 , 1.898091 , 1.898091 ],
+            [1.898684 , 1.898684 , 1.898684 ],
+        ], dtype=np.float32)  # yapf: disable
 
-        for _, (atom0_coords, box_vectors) in enumerate(
-                zip(atom0_coords_array, box_vectors_array)):
-            np.testing.assert_allclose(atom0_coords, frame.atom(0).coords)
-            np.testing.assert_allclose(box_vectors, frame.unitcell_lengths,
-                                       rtol=1e-4)  # PDB files are f9.3
-            frame.next_frame()
+        np.testing.assert_allclose(atom0_coords, frame.atom(0).coords)
+        np.testing.assert_allclose(unitcell_lengths,
+                                   frame.unitcell_lengths,
+                                   rtol=1e-4)  # PDB files are f9.3
 
     def test_frame_create(self):
         Frame()
@@ -85,25 +111,43 @@ class FrameTest(unittest.TestCase):
 
     def test_frame_output_gro(self):
         frame = Frame('test/data/water.gro')
-        frame.save('water-out.gro')
-        self.assertTrue(filecmp.cmp('test/data/water.gro', 'water-out.gro'))
 
-        try_remove('water-out.gro')
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+
+            frame.save(tmp_path.joinpath('water-out.gro'))
+            self.assertTrue(
+                filecmp.cmp(self.data_dir.joinpath('water.gro'),
+                            tmp_path.joinpath('water-out.gro')))
 
     def test_frame_read_xtc_numframes(self):
         frame = Frame('test/data/water.gro', 'test/data/water.xtc')
-        self.assertEqual(10, frame.numframes)
+        self.assertEqual(11, frame.n_frames)
 
     def test_frame_read_xtc(self):
         frame = Frame('test/data/water.gro', 'test/data/water.xtc')
 
         self.check_reference_trajectory(frame)
 
-    def test_frame_write_xtc(self):
-        try_remove('water_test2.xtc')
+    def test_frame_accept_path(self):
+        """Test that Frame accepts :class:`pathlib.Path` arguments."""
+        _ = Frame(self.data_dir.joinpath('water.gro'),
+                  self.data_dir.joinpath('water.xtc'))
 
-        frame = Frame('test/data/water.gro', 'test/data/water.xtc')
-        frame.save('water_test2.xtc')
+    def test_frame_write_xtc(self):
+        """Test that :class:`Frame` can save a trajectory file."""
+        frame = Frame(self.data_dir.joinpath('water.gro'),
+                      self.data_dir.joinpath('water.xtc'))
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+
+            frame.save(tmp_path.joinpath('water.xtc'))
+            self.assertTrue(
+                util.compare_trajectories(
+                    self.data_dir.joinpath('water.xtc'),
+                    tmp_path.joinpath('water.xtc'),
+                    topology_file=self.data_dir.joinpath('water.gro')))
 
     def test_raise_nonmatching_system_mdtraj(self):
         with self.assertRaises(NonMatchingSystemError):

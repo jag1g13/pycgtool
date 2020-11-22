@@ -2,6 +2,8 @@ import unittest
 
 import math
 import os
+import pathlib
+import tempfile
 
 from pycgtool.bondset import BondSet
 from pycgtool.frame import Frame
@@ -31,6 +33,9 @@ class DummyBond:
 
 # TODO add setup and teardown to put all files in a tmp directory
 class BondSetTest(unittest.TestCase):
+    base_dir = pathlib.Path(__file__).absolute().parent
+    data_dir = base_dir.joinpath('data')
+
     # Columns are: eqm value, standard fc, MARTINI defaults fc
     invert_test_ref_data = [
         ( 0.220474419132,  72658.18163, 1250),
@@ -104,8 +109,6 @@ class BondSetTest(unittest.TestCase):
         mapping = Mapping('test/data/sugar.map', DummyOptions)
 
         cg_frame = mapping.apply(frame)
-        while frame.next_frame():
-            cg_frame = mapping.apply(frame, cg_frame=cg_frame)
 
         measure.apply(cg_frame)
         measure.boltzmann_invert()
@@ -121,8 +124,6 @@ class BondSetTest(unittest.TestCase):
         mapping = Mapping('test/data/sugar.map', DefaultOptions)
 
         cg_frame = mapping.apply(frame)
-        while frame.next_frame():
-            cg_frame = mapping.apply(frame, cg_frame=cg_frame)
 
         measure.apply(cg_frame)
         measure.boltzmann_invert()
@@ -140,8 +141,6 @@ class BondSetTest(unittest.TestCase):
         mapping = Mapping('test/data/sugar.map', DummyOptions)
 
         cg_frame = mapping.apply(frame)
-        while frame.next_frame():
-            cg_frame = mapping.apply(frame, cg_frame=cg_frame)
 
         measure.apply(cg_frame)
         measure.boltzmann_invert()
@@ -180,17 +179,23 @@ class BondSetTest(unittest.TestCase):
         measure = BondSet('test/data/sugar.bnd', DummyOptions)
         frame = Frame('test/data/sugar.gro', 'test/data/sugar.xtc')
         mapping = Mapping('test/data/sugar.map', DummyOptions)
-        cg_frame = mapping.apply(frame)
 
-        while frame.next_frame():
-            cg_frame = mapping.apply(frame, cg_frame=cg_frame)
+        cg_frame = mapping.apply(frame)
 
         measure.apply(cg_frame)
         measure.boltzmann_invert()
-        measure.write_itp('sugar_out.itp', mapping)
 
-        self.assertTrue(cmp_file_whitespace_float('sugar_out.itp', 'test/data/sugar_out.itp',
-                                                  rtol=0.005, verbose=True))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+
+            measure.write_itp(tmp_path.joinpath('sugar_out.itp'), mapping)
+
+            self.assertTrue(
+                cmp_file_whitespace_float(
+                    tmp_path.joinpath('sugar_out.itp'),
+                    self.data_dir.joinpath('sugar_out.itp'),
+                    rtol=0.005,
+                    verbose=True))
 
     def test_full_itp_vsites(self):
         """Test full operation to output of .itp file for molecule with vsites."""
@@ -200,17 +205,23 @@ class BondSetTest(unittest.TestCase):
         measure = BondSet('test/data/martini3/naphthalene.bnd', options)
         frame = Frame('test/data/martini3/naphthalene.gro')
         mapping = Mapping('test/data/martini3/naphthalene.map', options)
+
         cg_frame = mapping.apply(frame)
 
         measure.apply(cg_frame)
         measure.boltzmann_invert()
-        measure.write_itp('naphthalene_out.itp', mapping)
 
-        self.assertTrue(
-            cmp_file_whitespace_float('naphthalene_out.itp',
-                                      'test/data/martini3/naphthalene_out.itp',
-                                      rtol=0.005,
-                                      verbose=True))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+            measure.write_itp(tmp_path.joinpath('naphthalene_out.itp'),
+                              mapping)
+
+            self.assertTrue(
+                cmp_file_whitespace_float(
+                    tmp_path.joinpath('naphthalene_out.itp'),
+                    self.data_dir.joinpath('martini3/naphthalene_out.itp'),
+                    rtol=0.005,
+                    verbose=True))
 
     def test_duplicate_atoms_in_bond(self):
         with self.assertRaises(ValueError):
@@ -220,19 +231,21 @@ class BondSetTest(unittest.TestCase):
         measure = BondSet('test/data/sugar.bnd', DummyOptions)
         frame = Frame('test/data/sugar.gro', 'test/data/sugar.xtc')
         mapping = Mapping('test/data/sugar.map', DummyOptions)
-        cg_frame = mapping.apply(frame)
 
-        while frame.next_frame():
-            cg_frame = mapping.apply(frame, cg_frame=cg_frame)
+        cg_frame = mapping.apply(frame)
 
         measure.apply(cg_frame)
         measure.boltzmann_invert()
         measure.dump_values()
 
+        data_dir = pathlib.Path('test/data')
         filenames = ('ALLA_length.dat', 'ALLA_angle.dat', 'ALLA_dihedral.dat')
         for filename in filenames:
-            self.assertTrue(cmp_file_whitespace_float(os.path.join('test/data', filename), filename,
-                                                      rtol=0.008, verbose=True))
+            self.assertTrue(
+                cmp_file_whitespace_float(data_dir.joinpath(filename),
+                                          filename,
+                                          rtol=0.008,
+                                          verbose=True))
             os.remove(filename)
 
     def test_get_lines_for_bond_dump(self):

@@ -5,6 +5,7 @@ Both Frame and Residue are iterable. Residue is indexable with either atom numbe
 """
 
 import logging
+import pathlib
 import typing
 
 import mdtraj
@@ -34,25 +35,35 @@ class NonMatchingSystemError(ValueError):
 class Frame:
     """Load and store data from a simulation trajectory."""
     def __init__(self,
-                 topology_file: typing.Optional[str] = None,
-                 trajectory_file: typing.Optional[str] = None,
-                 frame_start: int = 0):
-        self.frame_number = frame_start
+                 topology_file: typing.Optional[typing.Union[pathlib.Path,
+                                                             str]] = None,
+                 trajectory_file: typing.Optional[typing.Union[pathlib.Path,
+                                                               str]] = None,
+                 frame_start: int = 0,
+                 frame_end: typing.Optional[int] = None):
+        """Load a simulation trajectory.
 
-        if topology_file:
+        :param topology_file: File containing system topology
+        :param trajectory_file: File containing simulation trajectory
+        :param frame_start: First frame of trajectory to use
+        :param frame_end: Last frame of trajectory to use
+        """
+        if topology_file is not None:
             try:
-                self._trajectory = mdtraj.load(topology_file)
+                self._trajectory = mdtraj.load(str(topology_file))
                 self._topology = self._trajectory.topology
 
-                if trajectory_file:
+                if trajectory_file is not None:
                     try:
-                        self._trajectory = mdtraj.load(trajectory_file,
+                        self._trajectory = mdtraj.load(str(trajectory_file),
                                                        top=self._topology)
+
+                        self._slice_trajectory(frame_start, frame_end)
 
                     except ValueError as exc:
                         raise NonMatchingSystemError from exc
 
-                self._load_trajectory_frame(self.frame_number)
+                self._load_trajectory()
 
             except OSError as exc:
                 if 'no loader' in str(exc):
@@ -64,39 +75,44 @@ class Frame:
             # No topology - we're probably building a CG frame
             self._topology = mdtraj.Topology()
 
-    def _load_trajectory_frame(self, frame_number) -> None:
-        """Load a trajectory frame into the frame attributes."""
+    def _slice_trajectory(
+            self,
+            frame_start: int = 0,
+            frame_end: typing.Optional[int] = None) -> mdtraj.Trajectory:
+        """Slice input simulation trajectory to a subset of frames.
+
+        :param frame_start: First frame of trajectory to use
+        :param frame_end: Last frame of trajectory to use
+        """
+        traj = self._trajectory
+
+        if frame_start != 0:
+            if frame_end is not None:
+                traj = traj[frame_start:frame_end]
+
+            else:
+                traj = traj[frame_start:]
+
+        return traj
+
+    def _load_trajectory(self) -> None:
+        """Load a trajectory into the frame attributes."""
         # Improve performance by not double indexing repeatedly
         traj = self._trajectory
 
-        xyz_frame = traj.xyz[frame_number]
         for atom in self._topology.atoms:
-            atom.coords = xyz_frame[atom.index]
+            atom.coords = traj.xyz[:, atom.index]
 
         # TODO handle non-cubic boxes
         try:
-            self.unitcell_lengths = traj.unitcell_lengths[frame_number]
-            self.unitcell_angles = traj.unitcell_angles[frame_number]
+            self.unitcell_lengths = traj.unitcell_lengths
+            self.unitcell_angles = traj.unitcell_angles
 
         except TypeError:
             self.unitcell_lengths = None
             self.unitcell_angles = None
 
-        self.time = traj.time[frame_number]
-
-    def next_frame(self) -> bool:
-        """Load the next trajectory frame into the frame attributes.
-
-        :return: Loading next frame was successful?
-        """
-        try:
-            self._load_trajectory_frame(self.frame_number + 1)
-
-        except IndexError:
-            return False
-
-        self.frame_number += 1
-        return True
+        self.time = traj.time
 
     @property
     def residues(self):
@@ -122,10 +138,9 @@ class Frame:
         return self._topology.n_atoms
 
     @property
-    def numframes(self) -> int:
-        """Number of frames in the frame trajectory."""
-        # The MDTraj trajectory has the topology file as frame 0
-        return self._trajectory.n_frames - 1
+    def n_frames(self) -> int:
+        """Number of frames in the trajectory."""
+        return self._trajectory.n_frames
 
     def add_residue(self,
                     name,
@@ -168,28 +183,39 @@ class Frame:
 
         return self._topology.add_atom(name, element, residue)
 
-    def save(self, filename, **kwargs) -> None:
+    def save(self,
+             filename: str,
+             frame_number: typing.Optional[int] = None,
+             **kwargs) -> None:
         """Write trajctory to file.
 
         :param filename: Name of output file
         """
-        self._trajectory.save(str(filename), **kwargs)
+        traj = self._trajectory
+        if frame_number is not None:
+            traj = traj.slice(frame_number)
 
-    def add_frame_to_trajectory(self) -> None:
-        """Add a new trajectory frame from the values stored as attributes on this frame."""
+        traj.save(str(filename), **kwargs)
+
+    def build_trajectory(self) -> None:
+        """Build an MDTraj trajectory from atom coordinates and the values stored as attributes on this frame."""
         xyz = np.array([atom.coords for atom in self._topology.atoms])
 
+        # We currently have axes: 0 - each atom, 1 - timestep, 2 - xyz coords
+        # Need to convert to axes: 0 - timestep, 1 - each atom, 2 - xyz coords
+        xyz = xyz.swapaxes(0, 1)
+
         optional_values = {
-            attr: None if getattr(self, attr) is None else [getattr(self, attr)]
+            attr: getattr(self, attr, None)
             for attr in {'time', 'unitcell_lengths', 'unitcell_angles'}
         }  # yapf: disable
 
-        new_frame = mdtraj.Trajectory(xyz,
-                                      topology=self._topology,
-                                      **optional_values)
+        new_trajectory = mdtraj.Trajectory(xyz,
+                                           topology=self._topology,
+                                           **optional_values)
 
         if hasattr(self, '_trajectory'):
-            self._trajectory += new_frame
+            self._trajectory += new_trajectory
 
         else:
-            self._trajectory = new_frame
+            self._trajectory = new_trajectory
