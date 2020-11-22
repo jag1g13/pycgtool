@@ -14,16 +14,20 @@ import pycgtool.__main__ as main
 def get_args(name, out_dir, extra: typing.Optional[typing.Mapping] = None):
     data_dir = pathlib.Path('test/data')
 
-    args = {
-        '-g': data_dir.joinpath(f'{name}.gro'),
-        '-x': data_dir.joinpath(f'{name}.xtc'),
+    args = [
+        data_dir.joinpath(f'{name}.gro'),
+        data_dir.joinpath(f'{name}.xtc'),
+    ]
+
+    kwargs = {
         '-m': data_dir.joinpath(f'{name}.map'),
         '-b': data_dir.joinpath(f'{name}.bnd'),
         '--out-dir': out_dir,
     }
 
     parsed_args = main.parse_arguments(
-        itertools.chain(*[[key, str(value)] for key, value in args.items()]))
+        itertools.chain(map(str, args),
+                        *[[key, str(value)] for key, value in kwargs.items()]))
 
     if extra is not None:
         for key, value in extra.items():
@@ -45,15 +49,14 @@ class PycgtoolTest(unittest.TestCase):
 
     def test_parse_arguments(self):
         args = main.parse_arguments([
-            '-g',
-            'GRO',
+            'TOPOLOGY',
             '-m',
             'MAP',
             '--begin',
             '1000',
         ])
 
-        self.assertEqual('GRO', args.gro)
+        self.assertEqual('TOPOLOGY', args.topology)
         self.assertEqual('MAP', args.map)
         self.assertEqual(1000, args.begin)
 
@@ -97,7 +100,7 @@ class PycgtoolTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = pathlib.Path(tmpdir)
             args = get_args('sugar', tmp_path, extra={
-                'xtc': None,
+                'trajectory': None,
             })
 
             main.full_run(args)
@@ -115,7 +118,7 @@ class PycgtoolTest(unittest.TestCase):
             tmp_path = pathlib.Path(tmpdir)
             args = get_args('sugar', tmp_path, extra={
                 'map': None,
-                'xtc': None,
+                'trajectory': None,
             })
 
             main.full_run(args)

@@ -42,7 +42,7 @@ def measure_bonds(frame: Frame, mapping: typing.Optional[Mapping],
     logger.info("Bond measurements will be made")
     bonds.apply(frame)
 
-    if config.map and config.xtc:
+    if config.map and config.trajectory:
         # Only perform Boltzmann Inversion if we have a mapping and a trajectory.
         # Otherwise we get infinite force constants.
         logger.info("Beginning Boltzmann Inversion")
@@ -87,8 +87,8 @@ def full_run(config):
     :param config: Program arguments from argparse
     """
     frame = Frame(
-        topology_file=config.gro,
-        trajectory_file=config.xtc,  # May be None
+        topology_file=config.topology,
+        trajectory_file=config.trajectory,  # May be None
         frame_start=config.begin,
         frame_end=config.end)
 
@@ -110,18 +110,20 @@ def full_run(config):
 def parse_arguments(arg_list):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Perform coarse-grain mapping of atomistic trajectory")
+        description=
+        "Generate coarse-grained molecular dynamics models from atomistic trajectories."
+    )
 
     # yapf: disable
     # Input files
     input_files = parser.add_argument_group("input files")
 
-    input_files.add_argument('-g', '--gro', type=str, required=True,
-                             help="GROMACS GRO file")
+    input_files.add_argument('topology', type=str,
+                             help="AA simulation topology - e.g. PDB, GRO, etc.")
+    input_files.add_argument('trajectory', type=str, nargs='?',
+                             help="AA simulation trajectory - e.g. XTC, DCD, etc.")
     input_files.add_argument('-m', '--map', type=str,
                              help="Mapping file")
-    input_files.add_argument('-x', '--xtc', type=str,
-                             help="GROMACS XTC file")
     input_files.add_argument('-b', '--bnd', type=str,
                              help="Bonds file")
     input_files.add_argument('-i', '--itp', type=str,
@@ -222,8 +224,8 @@ def validate_arguments(args):
 def main():
     args = parse_arguments(sys.argv[1:])
 
-    print("Using GRO: {0}".format(args.gro))
-    print("Using XTC: {0}".format(args.xtc))
+    print("Using GRO: {0}".format(args.topology))
+    print("Using XTC: {0}".format(args.trajectory))
 
     if args.profile:
         with cProfile.Profile() as profiler:
