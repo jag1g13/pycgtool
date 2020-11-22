@@ -1,7 +1,7 @@
 all: pycgtool cgprepare em npt md samples rgyr
 
 pycgtool:
-	../../pycgtool.py -g ref.gro -x ref.xtc -m atenolol.map -b atenolol.bnd
+	pycgtool ref.gro ref.xtc -m atenolol.map -b atenolol.bnd
 
 cgprepare:
 	gmx solvate -cp out.gro -cs ../../data/water.gro -o solv.gro -radius 0.21
@@ -21,10 +21,10 @@ md:
 	gmx mdrun -deffnm md -v
 
 samples:
-	../../pycgtool.py -g ref.gro -x ref.xtc -m atenolol.map -b atenolol.bnd --advanced
+	pycgtool ref.gro ref.xtc -m atenolol.map -b atenolol.bnd --advanced
 	mv {36KB,ref}_length.dat
 	mv {36KB,ref}_angle.dat
-	../../pycgtool.py -g md.gro -x md.xtc -b atenolol.bnd
+	pycgtool md.gro md.xtc -b atenolol.bnd
 
 comparesamples:
 	./average_columns.py ref_length.dat 36KB_length.dat

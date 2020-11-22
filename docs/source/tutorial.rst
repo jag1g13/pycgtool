@@ -72,7 +72,7 @@ Model Generation
 The process of model generation after having created the mapping and bond definition files is automated by PyCGTOOL.
 In the simplest case, a parameter set may be generated simply by passing the four input files to PyCGTOOL::
 
-    pycgtool.py -g ref.gro -x ref.xtc -m atenolol.map -b atenolol.bnd
+    pycgtool ref.gro ref.xtc -m atenolol.map -b atenolol.bnd
 
 This will create two output files ``out.gro``, the mapped CG coordinates, and ``out.itp``, the calculated CG model parameters.
 
@@ -111,7 +111,7 @@ Additionally, other methods of validation should be applied relevant to the clas
 To compare the distribution of bonded terms, we must first rerun PyCGTOOL to generate samples of the bonded measurements.
 For the atomistic reference simulation, this can be done by running::
 
-    pycgtool.py -g ref.gro -x ref.xtc -m atenolol.map -b atenolol.bnd --dump_measurements
+    pycgtool ref.gro ref.xtc -m atenolol.map -b atenolol.bnd --dump_measurements
 
 
 PyCGTOOL will now output a sample of each measured bond length and angle (but since the reference trajectory is short, the target sample size is not met and all values are collected), in the files ``36KB_length.dat`` and ``36KB_angle.dat``.
@@ -119,7 +119,7 @@ PyCGTOOL will now output a sample of each measured bond length and angle (but si
 Since we will be collecting samples of the same measurements from the CG simulation, these files should be renamed to, for instance, `ref_length.dat` and `ref_angle.dat`.
 Collect the same samples for the CG simulation using::
 
-    pycgtool.py -g md.gro -x md.xtc -b atenolol.bnd
+    pycgtool md.gro md.xtc -b atenolol.bnd
 
 Since we provide a bond file, but not a mapping file, PyCGTOOL will know that this is intended to simply collect bond measurements and will automatically set the `dump_measurements` option to `True`.
 Again, the files created will be called ``36KB_length.dat`` and ``36KB_angle.dat``.

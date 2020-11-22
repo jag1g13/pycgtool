@@ -40,14 +40,14 @@ Basic Usage
 -----------
 PyCGTOOL requires four input files to generate a coarse-grained model:
 
--g       GROMACS gro coordinate file
--x       GROMACS xtc trajectory file
--m       PyCGTOOL mapping definition file
--b       PyCGTOOL bond definition file
+- AA simulation topology file (e.g. PDB, GRO, etc.)
+- AA simulation trajectory file (e.g. XTC, DCD, etc.)
+- PyCGTOOL mapping definition file
+- PyCGTOOL bond definition file
 
 The program is called by::
 
-    pycgtool.py -g <GRO file> -x <XTC file> -m <MAP file> -b <BND file>
+    pycgtool <topology file> <trajectory file> -m <MAP file> -b <BND file>
 
 Example mapping and bond definition files are present in the ``test/data`` directory.  Their format is explained below.
 
@@ -127,9 +127,6 @@ If no angles are defined for a molecule, PyCGTOOL will construct all angles from
    C5 O5 C1 C2
    O5 C1 C2 C3
 
-
-
-
 Advanced Usage
 --------------
 
@@ -146,7 +143,7 @@ For full detail see: :doc:`mapping-only`.
 
 This mode may be invoked by::
 
-   pycgtool.py -g <GRO file> -m <MAP file>
+   pycgtool <topology file> -m <MAP file>
 
 
 Measure Only
@@ -156,7 +153,7 @@ Measure-only mode may be used to aid in the testing of a coarse-grained model by
 These bond measurements may be compared directly to those collected from the pseudo-coarse-grained trajectory used to generate the model.
 This mode may be invoked by::
 
-   pycgtool.py -g <GRO file> -x <XTC file> -b <BND file>
+   pycgtool <topology file> <trajectory file> -b <BND file>
 
 
 Advanced Options

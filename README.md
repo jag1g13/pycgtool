@@ -16,13 +16,6 @@ For instance, a pre-equilibrated atomistic membrane may be used to create starti
 
 PyCGTOOL makes it easy to test multiple variations in mapping and bond topology by making simple changes to the config files.
 
-This version has several advantages over the original C++ implementation CGTOOL:
-* PyCGTOOL is able to run anywhere the necessary library dependencies are available (all available from pip)
-* Does not require that residues are present in contiguous sorted blocks
-* May map multiple residues with a single pass
-* Support for polymers such as DNA or proteins making use of GROMACS' pdb2gmx
-* Much more automated testing ensures that regressions will be identified quickly
-
 If you find this useful, please cite as:
 ```
 Graham, J. (2017). PyCGTOOL, https://doi.org/10.5281/zenodo.598143
@@ -44,7 +37,11 @@ For more information see [MDTraj/#1572](https://github.com/mdtraj/mdtraj/issues/
 
 ## Usage
 
-Input to PyCGTOOL is GROMACS GRO and XTC files, along with two custom files: MAP and BND.  These files provide the atomistic-to-CG mapping and bonded topology respectively.  Example files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/master/test/data) directory.  The format of these files is described in the [full documentation](https://pycgtool.readthedocs.io/en/master/index.html).
+Input to PyCGTOOL is an atomistic simulation trajectory in the form of a topology (e.g. PDB, GRO, etc.) and a trajectory file (e.g. XTC, DCD, etc.), along with two custom files: MAP and BND.
+These files provide the atomistic-to-CG mapping and bonded topology respectively.
+
+Example files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/master/test/data) directory.
+The format of these files is described in the [full documentation](https://pycgtool.readthedocs.io/en/master/index.html).
 
 For more information, see [the tutorial](https://pycgtool.readthedocs.io/en/master/tutorial.html).
 It is important to perform validation of any new parameter set; a brief example is present at the end of the tutorial.
@@ -58,19 +55,19 @@ pycgtool -h
 
 To generate a CG model from an atomistic simulation:
 ```
-pycgtool -g <GRO file> -x <XTC file> -m <MAP file> -b <BND file>
+pycgtool <topology file> <trajectory file> -m <MAP file> -b <BND file>
 ```
 
 ### Map Only
 
 To use PyCGTOOL to convert a set of atomistic simulation coordinates to CG coordinates:
 ```
-pycgtool -g <GRO file> -m <MAP file>
+pycgtool <topology file> -m <trajectory file>
 ```
 
 Or to convert a complete simulation trajectory:
 ```
-pycgtool -g <GRO file> -x <XTC file> -m <MAP file>
+pycgtool <topology file> <trajectory file> -m <MAP file>
 ```
 
 ## Maintainers
