@@ -12,7 +12,6 @@ import typing
 
 import numpy as np
 import mdtraj
-import tqdm
 
 from .mapping import VirtualMap
 from .functionalforms import get_functional_forms
@@ -487,17 +486,9 @@ class BondSet:
                 vals = calc[len(bond.atoms)](frame._trajectory, bond_indices)
                 bond.values = vals.flatten()
 
-    def boltzmann_invert(self, progress: bool = False) -> None:
-        """Perform Boltzmann Inversion of all bonds to calculate equilibrium value and force constant.
-
-        :param progress: Display a progress bar using tqdm
-        """
-        bond_iter = itertools.chain(*self._molecules.values())
-        if progress:
-            total = sum(map(len, self._molecules.values()))
-            bond_iter = tqdm.tqdm(bond_iter, total=total)
-
-        for bond in bond_iter:
+    def boltzmann_invert(self) -> None:
+        """Perform Boltzmann Inversion of all bonds to calculate equilibrium value and force constant."""
+        for bond in itertools.chain(*self._molecules.values()):
             try:
                 bond.boltzmann_invert(temp=self._temperature)
             except ValueError:

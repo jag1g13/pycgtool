@@ -46,7 +46,7 @@ def measure_bonds(frame: Frame, mapping: typing.Optional[Mapping],
         # Only perform Boltzmann Inversion if we have a mapping and a trajectory.
         # Otherwise we get infinite force constants.
         logger.info("Beginning Boltzmann Inversion")
-        bonds.boltzmann_invert(progress=(not config.quiet))
+        bonds.boltzmann_invert()
 
         if config.output_forcefield:
             logger.info("Creating GROMACS forcefield directory")
@@ -185,9 +185,6 @@ def parse_arguments(arg_list):
 
     # Run options
     run_options = parser.add_argument_group("run options")
-
-    run_options.add_argument('--quiet', default=False, action='store_true',
-                             help="Hide progress bars")
 
     run_options.add_argument('--profile', default=False, action='store_true',
                              help="Profile performance")
