@@ -107,6 +107,18 @@ def full_run(config):
         measure_bonds(cg_frame, mapping, config)
 
 
+class BooleanAction(argparse.Action):
+    """Set up a boolean argparse argument with matching `--no` argument.
+    
+    Based on https://thisdataguy.com/2017/07/03/no-options-with-argparse-and-python/
+    """
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        super().__init__(option_strings, dest, nargs=0, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, not option_string.startswith('--no-'))
+
+
 def parse_arguments(arg_list):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -129,33 +141,33 @@ def parse_arguments(arg_list):
     input_files.add_argument('-i', '--itp', type=str,
                              help="GROMACS ITP file")
     input_files.add_argument('--begin', type=int, default=0,
-                             help="Frame number to begin")
+                             help="Trajectory frame number to begin")
     input_files.add_argument('--end', type=int, default=None,
-                             help="Frame number to end")
+                             help="Trajectory frame number to end")
 
     # Output files
     output_files = parser.add_argument_group("output files")
 
     output_files.add_argument('--out-dir', default='.', type=str,
                               help="Directory where output files should be placed")
-    output_files.add_argument('--output-xtc', default=False, action='store_true',
-                              help="Output a pseudo-CG trajectory")
     output_files.add_argument("--output-name", default="out",
                               help="Base name of output files")
+    output_files.add_argument('--output-xtc', '--no-output-xtc', default=False, action=BooleanAction,
+                              help="Output a pseudo-CG trajectory?")
     output_files.add_argument("--output", default="gro",
                               help="Coordinate output format")
-    output_files.add_argument("--output-forcefield", default=False, action='store_true',
+    output_files.add_argument("--output-forcefield", '--no-output-forcefield', default=False, action=BooleanAction,
                               help="Output GROMACS forefield directory?")
-    output_files.add_argument("--dump-measurements", default=False, action="store_true",
-                              help="Whether to output bond measurements")
+    output_files.add_argument("--dump-measurements", '--no-dump-measurements', default=False, action=BooleanAction,
+                              help="Output sample of bond measurements?")
     output_files.add_argument("--dump-n-values", type=int, default=10000,
-                              help="How many measurements to output")
+                              help="Size of sample of measurements to output")
 
     # Mapping options
     mapping_options = parser.add_argument_group("mapping options")
 
-    mapping_options.add_argument("--map-only", default=False, action="store_true",
-                                 help="Run in mapping-only mode")
+    mapping_options.add_argument("--map-only", '--no-map-only', default=False, action=BooleanAction,
+                                 help="Run in mapping-only mode?")
     mapping_options.add_argument("--map-center", default="geom",
                                  choices=["geom", "mass", "first"],
                                  help="Mapping method")
@@ -167,15 +179,15 @@ def parse_arguments(arg_list):
     bond_options = parser.add_argument_group("bond options")
 
     bond_options.add_argument("--constr_threshold", type=float, default=100000,
-                              help="Convert stiff bonds to contraints over [value]")
+                              help="Convert bonds with force constants over [value] to constraints")
     bond_options.add_argument("--temperature", type=float, default=310,
                               help="Temperature of reference simulation")
-    bond_options.add_argument("--default-fc", default=False, action='store_true',
+    bond_options.add_argument("--default-fc", '--no-default-fc', default=False, action=BooleanAction,
                               help="Use default MARTINI force constants?")
-    bond_options.add_argument("--generate-angles", default=True, action='store_false',
-                              help="Generate angles from bonds")
-    bond_options.add_argument("--generate-dihedrals", default=False, action="store_true",
-                              help="Generate dihedrals from bonds")
+    bond_options.add_argument("--generate-angles", '--no-generate-angles', default=True, action=BooleanAction,
+                              help="Generate angles from bonds?")
+    bond_options.add_argument("--generate-dihedrals", '--no-generate-dihedrals', default=False, action=BooleanAction,
+                              help="Generate dihedrals from bonds?")
     bond_options.add_argument("--length-form", default="Harmonic",
                               help="Form of bond potential")
     bond_options.add_argument("--angle-form", default="CosHarmonic",
@@ -186,8 +198,8 @@ def parse_arguments(arg_list):
     # Run options
     run_options = parser.add_argument_group("run options")
 
-    run_options.add_argument('--profile', default=False, action='store_true',
-                             help="Profile performance")
+    run_options.add_argument('--profile', '--no-profile', default=False, action=BooleanAction,
+                             help="Profile performance?")
     # yapf: enable
 
     args = parser.parse_args(arg_list)
