@@ -31,6 +31,7 @@ wheel = "^0.35.1"
 numpy = "^1.19.1"
 cython = "^0.29.21"
 mdtraj = "^1.9.4"
+rich = "^9.2.0"
 
 # Optional extras to enable additional functionality
 sphinx-autoapi = { version = "^1.5.0", optional = true }

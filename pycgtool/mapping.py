@@ -249,7 +249,7 @@ class Mapping:
                     name, typ, first, *atoms = mol_section[i][1:]
 
                 except KeyError as exc:
-                    raise ValueError(f'"{name}" line prefix invalid') from exc
+                    raise ValueError(f'Invalid line prefix "{name}" in mapping file') from exc
 
             try:
                 # Allow optional charge in mapping file
@@ -262,8 +262,7 @@ class Mapping:
                 atoms.insert(0, first)
 
             if not atoms:
-                # TODO should this stop execution?
-                logger.warning('Bead %s specification contains no atoms', name)
+                raise ValueError(f'Bead {name} specification contains no atoms')
 
             mol_map.append(
                 bead_class(name, i, type=typ, atoms=atoms, charge=charge))
@@ -421,7 +420,6 @@ class Mapping:
         return cg_frame
 
 
-# TODO: Use MDTraj instead
 def calc_coords_weight(ref_coords, coords, weights, box=None):
     """Calculate the coordinates of a single CG bead from weighted component atom coordinates.
 

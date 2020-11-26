@@ -50,15 +50,18 @@ class Frame:
         """
         if topology_file is not None:
             try:
+                logging.info('Loading topology file')
                 self._trajectory = mdtraj.load(str(topology_file))
                 self._topology = self._trajectory.topology
+                logging.info('Finished loading topology file')
 
                 if trajectory_file is not None:
                     try:
+                        logging.info('Loading trajectory file - this may take a while')
                         self._trajectory = mdtraj.load(str(trajectory_file),
                                                        top=self._topology)
-
                         self._slice_trajectory(frame_start, frame_end)
+                        logging.info('Finished loading trajectory file')
 
                     except ValueError as exc:
                         raise NonMatchingSystemError from exc

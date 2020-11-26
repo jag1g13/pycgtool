@@ -5,7 +5,10 @@ import cProfile
 import logging
 import pathlib
 import sys
+import textwrap
 import typing
+
+from rich.logging import RichHandler
 
 from .frame import Frame
 from .mapping import Mapping
@@ -37,31 +40,31 @@ def measure_bonds(frame: Frame, mapping: typing.Optional[Mapping],
     :param mapping:
     :param config: Program arguments from argparse
     """
-    bonds = BondSet(config.bnd, config)
-
-    logger.info("Bond measurements will be made")
+    bonds = BondSet(config.bondset, config)
     bonds.apply(frame)
 
-    if config.map and config.trajectory:
+    if config.mapping and config.trajectory:
         # Only perform Boltzmann Inversion if we have a mapping and a trajectory.
         # Otherwise we get infinite force constants.
-        logger.info("Beginning Boltzmann Inversion")
+        logger.info('Starting Boltzmann Inversion')
         bonds.boltzmann_invert()
+        logger.info('Finished Boltzmann Inversion')
 
         if config.output_forcefield:
-            logger.info("Creating GROMACS forcefield directory")
+            logger.info("Writing GROMACS forcefield directory")
             out_dir = pathlib.Path(config.out_dir)
             forcefield = ForceField(config.output_name, dir_path=out_dir)
             forcefield.write(config.output_name, mapping, bonds)
-            logger.info("GROMACS forcefield directory created")
+            logger.info("Finished writing GROMACS forcefield directory")
 
         else:
             bonds.write_itp(get_output_filepath('itp', config),
                             mapping=mapping)
 
     if config.dump_measurements:
-        logger.info("Dumping bond measurements to file")
+        logger.info('Writing bond measurements to file')
         bonds.dump_values(config.dump_n_values, config.out_dir)
+        logger.info('Finished writing bond measurements to file')
 
 
 def mapping_loop(frame: Frame, config) -> typing.Tuple[Frame, Mapping]:
@@ -70,11 +73,12 @@ def mapping_loop(frame: Frame, config) -> typing.Tuple[Frame, Mapping]:
     :param frame:
     :param config: Program arguments from argparse
     """
-    logger.info("Mapping will be performed")
-    mapping = Mapping(config.map, config, itp_filename=config.itp)
+    logger.info('Starting AA->CG mapping')
+    mapping = Mapping(config.mapping, config, itp_filename=config.itp)
 
     cg_frame = mapping.apply(frame)
     cg_frame.save(get_output_filepath('gro', config), frame_number=0)
+    logging.info('Finished AA->CG mapping')
 
     return cg_frame, mapping
 
@@ -92,24 +96,24 @@ def full_run(config):
         frame_start=config.begin,
         frame_end=config.end)
 
-    if config.map:
+    if config.mapping:
         cg_frame, mapping = mapping_loop(frame, config)
 
     else:
-        logger.info("Mapping will not be performed")
+        logger.info('Skipping AA->CG mapping')
         mapping = None
         cg_frame = frame
 
     if config.output_xtc:
         cg_frame.save(get_output_filepath('xtc', config))
 
-    if config.bnd:
+    if config.bondset:
         measure_bonds(cg_frame, mapping, config)
 
 
 class BooleanAction(argparse.Action):
     """Set up a boolean argparse argument with matching `--no` argument.
-    
+
     Based on https://thisdataguy.com/2017/07/03/no-options-with-argparse-and-python/
     """
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
@@ -134,9 +138,9 @@ def parse_arguments(arg_list):
                              help="AA simulation topology - e.g. PDB, GRO, etc.")
     input_files.add_argument('trajectory', type=str, nargs='?',
                              help="AA simulation trajectory - e.g. XTC, DCD, etc.")
-    input_files.add_argument('-m', '--map', type=str,
+    input_files.add_argument('-m', '--mapping', type=str,
                              help="Mapping file")
-    input_files.add_argument('-b', '--bnd', type=str,
+    input_files.add_argument('-b', '--bondset', type=str,
                              help="Bonds file")
     input_files.add_argument('-i', '--itp', type=str,
                              help="GROMACS ITP file")
@@ -200,6 +204,9 @@ def parse_arguments(arg_list):
 
     run_options.add_argument('--profile', '--no-profile', default=False, action=BooleanAction,
                              help="Profile performance?")
+    run_options.add_argument('--log-level', default='INFO',
+                             choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
+                             help="Which log messages should be shown?")
     # yapf: enable
 
     args = parser.parse_args(arg_list)
@@ -219,12 +226,12 @@ def validate_arguments(args):
     :param args: Parsed arguments from ArgumentParser
     """
     if not args.dump_measurements:
-        args.dump_measurements = bool(args.bnd) and not bool(args.map)
+        args.dump_measurements = bool(args.bondset) and not bool(args.mapping)
 
     if not args.map_only:
-        args.map_only = not bool(args.bnd)
+        args.map_only = not bool(args.bondset)
 
-    if not args.map and not args.bnd:
+    if not args.mapping and not args.bondset:
         raise ArgumentValidationError("One or both of -m and -b is required.")
 
     return args
@@ -233,17 +240,47 @@ def validate_arguments(args):
 def main():
     args = parse_arguments(sys.argv[1:])
 
-    print("Using GRO: {0}".format(args.topology))
-    print("Using XTC: {0}".format(args.trajectory))
+    logging.basicConfig(level=args.log_level,
+                        format='%(message)s',
+                        datefmt='[%X]',
+                        handlers=[RichHandler()])
 
-    if args.profile:
-        with cProfile.Profile() as profiler:
+    banner = """\
+         _____        _____ _____ _______ ____   ____  _      
+        |  __ \      / ____/ ____|__   __/ __ \ / __ \| |     
+        | |__) |   _| |   | |  __   | | | |  | | |  | | |     
+        |  ___/ | | | |   | | |_ |  | | | |  | | |  | | |     
+        | |   | |_| | |___| |__| |  | | | |__| | |__| | |____ 
+        |_|    \__, |\_____\_____|  |_|  \____/ \____/|______|
+                __/ |                                         
+               |___/                                          
+    """  # noqa
+
+    logger.info('[bold blue]%s[/]',
+                textwrap.dedent(banner),
+                extra={'markup': True})
+
+    logger.info(30 * '-')
+    logger.info('Topology:\t%s', args.topology)
+    logger.info('Trajectory:\t%s', args.trajectory)
+    logger.info('Mapping:\t%s', args.mapping)
+    logger.info('Bondset:\t%s', args.bondset)
+    logger.info(30 * '-')
+
+    try:
+        if args.profile:
+            with cProfile.Profile() as profiler:
+                full_run(args)
+
+            profiler.dump_stats('gprof.out')
+
+        else:
             full_run(args)
 
-        profiler.dump_stats('gprof.out')
+        logger.info('Finished processing - goodbye!')
 
-    else:
-        full_run(args)
+    except Exception as exc:
+        logger.error(exc)
 
 
 if __name__ == "__main__":

@@ -57,7 +57,7 @@ class PycgtoolTest(unittest.TestCase):
         ])
 
         self.assertEqual('TOPOLOGY', args.topology)
-        self.assertEqual('MAP', args.map)
+        self.assertEqual('MAP', args.mapping)
         self.assertEqual(1000, args.begin)
 
     def test_map_only(self):
@@ -117,7 +117,7 @@ class PycgtoolTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = pathlib.Path(tmpdir)
             args = get_args('sugar', tmp_path, extra={
-                'map': None,
+                'mapping': None,
                 'trajectory': None,
             })
 
