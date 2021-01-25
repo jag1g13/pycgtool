@@ -62,7 +62,7 @@ pycgtool <topology file> <trajectory file> -m <MAP file> -b <BND file>
 
 To use PyCGTOOL to convert a set of atomistic simulation coordinates to CG coordinates:
 ```
-pycgtool <topology file> -m <trajectory file>
+pycgtool <topology file> -m <MAP file>
 ```
 
 Or to convert a complete simulation trajectory:
