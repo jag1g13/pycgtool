@@ -28,7 +28,10 @@ pycgtool = "pycgtool.__main__:main"
 [tool.poetry.dependencies]
 python = "^3.6"
 wheel = "^0.35.1"
-numpy = "^1.19.1"
+numpy = [
+    { version = "^1.19.1", python = "<3.7" },  # Support for Python 3.6 was dropped in 1.20
+    { version = "^1.20.0", python = ">=3.7" }  # But 1.20 should resolve issue with MDTraj on macOS
+]
 cython = "^0.29.21"
 mdtraj = "^1.9.5"
 rich = "^9.2.0"
