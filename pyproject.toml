@@ -30,7 +30,7 @@ python = "^3.6"
 wheel = "^0.35.1"
 numpy = "^1.19.1"
 cython = "^0.29.21"
-mdtraj = "^1.9.4"
+mdtraj = "^1.9.5"
 rich = "^9.2.0"
 
 [tool.poetry.dev-dependencies]
