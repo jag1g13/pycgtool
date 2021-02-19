@@ -11,6 +11,7 @@
 /minenv/
 /venv/
 *.pyc
+poetry.toml
 
 # Development and Testing
 .cache
@@ -31,3 +32,4 @@ settings.json
 .cache/
 /notes/
 *.offsets
+*.pkl

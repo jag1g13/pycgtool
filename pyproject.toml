@@ -35,6 +35,7 @@ numpy = [
 cython = "^0.29.21"
 mdtraj = "^1.9.5"
 rich = "^9.2.0"
+mdplus = { git = "https://bitbucket.org/claughton/mdplus.git" }
 
 [tool.poetry.dev-dependencies]
 prospector = "^1.3.0"

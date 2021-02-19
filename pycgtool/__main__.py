@@ -8,6 +8,8 @@ import sys
 import textwrap
 import typing
 
+from mdplus.multiscale import GLIMPS
+import numpy as np
 from rich.logging import RichHandler
 
 from .frame import Frame
@@ -83,6 +85,39 @@ def mapping_loop(frame: Frame, config) -> typing.Tuple[Frame, Mapping]:
     return cg_frame, mapping
 
 
+def get_coords(frame: Frame, resname: str) -> np.ndarray:
+    return np.concatenate([
+        frame._trajectory.atom_slice([atom.index for atom in residue.atoms]).xyz
+        for residue in frame._trajectory.topology.residues
+        if residue.name == resname
+    ])
+
+
+def train_backmapper(aa_frame: Frame, cg_frame: Frame):
+    # resname = 'POPC'
+    # aa_coords = get_coords(aa_frame, resname)
+    # cg_coords = get_coords(cg_frame, resname)
+
+    cg_subset_traj = cg_frame._trajectory.atom_slice(cg_frame._trajectory.topology.select('resid 1'))
+    aa_subset_traj = aa_frame._trajectory.atom_slice(aa_frame._trajectory.topology.select('resid 1'))
+
+    cg_subset_traj.save('cg_test.gro')
+    aa_subset_traj.save('aa_test.gro')
+
+    logger.info('Training backmapper')
+    backmapper = GLIMPS()
+    backmapper.fit(cg_subset_traj.xyz, aa_subset_traj.xyz)
+    logger.info('Finished training backmapper')
+
+    logger.info('Testing backmapper')
+    backmapped = backmapper.transform(cg_subset_traj.xyz)
+    aa_subset_traj.xyz = backmapped
+    aa_subset_traj.save('backmapped.gro')
+    logger.info('Finished testing backmapper')
+
+    backmapper.save('backmapper.pkl')
+
+
 def full_run(config):
     """Main function of the program PyCGTOOL.
 
@@ -95,9 +130,11 @@ def full_run(config):
         trajectory_file=config.trajectory,  # May be None
         frame_start=config.begin,
         frame_end=config.end)
+    frame._trajectory.make_molecules_whole(inplace=True)
 
     if config.mapping:
         cg_frame, mapping = mapping_loop(frame, config)
+        train_backmapper(frame, cg_frame)
 
     else:
         logger.info('Skipping AA->CG mapping')
