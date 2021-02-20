@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 np.seterr(all="raise")
 
+PathLike = typing.Union[pathlib.Path, str]
+
 
 class UnsupportedFormatException(Exception):
     """Exception raised when a topology/trajectory format cannot be parsed."""
@@ -35,10 +37,8 @@ class NonMatchingSystemError(ValueError):
 class Frame:
     """Load and store data from a simulation trajectory."""
     def __init__(self,
-                 topology_file: typing.Optional[typing.Union[pathlib.Path,
-                                                             str]] = None,
-                 trajectory_file: typing.Optional[typing.Union[pathlib.Path,
-                                                               str]] = None,
+                 topology_file: typing.Optional[PathLike] = None,
+                 trajectory_file: typing.Optional[PathLike] = None,
                  frame_start: int = 0,
                  frame_end: typing.Optional[int] = None):
         """Load a simulation trajectory.
@@ -60,8 +60,10 @@ class Frame:
                         logging.info('Loading trajectory file - this may take a while')
                         self._trajectory = mdtraj.load(str(trajectory_file),
                                                        top=self._topology)
-                        self._slice_trajectory(frame_start, frame_end)
-                        logging.info('Finished loading trajectory file')
+                        self._trajectory = self._slice_trajectory(frame_start, frame_end)
+                        logging.info(
+                            'Finished loading trajectory file - loaded %d frames',
+                            self._trajectory.n_frames)
 
                     except ValueError as exc:
                         raise NonMatchingSystemError from exc
