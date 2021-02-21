@@ -45,7 +45,7 @@ class PyCGTOOL:
                                 frame_number=0)
 
             if self.out_frame.n_frames > 1:
-                self.train_backmapper(self.in_frame, self.out_frame)
+                self.train_backmapper()
 
         self.bondset = None
         if self.config.bondset:
@@ -93,7 +93,8 @@ class PyCGTOOL:
                                      self.config.out_dir)
             logger.info('Finished writing bond measurements to file')
 
-    def get_coords(self, frame: Frame, resname: str) -> np.ndarray:
+    @staticmethod
+    def get_coords(frame: Frame, resname: str) -> np.ndarray:
         return np.concatenate([
             frame._trajectory.atom_slice(
                 [atom.index for atom in residue.atoms]).xyz
@@ -101,15 +102,16 @@ class PyCGTOOL:
             if residue.name == resname
         ])
 
-    def train_backmapper(self, aa_frame: Frame, cg_frame: Frame):
+    def train_backmapper(self):
         # resname = 'POPC'
         # aa_coords = get_coords(aa_frame, resname)
         # cg_coords = get_coords(cg_frame, resname)
+        sel = 'resid 0'
 
-        cg_subset_traj = cg_frame._trajectory.atom_slice(
-            cg_frame._trajectory.topology.select('resid 0'))
-        aa_subset_traj = aa_frame._trajectory.atom_slice(
-            aa_frame._trajectory.topology.select('resid 0'))
+        aa_subset_traj = self.in_frame._trajectory.atom_slice(
+            self.in_frame._trajectory.topology.select(sel))
+        cg_subset_traj = self.out_frame._trajectory.atom_slice(
+            self.out_frame._trajectory.topology.select(sel))
 
         cg_subset_traj.save('cg_test.gro')
         aa_subset_traj.save('aa_test.gro')
@@ -143,13 +145,12 @@ class BooleanAction(argparse.Action):
 
 
 def parse_arguments(arg_list):
+    # yapf: disable
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=
-        "Generate coarse-grained molecular dynamics models from atomistic trajectories."
+        description="Generate coarse-grained molecular dynamics models from atomistic trajectories."
     )
 
-    # yapf: disable
     # Input files
     input_files = parser.add_argument_group("input files")
 
@@ -298,9 +299,8 @@ def main():
             pycgtool = PyCGTOOL(args)
 
         elapsed_time = time.time() - start_time
-        logger.info(
-            f'Processed {pycgtool.out_frame.n_frames} frames in {elapsed_time:.2f}s'
-        )
+        logger.info('Processed %d frames in %.2f s',
+                    pycgtool.out_frame.n_frames, elapsed_time)
         logger.info('Finished processing - goodbye!')
 
     except Exception as exc:
