@@ -33,6 +33,7 @@ numpy = [
     { version = "^1.20.0", python = ">=3.7" }  # But 1.20 should resolve issue with MDTraj on macOS
 ]
 cython = "^0.29.21"
+astunparse = "1.6.2"  # See https://github.com/mdtraj/mdtraj/issues/1613
 mdtraj = "^1.9.5"
 rich = "^9.2.0"
 mdplus = { git = "https://bitbucket.org/claughton/mdplus.git" }
