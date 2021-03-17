@@ -9,7 +9,6 @@ import textwrap
 import time
 
 from mdplus.multiscale import GLIMPS
-import numpy as np
 from rich.logging import RichHandler
 
 from .frame import Frame
