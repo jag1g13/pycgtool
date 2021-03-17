@@ -168,8 +168,6 @@ def parse_arguments(arg_list):
     # Mapping options
     mapping_options = parser.add_argument_group("mapping options")
 
-    mapping_options.add_argument("--map-only", '--no-map-only', default=False, action=BooleanAction,
-                                 help="Run in mapping-only mode?")
     mapping_options.add_argument("--map-center", default="geom",
                                  choices=["geom", "mass", "first"],
                                  help="Mapping method")
@@ -182,7 +180,7 @@ def parse_arguments(arg_list):
     # Bond options
     bond_options = parser.add_argument_group("bond options")
 
-    bond_options.add_argument("--constr_threshold", type=float, default=100000,
+    bond_options.add_argument("--constr-threshold", type=float, default=100000,
                               help="Convert bonds with force constants over [value] to constraints")
     bond_options.add_argument("--temperature", type=float, default=310,
                               help="Temperature of reference simulation")
@@ -227,12 +225,17 @@ def validate_arguments(args):
     """
     if not args.dump_measurements:
         args.dump_measurements = bool(args.bondset) and not bool(args.mapping)
-
-    if not args.map_only:
-        args.map_only = not bool(args.bondset)
+        logger.info(
+            'Argument --dump-measurements has been set because you have provided a bondset but no mapping'
+        )
 
     if not args.mapping and not args.bondset:
-        raise ArgumentValidationError("One or both of -m and -b is required.")
+        raise ArgumentValidationError('One or both of -m and -b is required')
+
+    if args.backmapper_resname:
+        logger.warning(
+            'Backmapping is an experimental feature and has not yet been fully validated'
+        )
 
     return args
 
