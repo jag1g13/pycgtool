@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 np.seterr(all="raise")
 
+PathLike = typing.Union[pathlib.Path, str]
+
 
 class UnsupportedFormatException(Exception):
     """Exception raised when a topology/trajectory format cannot be parsed."""
@@ -35,10 +37,8 @@ class NonMatchingSystemError(ValueError):
 class Frame:
     """Load and store data from a simulation trajectory."""
     def __init__(self,
-                 topology_file: typing.Optional[typing.Union[pathlib.Path,
-                                                             str]] = None,
-                 trajectory_file: typing.Optional[typing.Union[pathlib.Path,
-                                                               str]] = None,
+                 topology_file: typing.Optional[PathLike] = None,
+                 trajectory_file: typing.Optional[PathLike] = None,
                  frame_start: int = 0,
                  frame_end: typing.Optional[int] = None):
         """Load a simulation trajectory.
@@ -60,8 +60,10 @@ class Frame:
                         logging.info('Loading trajectory file - this may take a while')
                         self._trajectory = mdtraj.load(str(trajectory_file),
                                                        top=self._topology)
-                        self._slice_trajectory(frame_start, frame_end)
-                        logging.info('Finished loading trajectory file')
+                        self._trajectory = self._slice_trajectory(frame_start, frame_end)
+                        logging.info(
+                            'Finished loading trajectory file - loaded %d frames',
+                            self._trajectory.n_frames)
 
                     except ValueError as exc:
                         raise NonMatchingSystemError from exc
@@ -116,6 +118,10 @@ class Frame:
             self.unitcell_angles = None
 
         self.time = traj.time
+
+        # Cast unitcell vectors to float32 to avoid warning - they're currently float64
+        if traj.unitcell_vectors is not None:
+            traj.unitcell_vectors = traj.unitcell_vectors.astype(np.float32)
 
     @property
     def residues(self):
@@ -187,7 +193,7 @@ class Frame:
         return self._topology.add_atom(name, element, residue)
 
     def save(self,
-             filename: str,
+             filename: PathLike,
              frame_number: typing.Optional[int] = None,
              **kwargs) -> None:
         """Write trajctory to file.
@@ -202,7 +208,7 @@ class Frame:
 
     def build_trajectory(self) -> None:
         """Build an MDTraj trajectory from atom coordinates and the values stored as attributes on this frame."""
-        xyz = np.array([atom.coords for atom in self._topology.atoms])
+        xyz = np.array([atom.coords for atom in self._topology.atoms], dtype=np.float32)
 
         # We currently have axes: 0 - each atom, 1 - timestep, 2 - xyz coords
         # Need to convert to axes: 0 - timestep, 1 - each atom, 2 - xyz coords

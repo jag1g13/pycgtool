@@ -165,7 +165,6 @@ Option               Description                                  Values
 output_name          Base name of output files                    **out**, any string
 output               Coordinate output format                     **gro**
 output_xtc           Should a pseudo-CG XTC be created            **False**, True
-map_only             Run in mapping-only mode                     **False**, True
 map_center           Mapping method                               **geom**, mass
 virtual_map_center   Virtual site mapping method                  **geom**, mass
 constr_threshold     Convert stiff bonds to constraints over      **100000**, any number

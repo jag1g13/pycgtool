@@ -68,7 +68,9 @@ class PycgtoolTest(unittest.TestCase):
                 'bnd': None,
             })
 
-            main.full_run(args)
+            # Equivalent to
+            # pycgtool <top> <trj> -m <map> --output-xtc
+            main.PyCGTOOL(args)
 
             self.assertTrue(
                 util.compare_trajectories(
@@ -81,7 +83,9 @@ class PycgtoolTest(unittest.TestCase):
             tmp_path = pathlib.Path(tmpdir)
             args = get_args('sugar', tmp_path)
 
-            main.full_run(args)
+            # Equivalent to
+            # pycgtool <top> <trj> -m <map> -b <bnd>
+            main.PyCGTOOL(args)
 
             self.assertTrue(
                 util.cmp_file_whitespace_float(
@@ -103,7 +107,9 @@ class PycgtoolTest(unittest.TestCase):
                 'trajectory': None,
             })
 
-            main.full_run(args)
+            # Equivalent to
+            # pycgtool <top> -m <map> -b <bnd>
+            main.PyCGTOOL(args)
 
             self.assertFalse(tmp_path.joinpath('out.itp').exists())
 
@@ -121,7 +127,9 @@ class PycgtoolTest(unittest.TestCase):
                 'trajectory': None,
             })
 
-            main.full_run(args)
+            # Equivalent to
+            # pycgtool <top> -b <bnd>
+            main.PyCGTOOL(args)
 
             # Does not produce itp file
             self.assertFalse(tmp_path.joinpath('out.itp').exists())
@@ -145,7 +153,9 @@ class PycgtoolTest(unittest.TestCase):
                                 'output_forcefield': True,
                             })
 
-            main.full_run(args)
+            # Equivalent to
+            # pycgtool <top> <trj> -m <map> -b <bnd> --output-forcefield
+            main.PyCGTOOL(args)
 
             # Does not produce itp file
             self.assertFalse(tmp_path.joinpath('out.itp').exists())

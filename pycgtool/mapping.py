@@ -344,6 +344,7 @@ class Mapping:
         :param aa_residues: Iterable of atomistic residues to map from
         :return: New CG Frame instance
         """
+        logger.info('Initialising output frame')
         cg_frame = Frame()
         missing_mappings = set()
 
@@ -364,6 +365,7 @@ class Mapping:
             for bmap in mol_map:
                 cg_frame.add_atom(bmap.name, None, cg_res)
 
+        logger.info('Finished initialising output frame')
         return cg_frame
 
     def apply(self, frame: Frame, cg_frame: typing.Optional[Frame] = None):
@@ -385,6 +387,7 @@ class Mapping:
         if not np.all(unitcell_lengths):
             unitcell_lengths = None
 
+        logger.info('Applying AA->CG mapping')
         residues_to_map = (res for res in frame.residues
                            if res.name in self._mappings)
         for aa_res, cg_res in zip(residues_to_map, cg_frame.residues):
@@ -417,6 +420,7 @@ class Mapping:
 
         cg_frame.build_trajectory()
 
+        logger.info('Finished applying AA->CG mapping')
         return cg_frame
 
 

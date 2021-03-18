@@ -1,9 +1,9 @@
-import unittest
 
 import math
 import os
 import pathlib
 import tempfile
+import unittest
 
 from pycgtool.bondset import BondSet
 from pycgtool.frame import Frame

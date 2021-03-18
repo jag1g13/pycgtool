@@ -6,14 +6,18 @@ import logging
 import pathlib
 import sys
 import textwrap
+import time
 import typing
 
+from mdplus.multiscale import GLIMPS
 from rich.logging import RichHandler
 
 from .frame import Frame
 from .mapping import Mapping
 from .bondset import BondSet
 from .forcefield import ForceField
+
+PathLike = typing.Union[pathlib.Path, str]
 
 logger = logging.getLogger(__name__)
 
@@ -22,93 +26,93 @@ class ArgumentValidationError(ValueError):
     """Exception raised for invalid combinations of command line arguments."""
 
 
-def get_output_filepath(ext: str, config) -> pathlib.Path:
-    """Get file path for an output file by extension.
+class PyCGTOOL:
+    def __init__(self, config):
+        self.config = config
 
-    :param ext:
-    :param config: Program arguments from argparse
-    """
-    out_dir = pathlib.Path(config.out_dir)
-    return out_dir.joinpath(config.output_name + '.' + ext)
+        self.in_frame = Frame(
+            topology_file=self.config.topology,
+            trajectory_file=self.config.trajectory,  # May be None
+            frame_start=self.config.begin,
+            frame_end=self.config.end)
 
+        self.mapping = None
+        self.out_frame = self.in_frame
+        if self.config.mapping:
+            self.mapping, self.out_frame = self.apply_mapping(self.in_frame)
 
-def measure_bonds(frame: Frame, mapping: typing.Optional[Mapping],
-                  config) -> None:
-    """Measure bonds at the end of a run.
+        self.bondset = None
+        if self.config.bondset:
+            self.bondset = BondSet(self.config.bondset, self.config)
+            self.measure_bonds()
 
-    :param frame:
-    :param mapping:
-    :param config: Program arguments from argparse
-    """
-    bonds = BondSet(config.bondset, config)
-    bonds.apply(frame)
+        if self.config.output_xtc:
+            self.out_frame.save(self.get_output_filepath('xtc'))
 
-    if config.mapping and config.trajectory:
-        # Only perform Boltzmann Inversion if we have a mapping and a trajectory.
-        # Otherwise we get infinite force constants.
-        logger.info('Starting Boltzmann Inversion')
-        bonds.boltzmann_invert()
-        logger.info('Finished Boltzmann Inversion')
+    def get_output_filepath(self, ext: PathLike) -> pathlib.Path:
+        """Get file path for an output file by extension."""
+        out_dir = pathlib.Path(self.config.out_dir)
+        return out_dir.joinpath(self.config.output_name + '.' + ext)
 
-        if config.output_forcefield:
-            logger.info("Writing GROMACS forcefield directory")
-            out_dir = pathlib.Path(config.out_dir)
-            forcefield = ForceField(config.output_name, dir_path=out_dir)
-            forcefield.write(config.output_name, mapping, bonds)
-            logger.info("Finished writing GROMACS forcefield directory")
+    def apply_mapping(self, in_frame: Frame) -> typing.Tuple[Mapping, Frame]:
+        """Map input frame to output using requested mapping file."""
+        mapping = Mapping(self.config.mapping,
+                          self.config,
+                          itp_filename=self.config.itp)
+        out_frame = mapping.apply(in_frame)
+        out_frame.save(self.get_output_filepath('gro'), frame_number=0)
 
-        else:
-            bonds.write_itp(get_output_filepath('itp', config),
-                            mapping=mapping)
+        if self.config.backmapper_resname and self.out_frame.n_frames > 1:
+            self.train_backmapper(self.config.resname)
 
-    if config.dump_measurements:
-        logger.info('Writing bond measurements to file')
-        bonds.dump_values(config.dump_n_values, config.out_dir)
-        logger.info('Finished writing bond measurements to file')
+        return mapping, out_frame
 
+    def measure_bonds(self) -> None:
+        """Measure bonds at the end of a run."""
+        self.bondset.apply(self.out_frame)
 
-def mapping_loop(frame: Frame, config) -> typing.Tuple[Frame, Mapping]:
-    """Perform mapping loop over input trajectory.
+        if self.mapping is not None and self.out_frame.n_frames > 1:
+            # Only perform Boltzmann Inversion if we have a mapping and a trajectory.
+            # Otherwise we get infinite force constants.
+            logger.info('Starting Boltzmann Inversion')
+            self.bondset.boltzmann_invert()
+            logger.info('Finished Boltzmann Inversion')
 
-    :param frame:
-    :param config: Program arguments from argparse
-    """
-    logger.info('Starting AA->CG mapping')
-    mapping = Mapping(config.mapping, config, itp_filename=config.itp)
+            if self.config.output_forcefield:
+                logger.info("Writing GROMACS forcefield directory")
+                out_dir = pathlib.Path(self.config.out_dir)
+                forcefield = ForceField(self.config.output_name,
+                                        dir_path=out_dir)
+                forcefield.write(self.config.output_name, self.mapping,
+                                 self.bondset)
+                logger.info("Finished writing GROMACS forcefield directory")
 
-    cg_frame = mapping.apply(frame)
-    cg_frame.save(get_output_filepath('gro', config), frame_number=0)
-    logging.info('Finished AA->CG mapping')
+            else:
+                self.bondset.write_itp(self.get_output_filepath('itp'),
+                                       mapping=self.mapping)
 
-    return cg_frame, mapping
+        if self.config.dump_measurements:
+            logger.info('Writing bond measurements to file')
+            self.bondset.dump_values(self.config.dump_n_values,
+                                     self.config.out_dir)
+            logger.info('Finished writing bond measurements to file')
 
+    def train_backmapper(self, resname: str):
+        sel = f'resname {resname}'
 
-def full_run(config):
-    """Main function of the program PyCGTOOL.
+        aa_subset_traj = self.in_frame._trajectory.atom_slice(
+            self.in_frame._trajectory.topology.select(sel))
+        cg_subset_traj = self.out_frame._trajectory.atom_slice(
+            self.out_frame._trajectory.topology.select(sel))
 
-    Performs the complete AA->CG mapping and outputs a files dependent on given input.
+        logger.info('Training backmapper')
+        # Param x_valence is approximate number of bonds per CG bead
+        # Values greater than 2 fail for small molecules e.g. sugar test case
+        backmapper = GLIMPS(x_valence=2)
+        backmapper.fit(cg_subset_traj.xyz, aa_subset_traj.xyz)
+        logger.info('Finished training backmapper')
 
-    :param config: Program arguments from argparse
-    """
-    frame = Frame(
-        topology_file=config.topology,
-        trajectory_file=config.trajectory,  # May be None
-        frame_start=config.begin,
-        frame_end=config.end)
-
-    if config.mapping:
-        cg_frame, mapping = mapping_loop(frame, config)
-
-    else:
-        logger.info('Skipping AA->CG mapping')
-        mapping = None
-        cg_frame = frame
-
-    if config.output_xtc:
-        cg_frame.save(get_output_filepath('xtc', config))
-
-    if config.bondset:
-        measure_bonds(cg_frame, mapping, config)
+        backmapper.save(self.get_output_filepath('backmapper.pkl'))
 
 
 class BooleanAction(argparse.Action):
@@ -124,13 +128,12 @@ class BooleanAction(argparse.Action):
 
 
 def parse_arguments(arg_list):
+    # yapf: disable
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=
-        "Generate coarse-grained molecular dynamics models from atomistic trajectories."
+        description="Generate coarse-grained molecular dynamics models from atomistic trajectories."
     )
 
-    # yapf: disable
     # Input files
     input_files = parser.add_argument_group("input files")
 
@@ -170,19 +173,19 @@ def parse_arguments(arg_list):
     # Mapping options
     mapping_options = parser.add_argument_group("mapping options")
 
-    mapping_options.add_argument("--map-only", '--no-map-only', default=False, action=BooleanAction,
-                                 help="Run in mapping-only mode?")
     mapping_options.add_argument("--map-center", default="geom",
                                  choices=["geom", "mass", "first"],
                                  help="Mapping method")
     mapping_options.add_argument("--virtual-map-center", default="geom",
                                  choices=["geom", "mass"],
                                  help="Virtual site mapping method")
+    mapping_options.add_argument("--backmapper-resname", default=None,
+                                 help="Residue name for which to train a backmapper")
 
     # Bond options
     bond_options = parser.add_argument_group("bond options")
 
-    bond_options.add_argument("--constr_threshold", type=float, default=100000,
+    bond_options.add_argument("--constr-threshold", type=float, default=100000,
                               help="Convert bonds with force constants over [value] to constraints")
     bond_options.add_argument("--temperature", type=float, default=310,
                               help="Temperature of reference simulation")
@@ -227,25 +230,31 @@ def validate_arguments(args):
     """
     if not args.dump_measurements:
         args.dump_measurements = bool(args.bondset) and not bool(args.mapping)
-
-    if not args.map_only:
-        args.map_only = not bool(args.bondset)
+        logger.info(
+            'Argument --dump-measurements has been set because you have provided a bondset but no mapping'
+        )
 
     if not args.mapping and not args.bondset:
-        raise ArgumentValidationError("One or both of -m and -b is required.")
+        raise ArgumentValidationError('One or both of -m and -b is required')
+
+    if args.backmapper_resname:
+        logger.warning(
+            'Backmapping is an experimental feature and has not yet been fully validated'
+        )
 
     return args
 
 
 def main():
+    start_time = time.time()
     args = parse_arguments(sys.argv[1:])
 
     logging.basicConfig(level=args.log_level,
                         format='%(message)s',
                         datefmt='[%X]',
-                        handlers=[RichHandler()])
+                        handlers=[RichHandler(rich_tracebacks=True)])
 
-    banner = """\
+    banner = r"""
          _____        _____ _____ _______ ____   ____  _      
         |  __ \      / ____/ ____|__   __/ __ \ / __ \| |     
         | |__) |   _| |   | |  __   | | | |  | | |  | | |     
@@ -270,17 +279,20 @@ def main():
     try:
         if args.profile:
             with cProfile.Profile() as profiler:
-                full_run(args)
+                pycgtool = PyCGTOOL(args)
 
             profiler.dump_stats('gprof.out')
 
         else:
-            full_run(args)
+            pycgtool = PyCGTOOL(args)
 
+        elapsed_time = time.time() - start_time
+        logger.info('Processed %d frames in %.2f s',
+                    pycgtool.out_frame.n_frames, elapsed_time)
         logger.info('Finished processing - goodbye!')
 
     except Exception as exc:
-        logger.error(exc)
+        logger.exception(exc)
 
 
 if __name__ == "__main__":
