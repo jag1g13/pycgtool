@@ -7,6 +7,7 @@ import pathlib
 import sys
 import textwrap
 import time
+import typing
 
 from mdplus.multiscale import GLIMPS
 from rich.logging import RichHandler
@@ -15,6 +16,8 @@ from .frame import Frame
 from .mapping import Mapping
 from .bondset import BondSet
 from .forcefield import ForceField
+
+PathLike = typing.Union[pathlib.Path, str]
 
 logger = logging.getLogger(__name__)
 
@@ -36,15 +39,7 @@ class PyCGTOOL:
         self.mapping = None
         self.out_frame = self.in_frame
         if self.config.mapping:
-            self.mapping = Mapping(self.config.mapping,
-                                   self.config,
-                                   itp_filename=self.config.itp)
-            self.out_frame = self.mapping.apply(self.in_frame)
-            self.out_frame.save(self.get_output_filepath('gro'),
-                                frame_number=0)
-
-            if self.config.backmapper_resname and self.out_frame.n_frames > 1:
-                self.train_backmapper(self.config.resname)
+            self.mapping, self.out_frame = self.apply_mapping(self.in_frame)
 
         self.bondset = None
         if self.config.bondset:
@@ -54,13 +49,23 @@ class PyCGTOOL:
         if self.config.output_xtc:
             self.out_frame.save(self.get_output_filepath('xtc'))
 
-    def get_output_filepath(self, ext: str) -> pathlib.Path:
-        """Get file path for an output file by extension.
-
-        :param ext:
-        """
+    def get_output_filepath(self, ext: PathLike) -> pathlib.Path:
+        """Get file path for an output file by extension."""
         out_dir = pathlib.Path(self.config.out_dir)
         return out_dir.joinpath(self.config.output_name + '.' + ext)
+
+    def apply_mapping(self, in_frame: Frame) -> typing.Tuple[Mapping, Frame]:
+        """Map input frame to output using requested mapping file."""
+        mapping = Mapping(self.config.mapping,
+                          self.config,
+                          itp_filename=self.config.itp)
+        out_frame = mapping.apply(in_frame)
+        out_frame.save(self.get_output_filepath('gro'), frame_number=0)
+
+        if self.config.backmapper_resname and self.out_frame.n_frames > 1:
+            self.train_backmapper(self.config.resname)
+
+        return mapping, out_frame
 
     def measure_bonds(self) -> None:
         """Measure bonds at the end of a run."""

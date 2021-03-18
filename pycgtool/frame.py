@@ -193,7 +193,7 @@ class Frame:
         return self._topology.add_atom(name, element, residue)
 
     def save(self,
-             filename: str,
+             filename: PathLike,
              frame_number: typing.Optional[int] = None,
              **kwargs) -> None:
         """Write trajctory to file.
