@@ -119,6 +119,10 @@ class Frame:
 
         self.time = traj.time
 
+        # Cast unitcell vectors to float32 to avoid warning - they're currently float64
+        if traj.unitcell_vectors is not None:
+            traj.unitcell_vectors = traj.unitcell_vectors.astype(np.float32)
+
     @property
     def residues(self):
         """Residues in the frame topology."""
@@ -204,7 +208,7 @@ class Frame:
 
     def build_trajectory(self) -> None:
         """Build an MDTraj trajectory from atom coordinates and the values stored as attributes on this frame."""
-        xyz = np.array([atom.coords for atom in self._topology.atoms])
+        xyz = np.array([atom.coords for atom in self._topology.atoms], dtype=np.float32)
 
         # We currently have axes: 0 - each atom, 1 - timestep, 2 - xyz coords
         # Need to convert to axes: 0 - timestep, 1 - each atom, 2 - xyz coords
