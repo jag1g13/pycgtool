@@ -16,9 +16,22 @@ For instance, a pre-equilibrated atomistic membrane may be used to create starti
 
 PyCGTOOL makes it easy to test multiple variations in mapping and bond topology by making simple changes to the config files.
 
-If you find this useful, please cite as:
-```
-Graham, J. (2017). PyCGTOOL, https://doi.org/10.5281/zenodo.598143
+If you find PyCGTOOL useful, please cite our JCIM paper (https://doi.org/10.1021/acs.jcim.7b00096) and the code itself (https://doi.org/10.5281/zenodo.598143).
+
+```bibtex
+@article{Graham2017,
+   author = {James A. Graham and Jonathan W. Essex and Syma Khalid},
+   doi = {10.1021/acs.jcim.7b00096},
+   issn = {1549-9596},
+   issue = {4},
+   journal = {Journal of Chemical Information and Modeling},
+   month = {4},
+   pages = {650-656},
+   title = {PyCGTOOL: Automated Generation of Coarse-Grained Molecular Dynamics Models from Atomistic Trajectories},
+   volume = {57},
+   url = {https://pubs.acs.org/doi/10.1021/acs.jcim.7b00096},
+   year = {2017},
+}
 ```
 
 ## Install
@@ -44,7 +57,7 @@ Example files are present in the [test/data](https://github.com/jag1g13/pycgtool
 The format of these files is described in the [full documentation](https://pycgtool.readthedocs.io/en/master/index.html).
 
 For more information, see [the tutorial](https://pycgtool.readthedocs.io/en/master/tutorial.html).
-It is important to perform validation of any new parameter set; a brief example is present at the end of the tutorial.
+It is important to perform validation of any new parameter set - a brief example is present at the end of the tutorial.
 
 For a full list of options, see the [documentation](https://pycgtool.readthedocs.io/en/master/index.html) or use:
 ```
