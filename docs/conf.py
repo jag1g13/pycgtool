@@ -33,8 +33,7 @@ extensions = [
     'autoapi.extension',
     'sphinx_rtd_theme',
     'sphinx.ext.viewcode',
-    # 'recommonmark',
-    'm2r2',
+    'myst_parser',
 ]
 
 source_suffix = ['.rst', '.md']
@@ -46,6 +45,8 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+
+myst_enable_extensions = ['deflist']
 
 
 # -- Options for HTML output -------------------------------------------------
