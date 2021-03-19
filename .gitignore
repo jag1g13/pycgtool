@@ -20,7 +20,7 @@ poetry.toml
 .python-version
 /cover/
 /dist/
-/docs/build/
+/docs/_build/
 /pycgtool.egg-info/
 /tmp/
 

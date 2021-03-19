@@ -18,12 +18,11 @@
 # -- Project information -----------------------------------------------------
 
 project = 'PyCGTOOL'
-copyright = '2020, James Graham'
+copyright = '2016, James Graham'
 author = 'James Graham'
 
 # The full version, including alpha/beta/rc tags
 release = '2.0.0'
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -34,7 +33,11 @@ extensions = [
     'autoapi.extension',
     'sphinx_rtd_theme',
     'sphinx.ext.viewcode',
+    # 'recommonmark',
+    'm2r2',
 ]
+
+source_suffix = ['.rst', '.md']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -42,7 +45,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -57,7 +60,8 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+
 # -- Sphinx AudoAPI options --------------------------------------------------
 
 autoapi_type = 'python'
-autoapi_dirs = ['../../pycgtool']
+autoapi_dirs = ['../pycgtool']
