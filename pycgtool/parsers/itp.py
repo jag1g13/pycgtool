@@ -2,6 +2,7 @@
 
 import collections
 import logging
+import pathlib
 
 from .cfg import CFG, NoSectionError, DuplicateSectionError
 
@@ -9,21 +10,21 @@ logger = logging.getLogger(__name__)
 
 
 class ITP(CFG):
-    """Class representing an .itp file
+    """Class representing an .itp file.
 
-    Contains a dictionary for every molecule definition
+    Contains a dictionary of sections for every molecule definition.
     """
-    def _read_file(self) -> None:
+    def _read_file(self, filepath: pathlib.Path) -> None:
         mol_sections = ["atoms", "bonds", "angles", "dihedrals"]
 
-        with open(self.filename) as itp_file:
+        with open(filepath) as itp_file:
             curr_section = None
             curr_mol = None
 
             for line in itp_file:
-                line = self._read_line(line)
+                line = self._read_line(line, filepath)
 
-                if line is None:
+                if not line:
                     continue
 
                 if line.startswith("["):
@@ -42,7 +43,7 @@ class ITP(CFG):
                     curr_mol = toks[0]
 
                     if curr_mol in self:
-                        raise DuplicateSectionError(curr_mol, self.filename)
+                        raise DuplicateSectionError(curr_mol, filepath)
 
                     self[curr_mol] = collections.OrderedDict()
 
@@ -50,8 +51,8 @@ class ITP(CFG):
                     self[curr_mol][curr_section].append(toks)
 
                 elif curr_section is None:
-                    raise NoSectionError(self.filename)
+                    raise NoSectionError(filepath)
 
                 else:
                     logger.info("File '%s' contains unexpected section '%s'",
-                                self.filename, curr_section)
+                                filepath, curr_section)

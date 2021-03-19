@@ -8,6 +8,8 @@ import contextlib
 import pathlib
 import typing
 
+PathLike = typing.Union[str, pathlib.Path]
+
 
 class DuplicateSectionError(KeyError):
     """Exception used to indicate that a section has appeared twice in a file."""
@@ -28,53 +30,44 @@ class CFG(collections.OrderedDict, contextlib.AbstractContextManager):
 
     Contains a dictionary of Sections.
     """
-    def __init__(self,
-                 filename: typing.Optional[typing.Union[str,
-                                                        pathlib.Path]] = None):
-        """Parse a config file and extract Sections.
-
-        :param filename: Path of file to read
-        """
+    def __init__(self, filepath: typing.Optional[PathLike] = None):
+        """Parse a config file and extract Sections."""
         super().__init__()
-        self.filename = None
+        self.filepath = None
 
-        if filename is not None:
-            self.filename = pathlib.Path(filename)
-            self._read_file()
+        if filepath is not None:
+            self.filepath = pathlib.Path(filepath)
+            self._read_file(self.filepath)
 
-    def _read_line(self, line: str) -> typing.Optional[str]:
+    def _read_line(self, line: str, filepath: pathlib.Path) -> str:
         # Strip comments
         line = line.split(';')[0].strip()
-
-        if not line:
-            return None
 
         # Handle include directive
         if line.startswith('#include'):
             include_file = line.split()[1].strip('"')
-            other = type(self)(self.filename.parent.joinpath(include_file))
+            other = type(self)(filepath.parent.joinpath(include_file))
             self.update(other)
 
-            return None
+            return ''  # Handle include then treat as empty line
 
         return line
 
-    def _read_file(self) -> None:
-        with open(self.filename) as cfg_file:
+    def _read_file(self, filepath: pathlib.Path) -> None:
+        with open(filepath) as cfg_file:
             curr_section = None
 
             for line in cfg_file:
-                line = self._read_line(line)
+                line = self._read_line(line, filepath)
 
-                if line is None:
+                if not line:
                     continue
 
                 if line.startswith("["):
                     curr_section = line.strip("[ ]")
 
                     if curr_section in self:
-                        raise DuplicateSectionError(curr_section,
-                                                    self.filename)
+                        raise DuplicateSectionError(curr_section, filepath)
 
                     self[curr_section] = []
 
@@ -86,7 +79,7 @@ class CFG(collections.OrderedDict, contextlib.AbstractContextManager):
                     self[curr_section].append(toks)
 
                 except KeyError as exc:
-                    raise NoSectionError(self.filename) from exc
+                    raise NoSectionError(filepath) from exc
 
     def __exit__(self, exc_type, exc_value, traceback):
         pass
