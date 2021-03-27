@@ -12,12 +12,20 @@ processors:
   - type: smart
   - type: crossref
 
+#@ def base_url():
+#@     base_url = None
+#@     if env.GITHUB_ACTIONS:
+#@         user, repo = env.GITHUB_REPOSITORY.split('/')
+#@         base_url = f'https://{user}.github.io/{repo}'
+#@     return base_url
+#@ end
+
 renderer:
   type: hugo
   config:
     title: PyCGTOOL
     theme: { clone_url: "https://github.com/alex-shpak/hugo-book.git" }
-    base_url: "https://jag1g13.github.io/pycgtool/"
+    baseURL: #@ base_url()
 
   content_directory: content
   default_preamble: { menu: main }
