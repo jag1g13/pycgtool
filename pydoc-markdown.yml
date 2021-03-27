@@ -1,0 +1,44 @@
+loaders:
+  - type: python
+    packages:
+      - pycgtool
+
+processors:
+  - type: filter
+    documented_onlt: true
+    exclude_private: true
+    exclude_special: true
+    skip_empty_modules: true
+  - type: smart
+  - type: crossref
+
+renderer:
+  type: hugo
+  config:
+    title: PyCGTOOL
+    theme: { clone_url: "https://github.com/alex-shpak/hugo-book.git" }
+
+  content_directory: content
+  default_preamble: { menu: main }
+
+  pages:
+    - title: Home
+      name: index
+      source: README.md
+
+    - title: Arguments
+      name: docs/Arguments
+      source: docs/arguments.md
+
+    - title: Tutorial
+      name: docs/tutorial
+      source: docs/tutorial.md
+
+    - title: File Formats
+      name: docs/file-formats
+      source: docs/file-formats.md
+
+    - title: API Documentation
+      name: docs/api
+      contents:
+        - "*"

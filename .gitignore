@@ -34,3 +34,7 @@ settings.json
 /notes/
 *.offsets
 *.pkl
+
+# Docs build
+/build/docs
+/public
