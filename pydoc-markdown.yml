@@ -17,6 +17,7 @@ renderer:
   config:
     title: PyCGTOOL
     theme: { clone_url: "https://github.com/alex-shpak/hugo-book.git" }
+    base_url: "https://jag1g13.github.io/pycgtool/"
 
   content_directory: content
   default_preamble: { menu: main }
