@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta name="generator" content="Hugo 0.82.0" />
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="pycgtool.functionalforms #  Utilities for describing the functional forms of bonded potentials being calculated.
+See http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html and http://manual.gromacs.org/documentation/current/reference-manual/topologies/topology-file-formats.html#tab-topfile2
+The links above list the bonded potentials available for use in GROMACS force fields. These can be implemented as functional forms in PyCGTOOL by subclassing :class:FunctionalForm.
+get_functional_forms #  get_functional_forms() -&gt; enum.Enum Get enum of known functional forms.
+FunctionalForm Objects #  class FunctionalForm(, metaclass=abc.ABCMeta) Parent class of any functional form used in Boltzmann Inversion to convert variance to a force constant.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="API Documentation" />
+<meta property="og:description" content="pycgtool.functionalforms #  Utilities for describing the functional forms of bonded potentials being calculated.
+See http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html and http://manual.gromacs.org/documentation/current/reference-manual/topologies/topology-file-formats.html#tab-topfile2
+The links above list the bonded potentials available for use in GROMACS force fields. These can be implemented as functional forms in PyCGTOOL by subclassing :class:FunctionalForm.
+get_functional_forms #  get_functional_forms() -&gt; enum.Enum Get enum of known functional forms.
+FunctionalForm Objects #  class FunctionalForm(, metaclass=abc.ABCMeta) Parent class of any functional form used in Boltzmann Inversion to convert variance to a force constant." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/docs/api/" /><meta property="article:section" content="docs" />
+
+
+
+<title>API Documentation | PyCGTOOL</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/book.min.2bc2364a4a4b31f0ec1debecf0a8f90a840821f143dfe1ac6a0f7cbcbdcf64ac.css" integrity="sha256-K8I2SkpLMfDsHevs8Kj5CoQIIfFD3&#43;Gsag98vL3PZKw=">
+<script defer src="/en.search.min.215be45ca1a05efa85e3f66dcd52ca664821056d219f9227cb71339e077de7b3.js" integrity="sha256-IVvkXKGgXvqF4/ZtzVLKZkghBW0hn5Iny3Ezngd957M="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a href="/"><span>PyCGTOOL</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/api/" class=" active">API Documentation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/arguments/" class="">Arguments</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/file-formats/" class="">File Formats</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/tutorial/" class="">Tutorial</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var a=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(b){localStorage.setItem("menu.scrollTop",a.scrollTop)}),a.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>API Documentation</strong>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#functionalform-objects">FunctionalForm Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#harmonic-objects">Harmonic Objects</a></li>
+    <li><a href="#cosharmonic-objects">CosHarmonic Objects</a></li>
+    <li><a href="#martinidefaultlength-objects">MartiniDefaultLength Objects</a></li>
+    <li><a href="#martinidefaultangle-objects">MartiniDefaultAngle Objects</a></li>
+    <li><a href="#martinidefaultdihedral-objects">MartiniDefaultDihedral Objects</a></li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#unsupportedformatexception-objects">UnsupportedFormatException Objects</a></li>
+    <li><a href="#nonmatchingsystemerror-objects">NonMatchingSystemError Objects</a></li>
+    <li><a href="#frame-objects">Frame Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#argumentvalidationerror-objects">ArgumentValidationError Objects</a></li>
+    <li><a href="#pycgtool-objects">PyCGTOOL Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#booleanaction-objects">BooleanAction Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#bond-objects">Bond Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#bondset-objects">BondSet Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#duplicatesectionerror-objects">DuplicateSectionError Objects</a></li>
+    <li><a href="#nosectionerror-objects">NoSectionError Objects</a></li>
+    <li><a href="#cfg-objects">CFG Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#itp-objects">ITP Objects</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#beadmap-objects">BeadMap Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#virtualmap-objects">VirtualMap Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#mapping-objects">Mapping Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#forcefield-objects">ForceField Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h1 id="pycgtoolfunctionalforms">
+  pycgtool.functionalforms
+  <a class="anchor" href="#pycgtoolfunctionalforms">#</a>
+</h1>
+<p>Utilities for describing the functional forms of bonded potentials being calculated.</p>
+<p>See <a href="http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html">http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html</a>
+and <a href="http://manual.gromacs.org/documentation/current/reference-manual/topologies/topology-file-formats.html#tab-topfile2">http://manual.gromacs.org/documentation/current/reference-manual/topologies/topology-file-formats.html#tab-topfile2</a></p>
+<p>The links above list the bonded potentials available for use in GROMACS force fields.
+These can be implemented as functional forms in PyCGTOOL by subclassing :class:<code>FunctionalForm</code>.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="get_functional_forms">
+  get_functional_forms
+  <a class="anchor" href="#get_functional_forms">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">get_functional_forms() <span style="color:#f92672">-&gt;</span> enum<span style="color:#f92672">.</span>Enum
+</code></pre></div><p>Get enum of known functional forms.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="functionalform-objects">
+  FunctionalForm Objects
+  <a class="anchor" href="#functionalform-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">FunctionalForm</span>(, metaclass<span style="color:#f92672">=</span>abc<span style="color:#f92672">.</span>ABCMeta)
+</code></pre></div><p>Parent class of any functional form used in Boltzmann Inversion to convert variance to a force constant.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="__init__">
+  __init__
+  <a class="anchor" href="#__init__">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> __init__(mean_func: typing<span style="color:#f92672">.</span>Callable <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>nanmean, variance_func: typing<span style="color:#f92672">.</span>Callable <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>nanvar)
+</code></pre></div><p>Inject functions for calculating the mean and variance into the Boltzmann Inversion equations.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>mean_func</code>: Function to calculate the mean - default is np.nanmean</li>
+<li><code>variance_func</code>: Function to calculate the variance - default is np.nanvar</li>
+</ul>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="eqm">
+  eqm
+  <a class="anchor" href="#eqm">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> eqm(values: typing<span style="color:#f92672">.</span>Iterable[float], temp: float) <span style="color:#f92672">-&gt;</span> float
+</code></pre></div><p>Calculate equilibrium value.</p>
+<p>May be overridden by functional forms.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>values</code>: Measured internal coordinate values from which to calculate equilibrium value</li>
+<li><code>temp</code>: Temperature of simulation</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>Calculated equilibrium value</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="fconst">
+  fconst
+  <a class="anchor" href="#fconst">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> <span style="color:#a6e22e">@abc.abstractmethod</span>
+ <span style="color:#f92672">|</span> fconst(values: typing<span style="color:#f92672">.</span>Iterable[float], temp: float) <span style="color:#f92672">-&gt;</span> float
+</code></pre></div><p>Calculate force constant.
+Abstract static method to be defined by all functional forms.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>values</code>: Measured internal coordinate values from which to calculate force constant</li>
+<li><code>temp</code>: Temperature of simulation</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>Calculated force constant</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="gromacs_type_ids">
+  gromacs_type_ids
+  <a class="anchor" href="#gromacs_type_ids">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> <span style="color:#a6e22e">@abc.abstractproperty</span>
+ <span style="color:#f92672">|</span> gromacs_type_ids() <span style="color:#f92672">-&gt;</span> typing<span style="color:#f92672">.</span>Tuple[int]
+</code></pre></div><p>Return tuple of GROMACS potential type ids when used as length, angle, dihedral.</p>
+<p>:return tuple[int]: Tuple of GROMACS potential type ids</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="gromacs_type_id_by_natoms">
+  gromacs_type_id_by_natoms
+  <a class="anchor" href="#gromacs_type_id_by_natoms">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> <span style="color:#a6e22e">@classmethod</span>
+ <span style="color:#f92672">|</span> gromacs_type_id_by_natoms(cls, natoms: int) <span style="color:#f92672">-&gt;</span> int
+</code></pre></div><p>Return the GROMACS potential type id for this functional form when used with natoms.</p>
+<p>:param int natoms: Number of atoms in bond
+:return int: GROMACS potential type id</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="harmonic-objects">
+  Harmonic Objects
+  <a class="anchor" href="#harmonic-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Harmonic</span>(FunctionalForm)
+</code></pre></div><p>Simple harmonic potential.</p>
+<p>See <a href="http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html#harmonic-potential">http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html#harmonic-potential</a>  # noqa</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="cosharmonic-objects">
+  CosHarmonic Objects
+  <a class="anchor" href="#cosharmonic-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CosHarmonic</span>(FunctionalForm)
+</code></pre></div><p>Cosine based angle potential.</p>
+<p>See <a href="http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html#cosine-based-angle-potential">http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html#cosine-based-angle-potential</a>  # noqa</p>
+<p>Uses the transformation in eqn 20 of the above source.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="martinidefaultlength-objects">
+  MartiniDefaultLength Objects
+  <a class="anchor" href="#martinidefaultlength-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MartiniDefaultLength</span>(FunctionalForm)
+</code></pre></div><p>Dummy functional form which returns a fixed force constant.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="martinidefaultangle-objects">
+  MartiniDefaultAngle Objects
+  <a class="anchor" href="#martinidefaultangle-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MartiniDefaultAngle</span>(FunctionalForm)
+</code></pre></div><p>Dummy functional form which returns a fixed force constant.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="martinidefaultdihedral-objects">
+  MartiniDefaultDihedral Objects
+  <a class="anchor" href="#martinidefaultdihedral-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MartiniDefaultDihedral</span>(FunctionalForm)
+</code></pre></div><p>Dummy functional form which returns a fixed force constant.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h1 id="pycgtoolutil">
+  pycgtool.util
+  <a class="anchor" href="#pycgtoolutil">#</a>
+</h1>
+<p>This module contains some general purpose utility functions used in PyCGTOOL.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="circular_mean">
+  circular_mean
+  <a class="anchor" href="#circular_mean">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">circular_mean(values)
+</code></pre></div><p>Return average of angles on a cirle</p>
+<p>See <a href="https://en.wikipedia.org/wiki/Mean_of_circular_quantities">https://en.wikipedia.org/wiki/Mean_of_circular_quantities</a></p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>values</code>: array values to average</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>average</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="circular_variance">
+  circular_variance
+  <a class="anchor" href="#circular_variance">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">circular_variance(values)
+</code></pre></div><p>Return variance of angles on a cirle</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>values</code>: array values</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>average</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="extend_graph_chain">
+  extend_graph_chain
+  <a class="anchor" href="#extend_graph_chain">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">extend_graph_chain(extend, pairs)
+</code></pre></div><p>Take list of tuples representing chained links in an undirected graph and extend the chain length.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>extend</code>: List of link tuples to extend</li>
+<li><code>pairs</code>: Graph edges as list of tuples</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>List of link tuples for chain length one greater than input</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="transpose_and_sample">
+  transpose_and_sample
+  <a class="anchor" href="#transpose_and_sample">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">transpose_and_sample(sequence, n<span style="color:#f92672">=</span>None)
+</code></pre></div><p>Transpose a sequence of lists and sample to provide target number of rows.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>sequence</code>: 2d sequence object to transpose</li>
+<li><code>n</code>: Number of samples to take</li>
+</ul>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="dir_up">
+  dir_up
+  <a class="anchor" href="#dir_up">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">dir_up(name, n<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)
+</code></pre></div><p>Return the directory path n levels above a specified file/directory.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>name</code>: Name of file/directory to start from</li>
+<li><code>n</code>: Number of directory levels to go up</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>Directory n directories above name</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="backup_file">
+  backup_file
+  <a class="anchor" href="#backup_file">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">backup_file(name)
+</code></pre></div><p>Backup a file using the GROMACS backup naming scheme.
+name -&gt; <code>name.x</code>#</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>name</code>: File to backup</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>New name of file after backup</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="sliding">
+  sliding
+  <a class="anchor" href="#sliding">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">sliding(vals: typing<span style="color:#f92672">.</span>Iterable)
+</code></pre></div><p>Yield three values in a sliding window along an iterable.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>vals</code>: Iterable to iterate over</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>Generator of tuples</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="cmp_file_whitespace_float">
+  cmp_file_whitespace_float
+  <a class="anchor" href="#cmp_file_whitespace_float">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">cmp_file_whitespace_float(ref_filename, test_filename, rtol<span style="color:#f92672">=</span><span style="color:#ae81ff">0.01</span>, verbose<span style="color:#f92672">=</span>False)
+</code></pre></div><p>Compare two files ignoring spacing on a line and using a tolerance on floats</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>ref_filename</code>: Name of reference file</li>
+<li><code>test_filename</code>: Name of test file
+:param float rtol: Acceptable relative error on floating point numbers
+:param bool verbose: Print failing lines</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>True if files are the same, else False</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="number_or_string">
+  number_or_string
+  <a class="anchor" href="#number_or_string">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">number_or_string(string: str) <span style="color:#f92672">-&gt;</span> typing<span style="color:#f92672">.</span>Union[float, int, str]
+</code></pre></div><p>Convert string into an int or float if possible.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="cmp_whitespace_float">
+  cmp_whitespace_float
+  <a class="anchor" href="#cmp_whitespace_float">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">cmp_whitespace_float(ref_lines, test_lines, rtol<span style="color:#f92672">=</span><span style="color:#ae81ff">0.01</span>, verbose<span style="color:#f92672">=</span>False)
+</code></pre></div><p>Compare two iterables of lines ignoring spacing on a line and using a tolerance on floats</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>ref_lines</code>: Iterable of reference lines</li>
+<li><code>test_lines</code>: Iterable of test lines
+:param float rtol: Acceptable relative error on floating point numbers
+:param bool verbose: Print failing lines</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>True if all lines are the same, else False</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="file_write_lines">
+  file_write_lines
+  <a class="anchor" href="#file_write_lines">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">file_write_lines(filename, lines<span style="color:#f92672">=</span>None, backup<span style="color:#f92672">=</span>True, append<span style="color:#f92672">=</span>False)
+</code></pre></div><p>Open a file and write lines to it.</p>
+<p>:param str filename: Name of file to open
+:param iterable[str] lines: Iterable of lines to write
+:param bool backup: Should the file be backed up if it exists?  Disabled if appending
+:param bool append: Should lines be appended to an existing file?</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="any_starts_with">
+  any_starts_with
+  <a class="anchor" href="#any_starts_with">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">any_starts_with(iterable: typing<span style="color:#f92672">.</span>Iterable, char: str) <span style="color:#f92672">-&gt;</span> bool
+</code></pre></div><p>Return True if any string(s) in nested iterable starts with a given character.</p>
+<p>:param iterable iterable: Nested iterable of strings to check
+:param str char: Char to check each string
+:return bool: True if any string in nested iterable starts with char, else False</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="load_optional_topology">
+  load_optional_topology
+  <a class="anchor" href="#load_optional_topology">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">load_optional_topology(trajfile: typing<span style="color:#f92672">.</span>Union[str, pathlib<span style="color:#f92672">.</span>Path], topfile: typing<span style="color:#f92672">.</span>Optional[typing<span style="color:#f92672">.</span>Union[str, pathlib<span style="color:#f92672">.</span>Path]] <span style="color:#f92672">=</span> None) <span style="color:#f92672">-&gt;</span> mdtraj<span style="color:#f92672">.</span>Trajectory
+</code></pre></div><p>Load an MDTraj trajectory with or without a separate topology file.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>trajfile</code>: Trajectory file</li>
+<li><code>topfile</code>: Corresponding topology file</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>MDTraj trajectory</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="compare_trajectories">
+  compare_trajectories
+  <a class="anchor" href="#compare_trajectories">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">compare_trajectories(<span style="color:#f92672">*</span>trajectory_files: typing<span style="color:#f92672">.</span>Iterable[typing<span style="color:#f92672">.</span>Union[str, pathlib<span style="color:#f92672">.</span>Path]], <span style="color:#f92672">*</span>, topology_file: typing<span style="color:#f92672">.</span>Optional[typing<span style="color:#f92672">.</span>Union[str, pathlib<span style="color:#f92672">.</span>Path]] <span style="color:#f92672">=</span> None, rtol: float <span style="color:#f92672">=</span> <span style="color:#ae81ff">0.001</span>) <span style="color:#f92672">-&gt;</span> bool
+</code></pre></div><p>Compare multiple trajectory files for equality.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>trajectory_files</code>: Paths of trajectory file to compare</li>
+<li><code>topology_file</code>: Topology file path</li>
+<li><code>coords_only</code>: Only compare coordinates from trajectory - e.g. not box size</li>
+</ul>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h1 id="pycgtoolframe">
+  pycgtool.frame
+  <a class="anchor" href="#pycgtoolframe">#</a>
+</h1>
+<p>This module contains classes for storing atomic data.</p>
+<p>The Frame class may contain multiple Residues which may each contain multiple Atoms.
+Both Frame and Residue are iterable. Residue is indexable with either atom numbers or names.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="unsupportedformatexception-objects">
+  UnsupportedFormatException Objects
+  <a class="anchor" href="#unsupportedformatexception-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">UnsupportedFormatException</span>(<span style="color:#a6e22e">Exception</span>)
+</code></pre></div><p>Exception raised when a topology/trajectory format cannot be parsed.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="nonmatchingsystemerror-objects">
+  NonMatchingSystemError Objects
+  <a class="anchor" href="#nonmatchingsystemerror-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">NonMatchingSystemError</span>(<span style="color:#a6e22e">ValueError</span>)
+</code></pre></div><p>Exception raised when topology and trajectory do not match.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="frame-objects">
+  Frame Objects
+  <a class="anchor" href="#frame-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Frame</span>()
+</code></pre></div><p>Load and store data from a simulation trajectory.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="__init__-1">
+  __init__
+  <a class="anchor" href="#__init__-1">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> __init__(topology_file: typing<span style="color:#f92672">.</span>Optional[PathLike] <span style="color:#f92672">=</span> None, trajectory_file: typing<span style="color:#f92672">.</span>Optional[PathLike] <span style="color:#f92672">=</span> None, frame_start: int <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>, frame_end: typing<span style="color:#f92672">.</span>Optional[int] <span style="color:#f92672">=</span> None)
+</code></pre></div><p>Load a simulation trajectory.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>topology_file</code>: File containing system topology</li>
+<li><code>trajectory_file</code>: File containing simulation trajectory</li>
+<li><code>frame_start</code>: First frame of trajectory to use</li>
+<li><code>frame_end</code>: Last frame of trajectory to use</li>
+</ul>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="residues">
+  residues
+  <a class="anchor" href="#residues">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> <span style="color:#a6e22e">@property</span>
+ <span style="color:#f92672">|</span> residues()
+</code></pre></div><p>Residues in the frame topology.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="residue">
+  residue
+  <a class="anchor" href="#residue">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> residue(<span style="color:#f92672">*</span>args, <span style="color:#f92672">**</span>kwargs) <span style="color:#f92672">-&gt;</span> mdtraj<span style="color:#f92672">.</span>core<span style="color:#f92672">.</span>topology<span style="color:#f92672">.</span>Residue
+</code></pre></div><p>Get a residue from the frame topology by name or id.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="atoms">
+  atoms
+  <a class="anchor" href="#atoms">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> <span style="color:#a6e22e">@property</span>
+ <span style="color:#f92672">|</span> atoms()
+</code></pre></div><p>Atoms in the frame topology.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="atom">
+  atom
+  <a class="anchor" href="#atom">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> atom(<span style="color:#f92672">*</span>args, <span style="color:#f92672">**</span>kwargs) <span style="color:#f92672">-&gt;</span> mdtraj<span style="color:#f92672">.</span>core<span style="color:#f92672">.</span>topology<span style="color:#f92672">.</span>Atom
+</code></pre></div><p>Get an atom from the frame topology by name or id.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="natoms">
+  natoms
+  <a class="anchor" href="#natoms">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> <span style="color:#a6e22e">@property</span>
+ <span style="color:#f92672">|</span> natoms() <span style="color:#f92672">-&gt;</span> int
+</code></pre></div><p>Number of atoms in the frame topology.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="n_frames">
+  n_frames
+  <a class="anchor" href="#n_frames">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> <span style="color:#a6e22e">@property</span>
+ <span style="color:#f92672">|</span> n_frames() <span style="color:#f92672">-&gt;</span> int
+</code></pre></div><p>Number of frames in the trajectory.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="add_residue">
+  add_residue
+  <a class="anchor" href="#add_residue">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> add_residue(name, chain: typing<span style="color:#f92672">.</span>Optional[
+ <span style="color:#f92672">|</span>                         mdtraj<span style="color:#f92672">.</span>core<span style="color:#f92672">.</span>topology<span style="color:#f92672">.</span>Residue] <span style="color:#f92672">=</span> None, <span style="color:#f92672">**</span>kwargs) <span style="color:#f92672">-&gt;</span> mdtraj<span style="color:#f92672">.</span>core<span style="color:#f92672">.</span>topology<span style="color:#f92672">.</span>Residue
+</code></pre></div><p>Add a residue to the frame topology.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>name</code>: Name of residue</li>
+<li><code>chain</code>: MDTraj chain of residue</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>New residue</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="add_atom">
+  add_atom
+  <a class="anchor" href="#add_atom">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> add_atom(name: str, element: typing<span style="color:#f92672">.</span>Optional[mdtraj<span style="color:#f92672">.</span>element<span style="color:#f92672">.</span>Element], residue: mdtraj<span style="color:#f92672">.</span>core<span style="color:#f92672">.</span>topology<span style="color:#f92672">.</span>Residue) <span style="color:#f92672">-&gt;</span> mdtraj<span style="color:#f92672">.</span>core<span style="color:#f92672">.</span>topology<span style="color:#f92672">.</span>Atom
+</code></pre></div><p>Add an atom or CG bead to the frame topology.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>name</code>: Name of atom</li>
+<li><code>element</code>: MDTraj element of atom</li>
+<li><code>residue</code>: MDTraj residue of atom</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>New atom</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="save">
+  save
+  <a class="anchor" href="#save">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> save(filename: PathLike, frame_number: typing<span style="color:#f92672">.</span>Optional[int] <span style="color:#f92672">=</span> None, <span style="color:#f92672">**</span>kwargs) <span style="color:#f92672">-&gt;</span> None
+</code></pre></div><p>Write trajctory to file.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>filename</code>: Name of output file</li>
+</ul>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="build_trajectory">
+  build_trajectory
+  <a class="anchor" href="#build_trajectory">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> build_trajectory() <span style="color:#f92672">-&gt;</span> None
+</code></pre></div><p>Build an MDTraj trajectory from atom coordinates and the values stored as attributes on this frame.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h1 id="pycgtool__main__">
+  pycgtool.__main__
+  <a class="anchor" href="#pycgtool__main__">#</a>
+</h1>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="argumentvalidationerror-objects">
+  ArgumentValidationError Objects
+  <a class="anchor" href="#argumentvalidationerror-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ArgumentValidationError</span>(<span style="color:#a6e22e">ValueError</span>)
+</code></pre></div><p>Exception raised for invalid combinations of command line arguments.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="pycgtool-objects">
+  PyCGTOOL Objects
+  <a class="anchor" href="#pycgtool-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">PyCGTOOL</span>()
+</code></pre></div><p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="get_output_filepath">
+  get_output_filepath
+  <a class="anchor" href="#get_output_filepath">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> get_output_filepath(ext: PathLike) <span style="color:#f92672">-&gt;</span> pathlib<span style="color:#f92672">.</span>Path
+</code></pre></div><p>Get file path for an output file by extension.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="apply_mapping">
+  apply_mapping
+  <a class="anchor" href="#apply_mapping">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> apply_mapping(in_frame: Frame) <span style="color:#f92672">-&gt;</span> typing<span style="color:#f92672">.</span>Tuple[Mapping, Frame]
+</code></pre></div><p>Map input frame to output using requested mapping file.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="measure_bonds">
+  measure_bonds
+  <a class="anchor" href="#measure_bonds">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> measure_bonds() <span style="color:#f92672">-&gt;</span> None
+</code></pre></div><p>Measure bonds at the end of a run.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="booleanaction-objects">
+  BooleanAction Objects
+  <a class="anchor" href="#booleanaction-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">BooleanAction</span>(argparse<span style="color:#f92672">.</span>Action)
+</code></pre></div><p>Set up a boolean argparse argument with matching <code>--no</code> argument.</p>
+<p>Based on <a href="https://thisdataguy.com/2017/07/03/no-options-with-argparse-and-python/">https://thisdataguy.com/2017/07/03/no-options-with-argparse-and-python/</a></p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="validate_arguments">
+  validate_arguments
+  <a class="anchor" href="#validate_arguments">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">validate_arguments(args)
+</code></pre></div><p>Check that arguments are not contradictory and modify where necessary.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>args</code>: Parsed arguments from ArgumentParser</li>
+</ul>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h1 id="pycgtoolbondset">
+  pycgtool.bondset
+  <a class="anchor" href="#pycgtoolbondset">#</a>
+</h1>
+<p>Module containing classes to calculate bonded properties from a Frame.</p>
+<p>BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a single molecule.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="bond-objects">
+  Bond Objects
+  <a class="anchor" href="#bond-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Bond</span>()
+</code></pre></div><p>Class holding the properties of a single bonded term.</p>
+<p>Bond lengths, angles and dihedrals are all equivalent, distinguished by the number of atoms present.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="__init__-2">
+  __init__
+  <a class="anchor" href="#__init__-2">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> __init__(atoms: typing<span style="color:#f92672">.</span>Iterable[str], atom_numbers: typing<span style="color:#f92672">.</span>Optional[typing<span style="color:#f92672">.</span>Iterable[int]] <span style="color:#f92672">=</span> None, func_form<span style="color:#f92672">=</span>None)
+</code></pre></div><p>Create a single bond definition.</p>
+<p>:param List[str] atoms: List of atom names defining the bond
+:param List[int] atom_numbers: List of atom numbers defining the bond</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>func_form</code>: Functional form to use for Boltzmann Inversion</li>
+</ul>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="boltzmann_invert">
+  boltzmann_invert
+  <a class="anchor" href="#boltzmann_invert">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> boltzmann_invert(temp: float <span style="color:#f92672">=</span> <span style="color:#ae81ff">310</span>) <span style="color:#f92672">-&gt;</span> None
+</code></pre></div><p>Perform Boltzmann Inversion using measured values of bond to calculate equilibrium value and force constant.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>temp</code>: Temperature at which the simulation was performed</li>
+</ul>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="bondset-objects">
+  BondSet Objects
+  <a class="anchor" href="#bondset-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">BondSet</span>()
+</code></pre></div><p>Class used to perform bond measurements in a Frame.</p>
+<p>BondSet contains a dictionary of lists of Bonds. Each list corresponds to a single molecule.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="__init__-3">
+  __init__
+  <a class="anchor" href="#__init__-3">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> __init__(filename: str, options)
+</code></pre></div><p>Read in bonds from a file.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>filename</code>: File to read</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>Instance of BondSet</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="get_bonds">
+  get_bonds
+  <a class="anchor" href="#get_bonds">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> get_bonds(mol: str, natoms: int, select: typing<span style="color:#f92672">.</span>Callable[[Bond], bool] <span style="color:#f92672">=</span> <span style="color:#66d9ef">lambda</span> x: True) <span style="color:#f92672">-&gt;</span> typing<span style="color:#f92672">.</span>List[Bond]
+</code></pre></div><p>Return list of bonds from molecule containing natoms atoms.</p>
+<p>:param str mol: Molecule name
+:param int natoms: Number of atoms in bond, i.e. 2 for bond length, 3 for angle, 4 for dihedral
+:param function select: Optional lambda, return only bonds for which this is True
+:return List[Bond]: List of bonds</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="get_bond_lengths">
+  get_bond_lengths
+  <a class="anchor" href="#get_bond_lengths">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> get_bond_lengths(mol, with_constr<span style="color:#f92672">=</span>False)
+</code></pre></div><p>Return list of all bond lengths in molecule.  May include constraints.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>mol</code>: Molecule name to return bonds for</li>
+<li><code>with_constr</code>: Include constraints?</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>List of bonds</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="get_bond_length_constraints">
+  get_bond_length_constraints
+  <a class="anchor" href="#get_bond_length_constraints">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> get_bond_length_constraints(mol)
+</code></pre></div><p>Return list of all bond length constraints in molecule.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>mol</code>: Molecule name to return bonds for</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>List of bonds</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="get_bond_angles">
+  get_bond_angles
+  <a class="anchor" href="#get_bond_angles">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> get_bond_angles(mol, exclude_triangle<span style="color:#f92672">=</span>True)
+</code></pre></div><p>Return list of all bond angles in molecule.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>mol</code>: Molecule name to return bonds for</li>
+<li><code>exclude_triangle</code>: Exclude angles that are part of a triangle?</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>List of bonds</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="get_bond_dihedrals">
+  get_bond_dihedrals
+  <a class="anchor" href="#get_bond_dihedrals">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> get_bond_dihedrals(mol)
+</code></pre></div><p>Return list of all bond dihedrals in molecule.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>mol</code>: Molecule name to return bonds for</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>List of bonds</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="get_virtual_beads">
+  get_virtual_beads
+  <a class="anchor" href="#get_virtual_beads">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> get_virtual_beads(mapping)
+</code></pre></div><p>Return list of all virtual beads in molecule</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>mapping</code>:</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>list of virtual beads</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="write_itp">
+  write_itp
+  <a class="anchor" href="#write_itp">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> write_itp(filename, mapping)
+</code></pre></div><p>Output a GROMACS .itp file containing atoms/beads and bonded terms.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>filename</code>: Name of output file</li>
+<li><code>mapping</code>: AA-&gt;CG Mapping from which to collect bead properties</li>
+</ul>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="apply">
+  apply
+  <a class="anchor" href="#apply">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> apply(frame)
+</code></pre></div><p>Calculate bond lengths/angles for all trajectory frames with a Frame instance and store into Bonds.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>frame</code>: Frame from which to calculate values</li>
+</ul>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="boltzmann_invert-1">
+  boltzmann_invert
+  <a class="anchor" href="#boltzmann_invert-1">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> boltzmann_invert() <span style="color:#f92672">-&gt;</span> None
+</code></pre></div><p>Perform Boltzmann Inversion of all bonds to calculate equilibrium value and force constant.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="dump_values">
+  dump_values
+  <a class="anchor" href="#dump_values">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> dump_values(target_number: int <span style="color:#f92672">=</span> <span style="color:#ae81ff">10000</span>, output_dir: typing<span style="color:#f92672">.</span>Optional[typing<span style="color:#f92672">.</span>Union[pathlib<span style="color:#f92672">.</span>Path, str]] <span style="color:#f92672">=</span> None) <span style="color:#f92672">-&gt;</span> None
+</code></pre></div><p>Output measured bond values to files for length, angles and dihedrals.</p>
+<p>:param int target_number: Approx number of sample measurements to output. If None, all samples will be output.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>output_dir</code>: Directory to write output files to.</li>
+</ul>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h1 id="pycgtoolparserscfg">
+  pycgtool.parsers.cfg
+  <a class="anchor" href="#pycgtoolparserscfg">#</a>
+</h1>
+<p>Module containing classes used to parse custom CFG file format.</p>
+<p>Format is based upon GROMACS .itp files but does not support nesting of sections.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="duplicatesectionerror-objects">
+  DuplicateSectionError Objects
+  <a class="anchor" href="#duplicatesectionerror-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DuplicateSectionError</span>(<span style="color:#a6e22e">KeyError</span>)
+</code></pre></div><p>Exception used to indicate that a section has appeared twice in a file.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="nosectionerror-objects">
+  NoSectionError Objects
+  <a class="anchor" href="#nosectionerror-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">NoSectionError</span>(<span style="color:#a6e22e">KeyError</span>)
+</code></pre></div><p>Exception used to indicate that a file contains no sections.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="cfg-objects">
+  CFG Objects
+  <a class="anchor" href="#cfg-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CFG</span>(collections<span style="color:#f92672">.</span>OrderedDict,  contextlib<span style="color:#f92672">.</span>AbstractContextManager)
+</code></pre></div><p>Class representing a CFG file using a format similar to a GROMACS .itp file.</p>
+<p>Contains a dictionary of Sections.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="__init__-4">
+  __init__
+  <a class="anchor" href="#__init__-4">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> __init__(filepath: typing<span style="color:#f92672">.</span>Optional[PathLike] <span style="color:#f92672">=</span> None)
+</code></pre></div><p>Parse a config file and extract Sections.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h1 id="pycgtoolparsersitp">
+  pycgtool.parsers.itp
+  <a class="anchor" href="#pycgtoolparsersitp">#</a>
+</h1>
+<p>Module containing classes used to parse ITP/TOP file format.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="itp-objects">
+  ITP Objects
+  <a class="anchor" href="#itp-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ITP</span>(CFG)
+</code></pre></div><p>Class representing an .itp file.</p>
+<p>Contains a dictionary of sections for every molecule definition.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h1 id="pycgtoolmapping">
+  pycgtool.mapping
+  <a class="anchor" href="#pycgtoolmapping">#</a>
+</h1>
+<p>This module contains classes required to perform an atomistic to coarse-grain mapping.</p>
+<p>The Mapping class contains a dictionary of lists of BeadMaps.
+Each list corresponds to a single molecule.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="beadmap-objects">
+  BeadMap Objects
+  <a class="anchor" href="#beadmap-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">BeadMap</span>()
+</code></pre></div><p>Class holding values relating to the AA-&gt;CG transformation for a single bead.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="__init__-5">
+  __init__
+  <a class="anchor" href="#__init__-5">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> __init__(name: str, num: int, type: str <span style="color:#f92672">=</span> None, atoms<span style="color:#f92672">=</span>None, charge: float <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>, mass: float <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>)
+</code></pre></div><p>Create a single bead mapping.</p>
+<p>:param str name: The name of the bead
+:param int num: The number of the bead
+:param str type: The bead type
+:param List[str] atoms: The atom names from which the bead is made up
+:param float charge: The net charge on the bead
+:param float mass: The total bead mass</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="__iter__">
+  __iter__
+  <a class="anchor" href="#__iter__">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> __iter__()
+</code></pre></div><p>Iterate through the atom names from which the bead is made up.</p>
+<p><strong>Returns</strong>:</p>
+<p>Iterator over atoms</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="guess_atom_masses">
+  guess_atom_masses
+  <a class="anchor" href="#guess_atom_masses">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> guess_atom_masses() <span style="color:#f92672">-&gt;</span> None
+</code></pre></div><p>Guess masses for the atoms inside this bead.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="virtualmap-objects">
+  VirtualMap Objects
+  <a class="anchor" href="#virtualmap-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">VirtualMap</span>(BeadMap)
+</code></pre></div><p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="__init__-6">
+  __init__
+  <a class="anchor" href="#__init__-6">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> __init__(name, num, type<span style="color:#f92672">=</span>None, atoms<span style="color:#f92672">=</span>None, charge<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>)
+</code></pre></div><p>Create a single bead mapping.</p>
+<p>:param str name: The name of the bead
+:param int num: The number of the bead
+:param str type: The bead type
+:param List[str] atoms: The CG bead names from which the bead position is determined
+:param float charge: The net charge on the bead</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="guess_atom_masses-1">
+  guess_atom_masses
+  <a class="anchor" href="#guess_atom_masses-1">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> guess_atom_masses() <span style="color:#f92672">-&gt;</span> None
+</code></pre></div><p>Virtual beads should not define atom masses.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="mapping-objects">
+  Mapping Objects
+  <a class="anchor" href="#mapping-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Mapping</span>()
+</code></pre></div><p>Class used to perform the AA-&gt;CG mapping.</p>
+<p>Contains a dictionary of lists of BeadMaps.  Each list corresponds to a single molecule.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="__init__-7">
+  __init__
+  <a class="anchor" href="#__init__-7">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> __init__(filename: str, options, itp_filename: typing<span style="color:#f92672">.</span>Optional[str] <span style="color:#f92672">=</span> None)
+</code></pre></div><p>Read in the AA-&gt;CG mapping from a file.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>filename</code>: File from which to read mapping</li>
+<li><code>options</code>: Options from command line</li>
+<li><code>itp_filename</code>: Optional GROMACS itp file for atom mass / charge</li>
+</ul>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="apply-1">
+  apply
+  <a class="anchor" href="#apply-1">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> apply(frame: Frame, cg_frame: typing<span style="color:#f92672">.</span>Optional[Frame] <span style="color:#f92672">=</span> None)
+</code></pre></div><p>Apply the AA-&gt;CG mapping to an atomistic Frame.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>frame</code>: Frame to which mapping will be applied</li>
+<li><code>cgframe</code>: CG Frame to remap - optional</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>Frame instance containing the CG frame</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="calc_coords_weight">
+  calc_coords_weight
+  <a class="anchor" href="#calc_coords_weight">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">calc_coords_weight(ref_coords, coords, weights, box<span style="color:#f92672">=</span>None)
+</code></pre></div><p>Calculate the coordinates of a single CG bead from weighted component atom coordinates.</p>
+<p><strong>Arguments</strong>:</p>
+<ul>
+<li><code>ref_coords</code>: Coordinates of reference atom, usually first atom in bead</li>
+<li><code>coords</code>: Array of coordinates of component atoms</li>
+<li><code>weights</code>: Array of atom weights, must sum to 1</li>
+<li><code>box</code>: PBC box vectors</li>
+</ul>
+<p><strong>Returns</strong>:</p>
+<p>Coordinates of CG bead</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h1 id="pycgtoolforcefield">
+  pycgtool.forcefield
+  <a class="anchor" href="#pycgtoolforcefield">#</a>
+</h1>
+<p>This module contains a single class ForceField used to output a GROMACS .ff forcefield.</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h2 id="forcefield-objects">
+  ForceField Objects
+  <a class="anchor" href="#forcefield-objects">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ForceField</span>()
+</code></pre></div><p>Class used to output a GROMACS .ff forcefield</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="__init__-8">
+  __init__
+  <a class="anchor" href="#__init__-8">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> __init__(name, dir_path<span style="color:#f92672">=</span>pathlib<span style="color:#f92672">.</span>Path(<span style="color:#e6db74">&#39;.&#39;</span>))
+</code></pre></div><p>Open a named forcefield directory.  If it does not exist it is created.</p>
+<p>:param str name: Forcefield name to open/create</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="write">
+  write
+  <a class="anchor" href="#write">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> write(filename, mapping, bonds)
+</code></pre></div><p>Write RTP and R2B files for this forcefield.</p>
+<p>:param str filename: Filename prefix to use for both files
+:param Mapping mapping: CG Mapping object
+:param Iterable[Bond] bonds: CG Bonds object</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="bond_section">
+  bond_section
+  <a class="anchor" href="#bond_section">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> <span style="color:#a6e22e">@staticmethod</span>
+ <span style="color:#f92672">|</span> bond_section(bonds, section_header, multiplicity<span style="color:#f92672">=</span>None)
+</code></pre></div><p>Populate an RTP bond/angle/dihedral section.</p>
+<p>:param iterable[Bond] bonds: Iterable of bonds to add to RTP
+:param str section_header: RTP section header i.e. &ldquo;bonds&rdquo;/&ldquo;angles&rdquo;/&ldquo;dihedrals&rdquo;
+:param int multiplicity: Multiplicity of dihedral, default is None
+:return List[str]: Lines to add to RTP file</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="write_rtp">
+  write_rtp
+  <a class="anchor" href="#write_rtp">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> <span style="color:#a6e22e">@staticmethod</span>
+ <span style="color:#f92672">|</span> write_rtp(mapping, bonds)
+</code></pre></div><p>Return lines of a GROMACS RTP file.</p>
+<p>This file defines the residues present in the forcefield and allows pdb2gmx to be used.</p>
+<p>:param Mapping mapping: AA-&gt;CG mapping from which to collect molecules
+:param BondSet bonds: BondSet from which to collect bonds
+:return (list[str], set[str], set[str], set[str]):
+List of lines for RTP file,
+Set of residues requiring N terminal records,
+Set of residues requiring C terminal records,</p>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<h4 id="write_r2b">
+  write_r2b
+  <a class="anchor" href="#write_r2b">#</a>
+</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"> <span style="color:#f92672">|</span> <span style="color:#a6e22e">@staticmethod</span>
+ <span style="color:#f92672">|</span> write_r2b(n_terms, c_terms)
+</code></pre></div><p>Return lines of a GROMACS R2B file.</p>
+<p>This file defines names used for chain terminal records for PDB2GMX.</p>
+<p>:param Iterable[str] n_terms: Set of molecule names requiring N terminal records
+:param Iterable[str] c_terms: Set of molecule names requiring C terminal records
+:return List[str]: Lines of R2B file</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#functionalform-objects">FunctionalForm Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#harmonic-objects">Harmonic Objects</a></li>
+    <li><a href="#cosharmonic-objects">CosHarmonic Objects</a></li>
+    <li><a href="#martinidefaultlength-objects">MartiniDefaultLength Objects</a></li>
+    <li><a href="#martinidefaultangle-objects">MartiniDefaultAngle Objects</a></li>
+    <li><a href="#martinidefaultdihedral-objects">MartiniDefaultDihedral Objects</a></li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#unsupportedformatexception-objects">UnsupportedFormatException Objects</a></li>
+    <li><a href="#nonmatchingsystemerror-objects">NonMatchingSystemError Objects</a></li>
+    <li><a href="#frame-objects">Frame Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#argumentvalidationerror-objects">ArgumentValidationError Objects</a></li>
+    <li><a href="#pycgtool-objects">PyCGTOOL Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#booleanaction-objects">BooleanAction Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#bond-objects">Bond Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#bondset-objects">BondSet Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#duplicatesectionerror-objects">DuplicateSectionError Objects</a></li>
+    <li><a href="#nosectionerror-objects">NoSectionError Objects</a></li>
+    <li><a href="#cfg-objects">CFG Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#itp-objects">ITP Objects</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#beadmap-objects">BeadMap Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#virtualmap-objects">VirtualMap Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#mapping-objects">Mapping Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#forcefield-objects">ForceField Objects</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

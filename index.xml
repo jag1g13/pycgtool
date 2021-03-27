@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Home on PyCGTOOL</title>
+    <link>/</link>
+    <description>Recent content in Home on PyCGTOOL</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>API Documentation</title>
+      <link>/docs/api/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/api/</guid>
+      <description>pycgtool.functionalforms #  Utilities for describing the functional forms of bonded potentials being calculated.
+See http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html and http://manual.gromacs.org/documentation/current/reference-manual/topologies/topology-file-formats.html#tab-topfile2
+The links above list the bonded potentials available for use in GROMACS force fields. These can be implemented as functional forms in PyCGTOOL by subclassing :class:FunctionalForm.
+get_functional_forms #  get_functional_forms() -&amp;gt; enum.Enum Get enum of known functional forms.
+FunctionalForm Objects #  class FunctionalForm(, metaclass=abc.ABCMeta) Parent class of any functional form used in Boltzmann Inversion to convert variance to a force constant.</description>
+    </item>
+    
+    <item>
+      <title>Arguments</title>
+      <link>/docs/arguments/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/arguments/</guid>
+      <description>Full Arguments List #  Input Files #   topology Atomistic simulation topology trajectory Atomistic simulation trajectory -m, --mapping CG mapping definition file -b, --bondset Bond definition file  </description>
+    </item>
+    
+    <item>
+      <title>File Formats</title>
+      <link>/docs/file-formats/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/file-formats/</guid>
+      <description>File Formats #  Mapping Definition File #  An example of mapping definition file for the monosaccharide allose taken from test/data/sugar.map is shown below.
+Molecule names (as present in the gro coordinate file) are used as section headers inside square brackets. Each of the following lines describes a single coarse-grained bead mapping. The items on a line are:
+ the name of the bead its MARTINI bead type optionally the bead charge a list of all the atom names it should contain  All items on a line are whitespace separated.</description>
+    </item>
+    
+    <item>
+      <title>Tutorial</title>
+      <link>/docs/tutorial/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/tutorial/</guid>
+      <description>PyCGTOOL Tutorial #  This tutorial follows the complete process of parametrising a new molecule within the MARTINI forcefield, covering aspects of mapping design, model generation and model validation. PyCGTOOL is used at multiple stages, showing its use in several different situations. All files required to follow this tutorial are present in the doc/tutorial_files directory.
+The molecule chosen as a target for this parametrisation is the {math}\beta_1 antagonist atenolol.
+Atomistic Simulation #  The reference simulation for the parametrisation of atenolol was performed using the GROMOS 54A7 united atom forcefield with a topology from the ATB database.</description>
+    </item>
+    
+  </channel>
+</rss>

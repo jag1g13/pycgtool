@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta name="generator" content="Hugo 0.82.0" />
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="PyCGTOOL Tutorial #  This tutorial follows the complete process of parametrising a new molecule within the MARTINI forcefield, covering aspects of mapping design, model generation and model validation. PyCGTOOL is used at multiple stages, showing its use in several different situations. All files required to follow this tutorial are present in the doc/tutorial_files directory.
+The molecule chosen as a target for this parametrisation is the {math}\beta_1 antagonist atenolol.
+Atomistic Simulation #  The reference simulation for the parametrisation of atenolol was performed using the GROMOS 54A7 united atom forcefield with a topology from the ATB database.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Tutorial" />
+<meta property="og:description" content="PyCGTOOL Tutorial #  This tutorial follows the complete process of parametrising a new molecule within the MARTINI forcefield, covering aspects of mapping design, model generation and model validation. PyCGTOOL is used at multiple stages, showing its use in several different situations. All files required to follow this tutorial are present in the doc/tutorial_files directory.
+The molecule chosen as a target for this parametrisation is the {math}\beta_1 antagonist atenolol.
+Atomistic Simulation #  The reference simulation for the parametrisation of atenolol was performed using the GROMOS 54A7 united atom forcefield with a topology from the ATB database." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/docs/tutorial/" /><meta property="article:section" content="docs" />
+
+
+
+<title>Tutorial | PyCGTOOL</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/book.min.2bc2364a4a4b31f0ec1debecf0a8f90a840821f143dfe1ac6a0f7cbcbdcf64ac.css" integrity="sha256-K8I2SkpLMfDsHevs8Kj5CoQIIfFD3&#43;Gsag98vL3PZKw=">
+<script defer src="/en.search.min.215be45ca1a05efa85e3f66dcd52ca664821056d219f9227cb71339e077de7b3.js" integrity="sha256-IVvkXKGgXvqF4/ZtzVLKZkghBW0hn5Iny3Ezngd957M="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a href="/"><span>PyCGTOOL</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/api/" class="">API Documentation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/arguments/" class="">Arguments</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/file-formats/" class="">File Formats</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/tutorial/" class=" active">Tutorial</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var a=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(b){localStorage.setItem("menu.scrollTop",a.scrollTop)}),a.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Tutorial</strong>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#atomistic-simulation">Atomistic Simulation</a></li>
+    <li><a href="#mapping-design">Mapping Design</a></li>
+    <li><a href="#model-generation">Model Generation</a></li>
+    <li><a href="#running-the-cg-simulation">Running the CG Simulation</a></li>
+    <li><a href="#model-validation">Model Validation</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="pycgtool-tutorial">
+  PyCGTOOL Tutorial
+  <a class="anchor" href="#pycgtool-tutorial">#</a>
+</h1>
+<p>This tutorial follows the complete process of parametrising a new molecule within the MARTINI forcefield, covering aspects of mapping design, model generation and model validation.
+PyCGTOOL is used at multiple stages, showing its use in several different situations.
+All files required to follow this tutorial are present in the <code>doc/tutorial_files</code> directory.</p>
+<p>The molecule chosen as a target for this parametrisation is the {math}<code>\beta_1</code> antagonist atenolol.</p>
+<h2 id="atomistic-simulation">
+  Atomistic Simulation
+  <a class="anchor" href="#atomistic-simulation">#</a>
+</h2>
+<p>The reference simulation for the parametrisation of atenolol was performed using the GROMOS 54A7 united atom forcefield with a topology from the <a href="https://atb.uq.edu.au/molecule.py?molid=23433">ATB database</a>.
+A single molecule of atenolol was solvated and equilibrated, before collecting a 50 ns trajectory using the GROMACS molecular dynamics simulator.
+A reduced copy of this trajectory is provided in the tutorial files (as <code>ref.xtc</code>, <code>ref.gro</code> contains the initial structure) since the original is prohibitively large.</p>
+<h2 id="mapping-design">
+  Mapping Design
+  <a class="anchor" href="#mapping-design">#</a>
+</h2>
+<p>Designing a suitable mapping from the atomistic to the coarse-grained representation requires some experience and a degree of &lsquo;chemical intuition&rsquo;, but the ease with which the mapping may be modified using PyCGTOOL allows the mapping to be iterated much more quickly than if the construction of the CG model were to be performed manually.</p>
+<p>The process of designing a mapping involves splitting the molecule into fragments, each of which contains approximately four heavy atoms.
+Start by finding functional groups such as amides or carboxylates, each of which may become a single bead.
+Next, replace phenyl rings with a triangle of three <code>small</code> type beads, each of which contains two heavy atoms and has reduced Lennard-Jones size and mass, as compared to the normal four-atom beads.
+Finally, divide any remaining parts of the molecule into beads of four heavy atoms as required.
+The ideal bead will contain four heavy atoms and be nearly spherical, but this is not always possible.
+If any atoms remain after clusters of four have been allocated, it may be required to use a mapping of three-to-one for some beads.</p>
+<p>After the atoms have been allocated to beads, determine which beads should be bonded by inspection of the atomistic structure; bonds between functional groups in the atomistic structure become bonds between beads in the CG structure.
+It will probably be the case that there is no obviously best mapping and bond topology, which is not at this point a major issue as multiple mappings can be assessed easily.</p>
+<p>Once the mapping and bond topology have been determined, they must be put into a format readable by PyCGTOOL.
+This format is as described in the introduction to PyCGTOOL.
+The mapping file must contain a molecule header which is the residue name enclosed in square brackets.
+Each subsequent line represents a single CG bead and is of the structure (where items in square brackets are optional):</p>
+<pre><code>&lt;bead name&gt; &lt;MARTINI type&gt; [&lt;bead charge&gt;] &lt;component atom 1&gt; [&lt;component atom 2&gt; ...]
+</code></pre><p>The bonding file has a similar structure with a molecule header followed by lines defining each bond in the format::</p>
+<pre><code>&lt;bead 1&gt; &lt;bead 2&gt;
+</code></pre><p>It is not necessary to define angles since PyCGTOOL is able to infer these from the bond network.
+If only a subset of the possible angles require parameters then they may be listed, preventing automatic enumeration of all possible angles.</p>
+<p>The mapping used in the paper to describe atenolol (just one of the several possible mappings) is described by the following input files.</p>
+<pre><code>; atenolol.map
+[36KB]
+N1  P1  N1  C12 C13 C14
+O1  P1  O3  C1  C2  C3
+O2  SP3 O2  C4
+C1  SC3 C5  C6
+C2  SC3 C8  C9
+C3  SC3 C7  C10
+N2  P5  C11 O1  N2
+</code></pre><pre><code>; atenolol.bnd
+[36KB]
+N1 O1
+O1 O2
+O2 C1
+O2 C2
+C1 C2
+C1 C3
+C2 C3
+C3 N2
+</code></pre><h2 id="model-generation">
+  Model Generation
+  <a class="anchor" href="#model-generation">#</a>
+</h2>
+<p>The process of model generation after having created the mapping and bond definition files is automated by PyCGTOOL.
+In the simplest case, a parameter set may be generated simply by passing the four input files to PyCGTOOL::</p>
+<pre><code>pycgtool ref.gro ref.xtc -m atenolol.map -b atenolol.bnd
+</code></pre><p>This will create two output files <code>out.gro</code>, the mapped CG coordinates, and <code>out.itp</code>, the calculated CG model parameters.</p>
+<h2 id="running-the-cg-simulation">
+  Running the CG Simulation
+  <a class="anchor" href="#running-the-cg-simulation">#</a>
+</h2>
+<p>Note: These instructions assume the use of GROMACS 5.0 or newer.</p>
+<p>From this stage the usual preparation of MARTINI/GROMACS simulations applies.
+The output coordinates <code>out.gro</code> must be solvated using the GROMACS tool <code>gmx solvate</code> with the options::</p>
+<pre><code>gmx solvate -cp out.gro -cs ../../data/water.gro -o solv.gro -radius 0.21
+</code></pre><p>Since MARTINI water cannot be automatically added to the <code>.top</code> file, this must be done manually.
+A template file, <code>template.top</code>, is provided.
+Copy this to <code>topol.top</code> and add the line <code>W 251</code> to the bottom, since 251 should be the number of water molecules added by <code>gmx solvate</code>.</p>
+<p>The three stages of simulation: minimisation, equilibration, and production may then be run:</p>
+<pre><code>gmx grompp -f em.mdp -c solv.gro -p topol.top -o em.tpr
+gmx mdrun -deffnm em
+
+gmx grompp -f npt.mdp -c em.gro -p topol.top -o npt.tpr
+gmx mdrun -deffnm npt -v
+
+gmx grompp -f md.mdp -c em.gro -p topol.top -o md.tpr
+gmx mdrun -deffnm md -v
+</code></pre><p>These simulations should take a few minutes on a modern desktop.</p>
+<h2 id="model-validation">
+  Model Validation
+  <a class="anchor" href="#model-validation">#</a>
+</h2>
+<p>It is recommended to perform validation before using a generated CG model for production simulations, so that we may have confidence in its ability to replicate the behaviour of the molecule being studied.
+The methods of validation applied in the PyCGTOOL paper are a comparison of the distribution of bonded term measurements between the CG test simulation and the atomistic reference simulation, and a comparison of the radius of gyration between these two simulations.
+Additionally, other methods of validation should be applied relevant to the class of molecule being studied; for instance, validation of membrane lipids should compare the membrane thickness and surface area per lipid to the atomistic reference.</p>
+<p>To compare the distribution of bonded terms, we must first rerun PyCGTOOL to generate samples of the bonded measurements.
+For the atomistic reference simulation, this can be done by running:</p>
+<pre><code>pycgtool ref.gro ref.xtc -m atenolol.map -b atenolol.bnd --dump_measurements
+</code></pre><p>PyCGTOOL will now output a sample of each measured bond length and angle (but since the reference trajectory is short, the target sample size is not met and all values are collected), in the files <code>36KB_length.dat</code> and <code>36KB_angle.dat</code>.</p>
+<p>Since we will be collecting samples of the same measurements from the CG simulation, these files should be renamed to, for instance, <code>ref_length.dat</code> and <code>ref_angle.dat</code>.
+Collect the same samples for the CG simulation using:</p>
+<pre><code>pycgtool md.gro md.xtc -b atenolol.bnd
+</code></pre><p>Since we provide a bond file, but not a mapping file, PyCGTOOL will know that this is intended to simply collect bond measurements and will automatically set the <code>dump_measurements</code> option to <code>True</code>.
+Again, the files created will be called <code>36KB_length.dat</code> and <code>36KB_angle.dat</code>.</p>
+<p>These samples were compared in the paper using an R script to generate a series of boxplots, but a simpler Python script is provided which may be used to compare the mean and standard deviations of the samples:</p>
+<pre><code>./average_columns.py ref_length.dat 36KB_length.dat
+./average_columns.py ref_angle.dat 36KB_angle.dat
+</code></pre><p>If the automatically generated parameters provide an accurate representation of the reference structure, the percentage error between the two samples will be small.</p>
+<p>Validation of the more general molecular conformation may be performed by comparison of the radius of gyration of the reference and CG models
+This may be performed using the standard GROMACS too <code>gmx gyrate</code>:</p>
+<pre><code>gmx gyrate -f ref.xtc -s ref-for-rgyr.tpr -o ref-gyr.xvg
+gmx gyrate -f md.xtc -s md.tpr -o cg-gyr.xvg
+</code></pre><p>In both cases select the 36KB group as the one on which to perform the calculation.
+These commands will calculate the radius of gyration for each trajectory frame for both the reference and CG simulations.
+The resulting <code>.xvg</code> files may be visualised using a graphing program such as <code>xmgrace</code> or compared in the same way as the bonded samples, using:</p>
+<pre><code>./average_columns.py ref-gyr.xvg cg-gyr.xvg
+</code></pre><p>As before, a small percentage difference in each of the columns suggests good replication of gross conformation.</p>
+<p>In addition to these simple forms of validation, it is recommended that further validation, relevant to the class of molecule, is performed.
+In the case of membane lipids, for instance, this may take the form of an assessment of membrane thickness and surface area per lipid.</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#atomistic-simulation">Atomistic Simulation</a></li>
+    <li><a href="#mapping-design">Mapping Design</a></li>
+    <li><a href="#model-generation">Model Generation</a></li>
+    <li><a href="#running-the-cg-simulation">Running the CG Simulation</a></li>
+    <li><a href="#model-validation">Model Validation</a></li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

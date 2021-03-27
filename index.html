@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta name="generator" content="Hugo 0.82.0" />
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="PyCGTOOL #     
+Generate coarse-grained molecular dynamics models from atomistic trajectories.
+The aim of this project is to provide a tool to aid in parametrising coarse-grained (CG) molecular mechanics models. PyCGTOOL generates coarse-grained models from atomistic simulation trajectories using a user-provided mapping. Equilibrium values and force constants of bonded terms are calculated by Boltzmann Inversion of bond distributions collected from the input trajectory.
+Alternatively map-only mode (behaving similarly to MARTINIZE) may be used to generate initial coordinates to use with existing CG topologies such as the MARTINI lipid models.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Home" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="/" />
+
+<title>Home | PyCGTOOL</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/book.min.2bc2364a4a4b31f0ec1debecf0a8f90a840821f143dfe1ac6a0f7cbcbdcf64ac.css" integrity="sha256-K8I2SkpLMfDsHevs8Kj5CoQIIfFD3&#43;Gsag98vL3PZKw=">
+<script defer src="/en.search.min.215be45ca1a05efa85e3f66dcd52ca664821056d219f9227cb71339e077de7b3.js" integrity="sha256-IVvkXKGgXvqF4/ZtzVLKZkghBW0hn5Iny3Ezngd957M="></script>
+<link rel="alternate" type="application/rss+xml" href="/index.xml" title="PyCGTOOL" />
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a href="/"><span>PyCGTOOL</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/api/" class="">API Documentation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/arguments/" class="">Arguments</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/file-formats/" class="">File Formats</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/tutorial/" class="">Tutorial</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var a=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(b){localStorage.setItem("menu.scrollTop",a.scrollTop)}),a.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Home</strong>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#install">Install</a>
+      <ul>
+        <li><a href="#mdtraj-on-macos">MDTraj on macOS</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a>
+      <ul>
+        <li><a href="#generate-a-model">Generate a Model</a></li>
+        <li><a href="#map-only">Map Only</a></li>
+      </ul>
+    </li>
+    <li><a href="#maintainers">Maintainers</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="pycgtool">
+  PyCGTOOL
+  <a class="anchor" href="#pycgtool">#</a>
+</h1>
+<p><a href="LICENSE"><img src="https://img.shields.io/github/license/jag1g13/pycgtool.svg" alt="License" /></a>
+<a href="https://github.com/jag1g13/pycgtool/actions"><img src="https://img.shields.io/github/workflow/status/jag1g13/pycgtool/Python%20package" alt="Build Status" /></a>
+<a href="http://pycgtool.readthedocs.io/en/master/?badge=master"><img src="https://readthedocs.org/projects/pycgtool/badge/?version=master" alt="Documentation" /></a>
+<a href="https://doi.org/10.5281/zenodo.598143"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.598143.svg" alt="DOI" /></a></p>
+<p>Generate coarse-grained molecular dynamics models from atomistic trajectories.</p>
+<p>The aim of this project is to provide a tool to aid in parametrising coarse-grained (CG) molecular mechanics models.
+PyCGTOOL generates coarse-grained models from atomistic simulation trajectories using a user-provided mapping.
+Equilibrium values and force constants of bonded terms are calculated by Boltzmann Inversion of bond distributions collected from the input trajectory.</p>
+<p>Alternatively map-only mode (behaving similarly to MARTINIZE) may be used to generate initial coordinates to use with existing CG topologies such as the MARTINI lipid models.
+For instance, a pre-equilibrated atomistic membrane may be used to create starting coordinates for a MARTINI membrane simulation.</p>
+<p>PyCGTOOL makes it easy to test multiple variations in mapping and bond topology by making simple changes to the config files.</p>
+<p>If you find PyCGTOOL useful, please cite our JCIM paper (<a href="https://doi.org/10.1021/acs.jcim.7b00096">https://doi.org/10.1021/acs.jcim.7b00096</a>) and the code itself (<a href="https://doi.org/10.5281/zenodo.598143)">https://doi.org/10.5281/zenodo.598143)</a>.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bibtex" data-lang="bibtex"><span style="color:#a6e22e">@article</span>{Graham2017,
+   <span style="color:#a6e22e">author</span> = <span style="color:#e6db74">{James A. Graham and Jonathan W. Essex and Syma Khalid}</span>,
+   <span style="color:#a6e22e">doi</span> = <span style="color:#e6db74">{10.1021/acs.jcim.7b00096}</span>,
+   <span style="color:#a6e22e">issn</span> = <span style="color:#e6db74">{1549-9596}</span>,
+   <span style="color:#a6e22e">issue</span> = <span style="color:#e6db74">{4}</span>,
+   <span style="color:#a6e22e">journal</span> = <span style="color:#e6db74">{Journal of Chemical Information and Modeling}</span>,
+   <span style="color:#a6e22e">month</span> = <span style="color:#e6db74">{4}</span>,
+   <span style="color:#a6e22e">pages</span> = <span style="color:#e6db74">{650-656}</span>,
+   <span style="color:#a6e22e">title</span> = <span style="color:#e6db74">{PyCGTOOL: Automated Generation of Coarse-Grained Molecular Dynamics Models from Atomistic Trajectories}</span>,
+   <span style="color:#a6e22e">volume</span> = <span style="color:#e6db74">{57}</span>,
+   <span style="color:#a6e22e">url</span> = <span style="color:#e6db74">{https://pubs.acs.org/doi/10.1021/acs.jcim.7b00096}</span>,
+   <span style="color:#a6e22e">year</span> = <span style="color:#e6db74">{2017}</span>,
+}
+</code></pre></div><h2 id="install">
+  Install
+  <a class="anchor" href="#install">#</a>
+</h2>
+<p>PyCGTOOL requires Python 3.6 or higher and may be installed using pip:</p>
+<pre><code>pip install pycgtool
+</code></pre><h3 id="mdtraj-on-macos">
+  MDTraj on macOS
+  <a class="anchor" href="#mdtraj-on-macos">#</a>
+</h3>
+<p>On some versions macOS, with some versions of the Clang compiler, MDTraj may fail to load GROMACS XTC simulation trajectories.
+If you encounter this issue, make sure you have the latest version of MDTraj.</p>
+<p>For more information see <a href="https://github.com/mdtraj/mdtraj/issues/1572">MDTraj/#1572</a>.</p>
+<h2 id="usage">
+  Usage
+  <a class="anchor" href="#usage">#</a>
+</h2>
+<p>Input to PyCGTOOL is an atomistic simulation trajectory in the form of a topology (e.g. PDB, GRO, etc.) and a trajectory file (e.g. XTC, DCD, etc.), along with two custom files: MAP and BND.
+These files provide the atomistic-to-CG mapping and bonded topology respectively.</p>
+<p>Example files are present in the <a href="https://github.com/jag1g13/pycgtool/tree/master/test/data">test/data</a> directory.
+The format of these files is described in the <a href="https://pycgtool.readthedocs.io/en/master/index.html">full documentation</a>.</p>
+<p>For more information, see <a href="https://pycgtool.readthedocs.io/en/master/tutorial.html">the tutorial</a>.
+It is important to perform validation of any new parameter set - a brief example is present at the end of the tutorial.</p>
+<p>For a full list of options, see the <a href="https://pycgtool.readthedocs.io/en/master/index.html">documentation</a> or use:</p>
+<pre><code>pycgtool -h
+</code></pre><h3 id="generate-a-model">
+  Generate a Model
+  <a class="anchor" href="#generate-a-model">#</a>
+</h3>
+<p>To generate a CG model from an atomistic simulation:</p>
+<pre><code>pycgtool &lt;topology file&gt; &lt;trajectory file&gt; -m &lt;MAP file&gt; -b &lt;BND file&gt;
+</code></pre><h3 id="map-only">
+  Map Only
+  <a class="anchor" href="#map-only">#</a>
+</h3>
+<p>To use PyCGTOOL to convert a set of atomistic simulation coordinates to CG coordinates:</p>
+<pre><code>pycgtool &lt;topology file&gt; -m &lt;MAP file&gt;
+</code></pre><p>Or to convert a complete simulation trajectory:</p>
+<pre><code>pycgtool &lt;topology file&gt; &lt;trajectory file&gt; -m &lt;MAP file&gt;
+</code></pre><h2 id="maintainers">
+  Maintainers
+  <a class="anchor" href="#maintainers">#</a>
+</h2>
+<p>James Graham (<a href="https://github.com/jag1g13">@jag1g13</a>)</p>
+<h2 id="contributing">
+  Contributing
+  <a class="anchor" href="#contributing">#</a>
+</h2>
+<p>If you experience problems using PyCGTOOL or wish to see a new feature added please <a href="https://github.com/jag1g13/pycgtool/issues/new">open an issue</a> or submit a PR.</p>
+<p>To help develop PyCGTOOL, you can create a fork of this repository, clone your fork and install PyCGTOOL using:</p>
+<pre><code>poetry install
+</code></pre><p>This will install PyCGTOOL in editable mode (similar to <code>pip install -e .</code>) along with all the necessary runtime and development dependencies.
+The Makefile at the root of the repository contains targets for running unit and integration tests (<code>make test</code>) and linting (<code>make lint</code>).</p>
+<h2 id="license">
+  License
+  <a class="anchor" href="#license">#</a>
+</h2>
+<p><a href="LICENSE">GPL-3.0</a> © James Graham, University of Southampton</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#install">Install</a>
+      <ul>
+        <li><a href="#mdtraj-on-macos">MDTraj on macOS</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a>
+      <ul>
+        <li><a href="#generate-a-model">Generate a Model</a></li>
+        <li><a href="#map-only">Map Only</a></li>
+      </ul>
+    </li>
+    <li><a href="#maintainers">Maintainers</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
