@@ -2,20 +2,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>/docs/api/</loc>
+    <loc>https://jag1g13.github.io/pycgtool/docs/api/</loc>
   </url><url>
-    <loc>/docs/arguments/</loc>
+    <loc>https://jag1g13.github.io/pycgtool/docs/arguments/</loc>
   </url><url>
-    <loc>/categories/</loc>
+    <loc>https://jag1g13.github.io/pycgtool/categories/</loc>
   </url><url>
-    <loc>/docs/</loc>
+    <loc>https://jag1g13.github.io/pycgtool/docs/</loc>
   </url><url>
-    <loc>/docs/file-formats/</loc>
+    <loc>https://jag1g13.github.io/pycgtool/docs/file-formats/</loc>
   </url><url>
-    <loc>/</loc>
+    <loc>https://jag1g13.github.io/pycgtool/</loc>
   </url><url>
-    <loc>/tags/</loc>
+    <loc>https://jag1g13.github.io/pycgtool/tags/</loc>
   </url><url>
-    <loc>/docs/tutorial/</loc>
+    <loc>https://jag1g13.github.io/pycgtool/docs/tutorial/</loc>
   </url>
 </urlset>
