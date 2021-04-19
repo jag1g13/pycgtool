@@ -2,10 +2,9 @@
 
 This tutorial follows the complete process of parametrising a new molecule within the MARTINI forcefield, covering aspects of mapping design, model generation and model validation.
 PyCGTOOL is used at multiple stages, showing its use in several different situations.
-All files required to follow this tutorial are present in the `doc/tutorial_files` directory.
+All files required to follow this tutorial are present in the `docs/tutorial_files` directory of the [PyCGTOOL repository](https://github.com/jag1g13/pycgtool).
 
-The molecule chosen as a target for this parametrisation is the {math}`\beta_1` antagonist atenolol.
-
+The molecule chosen as a target for this parametrisation is the beta-receptor antagonist atenolol.
 
 ## Atomistic Simulation
 
@@ -36,7 +35,7 @@ Each subsequent line represents a single CG bead and is of the structure (where 
 <bead name> <MARTINI type> [<bead charge>] <component atom 1> [<component atom 2> ...]
 ```
 
-The bonding file has a similar structure with a molecule header followed by lines defining each bond in the format::
+The bonding file has a similar structure with a molecule header followed by lines defining each bond in the format:
 
 ```
 <bead 1> <bead 2>
@@ -75,7 +74,7 @@ C3 N2
 ## Model Generation
 
 The process of model generation after having created the mapping and bond definition files is automated by PyCGTOOL.
-In the simplest case, a parameter set may be generated simply by passing the four input files to PyCGTOOL::
+In the simplest case, a parameter set may be generated simply by passing the four input files to PyCGTOOL:
 
 ```
 pycgtool ref.gro ref.xtc -m atenolol.map -b atenolol.bnd
@@ -88,15 +87,17 @@ This will create two output files `out.gro`, the mapped CG coordinates, and `out
 Note: These instructions assume the use of GROMACS 5.0 or newer.
 
 From this stage the usual preparation of MARTINI/GROMACS simulations applies.
-The output coordinates `out.gro` must be solvated using the GROMACS tool `gmx solvate` with the options::
+The output coordinates `out.gro` must be solvated using the GROMACS tool `gmx solvate` with the options:
 
 ```
 gmx solvate -cp out.gro -cs ../../data/water.gro -o solv.gro -radius 0.21
 ```
 
+When we run this, GROMACS will tell us how many solvent molecules have been added - remember this number!
+
 Since MARTINI water cannot be automatically added to the `.top` file, this must be done manually.
-A template file, `template.top`, is provided. 
-Copy this to `topol.top` and add the line `W 251` to the bottom, since 251 should be the number of water molecules added by `gmx solvate`.
+A template file, `template.top`, is provided.
+Copy this to `topol.top` and add a new line to the bottom with a `W`, a space, then the number of solvent molecules added by `gmx solvate`.
 
 The three stages of simulation: minimisation, equilibration, and production may then be run:
 
@@ -116,26 +117,27 @@ These simulations should take a few minutes on a modern desktop.
 ## Model Validation
 
 It is recommended to perform validation before using a generated CG model for production simulations, so that we may have confidence in its ability to replicate the behaviour of the molecule being studied.
-The methods of validation applied in the PyCGTOOL paper are a comparison of the distribution of bonded term measurements between the CG test simulation and the atomistic reference simulation, and a comparison of the radius of gyration between these two simulations.
+The methods of validation applied in the [PyCGTOOL paper](https://pubs.acs.org/doi/abs/10.1021/acs.jcim.7b00096) are a comparison of the distribution of bonded term measurements between the CG test simulation and the atomistic reference simulation, and a comparison of the radius of gyration between these two simulations.
 Additionally, other methods of validation should be applied relevant to the class of molecule being studied; for instance, validation of membrane lipids should compare the membrane thickness and surface area per lipid to the atomistic reference.
 
 To compare the distribution of bonded terms, we must first rerun PyCGTOOL to generate samples of the bonded measurements.
 For the atomistic reference simulation, this can be done by running:
 
 ```
-pycgtool ref.gro ref.xtc -m atenolol.map -b atenolol.bnd --dump_measurements
+pycgtool ref.gro ref.xtc -m atenolol.map -b atenolol.bnd --dump-measurements
 ```
 
-PyCGTOOL will now output a sample of each measured bond length and angle (but since the reference trajectory is short, the target sample size is not met and all values are collected), in the files `36KB_length.dat` and `36KB_angle.dat`.
+PyCGTOOL will output a sample of each measured bond length and angle, in the files `36KB_length.dat` and `36KB_angle.dat`.
+Since the reference trajectory is short this will give us the measurements from every frame, but for longer trajectories it gives us a sample of 10,000 values to make the analysis quicker.
 
 Since we will be collecting samples of the same measurements from the CG simulation, these files should be renamed to, for instance, `ref_length.dat` and `ref_angle.dat`.
-Collect the same samples for the CG simulation using:
+Next, we collect the same samples for the CG simulation using:
 
 ```
 pycgtool md.gro md.xtc -b atenolol.bnd
 ```
 
-Since we provide a bond file, but not a mapping file, PyCGTOOL will know that this is intended to simply collect bond measurements and will automatically set the `dump_measurements` option to `True`.
+Since we provide a bond file, but not a mapping file, PyCGTOOL will know that this is intended to collect bond measurements and will set the `--dump-measurements` option automatically.
 Again, the files created will be called `36KB_length.dat` and `36KB_angle.dat`.
 
 These samples were compared in the paper using an R script to generate a series of boxplots, but a simpler Python script is provided which may be used to compare the mean and standard deviations of the samples:
@@ -164,6 +166,7 @@ The resulting `.xvg` files may be visualised using a graphing program such as `x
 ```
 
 As before, a small percentage difference in each of the columns suggests good replication of gross conformation.
+Note that the first column is the time in picoseconds, so don't worry if that column doesn't match - the other four columns are the total radius of gyration, and components along the X, Y and Z axes respectively.
 
 In addition to these simple forms of validation, it is recommended that further validation, relevant to the class of molecule, is performed.
 In the case of membane lipids, for instance, this may take the form of an assessment of membrane thickness and surface area per lipid.
