@@ -12,11 +12,11 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://jag1g13.github.io/pycgtool/docs/api/</guid>
-      <description>pycgtool.functionalforms #  Utilities for describing the functional forms of bonded potentials being calculated.
-See http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html and http://manual.gromacs.org/documentation/current/reference-manual/topologies/topology-file-formats.html#tab-topfile2
-The links above list the bonded potentials available for use in GROMACS force fields. These can be implemented as functional forms in PyCGTOOL by subclassing :class:FunctionalForm.
-get_functional_forms #  get_functional_forms() -&amp;gt; enum.Enum Get enum of known functional forms.
-FunctionalForm Objects #  class FunctionalForm(, metaclass=abc.ABCMeta) Parent class of any functional form used in Boltzmann Inversion to convert variance to a force constant.</description>
+      <description>pycgtool.bondset #  Module containing classes to calculate bonded properties from a Frame.
+BondSet contains a dictionary of lists of Bonds. Each list corresponds to a single molecule.
+Bond Objects #  class Bond() Class holding the properties of a single bonded term.
+Bond lengths, angles and dihedrals are all equivalent, distinguished by the number of atoms present.
+__init__ #  | __init__(atoms: typing.Iterable[str], atom_numbers: typing.Optional[typing.Iterable[int]] = None, func_form=None) Create a single bond definition.</description>
     </item>
     
     <item>
@@ -45,9 +45,8 @@ Molecule names (as present in the gro coordinate file) are used as section heade
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://jag1g13.github.io/pycgtool/docs/tutorial/</guid>
-      <description>PyCGTOOL Tutorial #  This tutorial follows the complete process of parametrising a new molecule within the MARTINI forcefield, covering aspects of mapping design, model generation and model validation. PyCGTOOL is used at multiple stages, showing its use in several different situations. All files required to follow this tutorial are present in the doc/tutorial_files directory.
-The molecule chosen as a target for this parametrisation is the {math}\beta_1 antagonist atenolol.
-Atomistic Simulation #  The reference simulation for the parametrisation of atenolol was performed using the GROMOS 54A7 united atom forcefield with a topology from the ATB database.</description>
+      <description>PyCGTOOL Tutorial #  This tutorial follows the complete process of parametrising a new molecule within the MARTINI forcefield, covering aspects of mapping design, model generation and model validation. PyCGTOOL is used at multiple stages, showing its use in several different situations. All files required to follow this tutorial are present in the docs/tutorial_files directory of the PyCGTOOL repository.
+The molecule chosen as a target for this parametrisation is the beta-receptor antagonist atenolol.</description>
     </item>
     
   </channel>
