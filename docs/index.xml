@@ -35,7 +35,7 @@ __init__ #  | __init__(atoms: typing.Iterable[str], atom_numbers: typing.Optiona
       
       <guid>https://jag1g13.github.io/pycgtool/docs/file-formats/</guid>
       <description>File Formats #  Mapping Definition File #  An example of mapping definition file for the monosaccharide allose taken from test/data/sugar.map is shown below.
-Molecule names (as present in the gro coordinate file) are used as section headers inside square brackets. Each of the following lines describes a single coarse-grained bead mapping. The items on a line are:
+Molecule names (as present in the coordinate file) are used as section headers inside square brackets. Each of the following lines describes a single coarse-grained bead mapping. The items on a line are:
  the name of the bead its MARTINI bead type optionally the bead charge a list of all the atom names it should contain  All items on a line are whitespace separated.</description>
     </item>
     
