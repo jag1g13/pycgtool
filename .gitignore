@@ -18,6 +18,7 @@ poetry.toml
 .cache
 .coverage
 .python-version
+/build/
 /cover/
 /dist/
 /docs/_build/
