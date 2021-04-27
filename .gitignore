@@ -18,10 +18,12 @@ poetry.toml
 .cache
 .coverage
 .python-version
+.tox/
 /build/
 /cover/
 /dist/
 /docs/_build/
+/htmlcov/
 /pycgtool.egg-info/
 /tmp/
 

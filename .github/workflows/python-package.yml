@@ -27,33 +27,22 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install Poetry
-      uses: snok/install-poetry@v1.1.1
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        # This path is specific to Ubuntu
+        path: ~/.cache/pip
+        # Look to see if there is a cache hit for the corresponding requirements file
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          ${{ runner.os }}-    
 
-    - name: Install project and dependencies
+    - name: Install Dependencies
       run: |
-        poetry install
+        python -m pip install --upgrade pip
+        pip install tox
 
-    - name: Test with pytest
+    - name: Run Tests / Linter
       run: |
-        poetry run pytest --cov=pycgtool --cov-report=
-
-    - name: Lint with flake8 - stop build if fails
-      run: |
-        poetry run prospector --strictness veryhigh --test-warnings --tool pyflakes
-
-    - name: Full lint - don't stop build
-      run: |
-        poetry run prospector --strictness veryhigh --test-warnings --member-warnings --max-line-length 120 --zero-exit
-
-    - name: Test that docs build
-      run: |
-        SPHINXBUILD="poetry run sphinx-build" make -C docs html
-
-    - name: Check that test coverage is above 80%
-      run: |
-        poetry run coverage report --fail-under=80
-
-    - name: Test that distributable package builds
-      run: |
-        poetry build
+        tox
