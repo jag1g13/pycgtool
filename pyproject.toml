@@ -48,7 +48,7 @@ myst-parser = { version = "^0.13.5", optional = true }
 prospector = "^1.3.0"
 pytest = "^6.0.1"
 pytest-cov = "^2.10.1"
-yapf = "^0.30.0"
+yapf = "^0.31.0"
 vulture = "^2.1"
 rstcheck = "^3.3.1"
 flake8 = "^3.8.4"
@@ -56,9 +56,13 @@ Sphinx = "^3.4.3"
 sphinx-autoapi = "^1.5.1"
 sphinx-rtd-theme = "^0.5.1"
 myst-parser = "^0.13.5"
+tox = "^3.23.0"
 
 [tool.poetry.extras]
 docs = ["Sphinx", "sphinx-autoapi", "sphinx-rtd-theme", "myst-parser"]
+
+[tool.yapf]
+column_limit = 110
 
 [build-system]
 requires = ["poetry>=0.12"]

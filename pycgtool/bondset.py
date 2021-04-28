@@ -392,8 +392,7 @@ class BondSet:
                     "Parameters have not been calculated."), mol)
                 continue
 
-            if not all(
-                (bond.fconst is not None for bond in self._molecules[mol])):
+            if not all(bond.fconst is not None for bond in self._molecules[mol]):
                 logger.warning(("Molecule '%s' has no measured bond values. "
                                 "Parameters have not been calculated."), mol)
                 continue
