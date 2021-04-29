@@ -279,7 +279,7 @@ name = "joblib"
 version = "1.0.1"
 description = "Lightweight pipelining with Python functions"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [[package]]
@@ -345,19 +345,12 @@ name = "mdplus"
 version = "0.0.5"
 description = "Tools for molecular dynamics simulation setup and analysis."
 category = "main"
-optional = false
+optional = true
 python-versions = "*"
-develop = false
 
 [package.dependencies]
 scikit-learn = "*"
 scipy = "*"
-
-[package.source]
-type = "git"
-url = "https://bitbucket.org/claughton/mdplus.git"
-reference = "master"
-resolved_reference = "da77e8406d435ed8b78275c2a3e43795d77f0f60"
 
 [[package]]
 name = "mdtraj"
@@ -705,7 +698,7 @@ name = "scikit-learn"
 version = "0.24.1"
 description = "A set of python modules for machine learning and data mining"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -900,7 +893,7 @@ name = "threadpoolctl"
 version = "2.1.0"
 description = "threadpoolctl"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.5"
 
 [[package]]
@@ -1031,12 +1024,13 @@ docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-cov", "pytest-enabler", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [extras]
+backmapping = ["mdplus"]
 docs = ["Sphinx", "sphinx-autoapi", "sphinx-rtd-theme", "myst-parser"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "92dba443958278291ba17ad4812cc72198144b93998a4c7c074842fdc77272d6"
+content-hash = "c5d9c3b58fa8b5eba2a06b73e25cb08fdeccb866cb95b2280dde281a1d831de7"
 
 [metadata.files]
 alabaster = [
@@ -1304,7 +1298,9 @@ mdit-py-plugins = [
     {file = "mdit-py-plugins-0.2.6.tar.gz", hash = "sha256:1e467ca2ea056e8065cbd5d6c61e5052bb50826bde84c40f6a5ed77e82125710"},
     {file = "mdit_py_plugins-0.2.6-py3-none-any.whl", hash = "sha256:77fd75dad81109ee91f30eb49146196f79afbbae041f298ae4886c8c2b5e23d7"},
 ]
-mdplus = []
+mdplus = [
+    {file = "mdplus-0.0.5.tar.gz", hash = "sha256:6ec9cc1d42e94898f1cf958765a9e93f9ca9c1e35d098f6ac05b38350103db88"},
+]
 mdtraj = [
     {file = "mdtraj-1.9.5-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:c02a9a589acc98dd3cc4db9b0cb21725f5e2cb9484c14cc4fa032a4663c7a1e9"},
     {file = "mdtraj-1.9.5-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:8816f9a91826e46a413fd1a5ffd663b4076cf4c3b8930bb2046814d1438a88ee"},
