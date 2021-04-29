@@ -9,7 +9,6 @@ import textwrap
 import time
 import typing
 
-from mdplus.multiscale import GLIMPS
 from rich.logging import RichHandler
 
 from .frame import Frame
@@ -63,7 +62,11 @@ class PyCGTOOL:
         out_frame.save(self.get_output_filepath('gro'), frame_number=0)
 
         if self.config.backmapper_resname and self.out_frame.n_frames > 1:
-            self.train_backmapper(self.config.resname)
+            try:
+                self.train_backmapper(self.config.resname)
+
+            except ImportError:
+                logger.error('MDPlus must be installed to perform backmapping')
 
         return mapping, out_frame
 
@@ -98,6 +101,7 @@ class PyCGTOOL:
             logger.info('Finished writing bond measurements to file')
 
     def train_backmapper(self, resname: str):
+        from mdplus.multiscale import GLIMPS
         sel = f'resname {resname}'
 
         aa_subset_traj = self.in_frame._trajectory.atom_slice(
