@@ -5,6 +5,7 @@ from pycgtool.parsers import CFG
 
 
 class TestParsersCFG(unittest.TestCase):
+    water_name = 'SOL'
     watline = ("W", "P4", "OW", "HW1", "HW2")
 
     def test_cfg_with(self):
@@ -14,19 +15,19 @@ class TestParsersCFG(unittest.TestCase):
     def test_cfg_iterate_sections(self):
         with CFG("test/data/water.map") as cfg:
             for name in cfg:
-                self.assertEqual("SOL", name)
+                self.assertEqual(self.water_name, name)
 
     def test_cfg_iterate_lines(self):
         with CFG("test/data/water.map") as cfg:
             for name, section in cfg.items():
-                self.assertEqual("SOL", name)
+                self.assertEqual(self.water_name, name)
                 for line in section:
                     self.assertEqual(self.watline, line)
 
     def test_cfg_get_section(self):
         with CFG("test/data/water.map") as cfg:
-            self.assertTrue("SOL" in cfg)
-            for line in cfg["SOL"]:
+            self.assertTrue(self.water_name in cfg)
+            for line in cfg[self.water_name]:
                 self.assertEqual(self.watline, line)
 
     def test_cfg_duplicate_error(self):

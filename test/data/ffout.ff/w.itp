@@ -1,0 +1,49 @@
+; MARTINI FORCEFIELD V2.2
+;
+; SJ MARRINK (last modified: 04-12-2012 by DdJ)
+;
+; NOTE 1: Bead definitinions in this file have not been changed with respect to
+;         martini_v2.1.itp. This file is purely here for clarity sake. Differences
+;         between V2.1 and V2.2 are created by the martinize script and can be found
+;         in martini_v2.2_aminoacids.itp.
+;
+; please cite:
+;
+; D.H. de Jong, G. Singh, W.F.D. Bennet, C. Arnarez, T.A. Wassenaar, L.V. Schafer,
+; X. Periole, D.P. Tieleman, S.J. Marrink.
+; Improved Parameters for the Martini Coarse-Grained Protein Force Field
+; J. Chem. Theory Comput., DOI: 10.1021/ct300646g
+
+; L. Monticelli, S. Kandasamy, X. Periole, R. Larson, D.P. Tieleman, S.J. Marrink.
+; The MARTINI coarse grained force field: extension to proteins.
+; J. Chem. Th. Comp., 4:819-834, 2008.
+;
+; S.J. Marrink, H.J. Risselada, S. Yefimov, D.P. Tieleman, A.H. de Vries.
+; The MARTINI forcefield: coarse grained model for biomolecular simulations.
+; JPC-B, 111:7812-7824, 2007.
+;
+; and (if using lipid topologies):
+;
+; S.J. Marrink, A.H. de Vries, A.E. Mark.
+; Coarse grained model for semi-quantitative lipid simulations.
+; JPC-B, 108:750-760, 2004.
+
+;;;;;; WATER (representing 4 H2O molecules)
+
+[ moleculetype ]
+; molname  	nrexcl
+  W 	    	1
+
+[ atoms ]
+;id 	type 	resnr 	residu 	atom 	cgnr 	charge
+ 1 	P4 	1 	W 	W 	1 	0 
+
+;;;;;; ANTIFREEZE (prevents freezing of water)
+
+[ moleculetype ]
+; molname 	 nrexcl
+  WF	   	 1
+
+[ atoms ]
+;id 	type 	resnr 	residu 	atom 	cgnr 	charge
+ 1 	BP4 	1 	WF	WF	1 	0

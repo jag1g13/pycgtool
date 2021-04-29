@@ -1,0 +1,18 @@
+#include "TOCL2.itp"
+#include "AT_AA_POPE.itp"
+#include "AT_AA_POPG.itp"
+#include "PII_charmm36.itp"
+
+[ system ]
+; name
+Martini system
+
+[ molecules ]
+; name        number
+PII 10
+POPE 270
+POPG 45
+CDL2 60
+POPE 270
+POPG 45
+CDL2 60

@@ -1,0 +1,29 @@
+;
+; Topology prepared automatically using PyCGTOOL
+; James Graham <J.A.Graham@soton.ac.uk> 2016
+; University of Southampton
+; https://github.com/jag1g13/pycgtool
+;
+
+[ moleculetype ]
+NAPH    1
+
+[ atoms ]
+   1 TC4     1 NAPH R1      1    0.000
+   2 TC4     1 NAPH R2      2    0.000
+   3 TC4     1 NAPH R3      3    0.000    0.000
+   4 TC4     1 NAPH R4      4    0.000
+   5 TC4     1 NAPH R5      5    0.000
+
+[ virtual_sitesn ]
+  3      1    1 2 4 5
+
+[ exclusions ]
+3 1 2 4 5
+
+[ constraints ]
+   1    2    1      0.29133
+   2    5    1      0.41260
+   5    4    1      0.29155
+   4    1    1      0.41273
+   1    5    1      0.50537

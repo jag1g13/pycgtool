@@ -1,14 +1,39 @@
-*.pyc
-.idea/
-.cache/
-/*.gro
-/*.itp
-/fftest.ff
-/env
-/minenv
-.coverage
-/cover
-/tmp
-/doc/build
-/nose2-junit.xml
+# Data
+/*.gro*
+/*.itp*
+/*.xtc*
+/fftest.ff/
+/gromacs/
 *.offsets
+
+# Dependencies and runtime
+/.venv/
+/env/
+/minenv/
+/venv/
+*.pyc
+poetry.toml
+
+# Development and Testing
+.cache
+.coverage
+.python-version
+.tox/
+/build/
+/cover/
+/dist/
+/docs/_build/
+/htmlcov/
+/pycgtool.egg-info/
+/tmp/
+
+# IDE files
+.idea/
+.vscode/
+settings.json
+
+# Misc
+.cache/
+/notes/
+*.offsets
+*.pkl

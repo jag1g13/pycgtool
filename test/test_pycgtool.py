@@ -1,80 +1,177 @@
-import unittest
+"""Tests of the full application workflows."""
+
+import itertools
+import pathlib
 import subprocess
-import os
-import logging
+import tempfile
+import typing
+import unittest
 
-import numpy as np
-
-from simpletraj.trajectory import XtcTrajectory
-
-try:
-    import mdtraj
-    mdtraj_present = True
-except ImportError:
-    mdtraj_present = False
-
-from pycgtool.interface import Options
-from pycgtool.util import cmp_whitespace_float
-from pycgtool.pycgtool import main, map_only
+from pycgtool import util
+import pycgtool.__main__ as main
 
 
-class Args:
-    def __init__(self, name, map=True, bnd=True):
-        self.gro = os.path.join("test/data", name+".gro")
-        self.xtc = os.path.join("test/data", name+".xtc")
-        self.map = os.path.join("test/data", name+".map") if map else None
-        self.bnd = os.path.join("test/data", name+".bnd") if bnd else None
-        self.begin = 0
-        self.end = -1
-        self.quiet = True
+def get_args(name, out_dir, extra: typing.Optional[typing.Mapping] = None):
+    data_dir = pathlib.Path('test/data')
+
+    args = [
+        data_dir.joinpath(f'{name}.gro'),
+        data_dir.joinpath(f'{name}.xtc'),
+    ]
+
+    kwargs = {
+        '-m': data_dir.joinpath(f'{name}.map'),
+        '-b': data_dir.joinpath(f'{name}.bnd'),
+        '--out-dir': out_dir,
+    }
+
+    parsed_args = main.parse_arguments(
+        itertools.chain(map(str, args),
+                        *[[key, str(value)] for key, value in kwargs.items()]))
+
+    if extra is not None:
+        for key, value in extra.items():
+            setattr(parsed_args, key, value)
+
+    # Re-validate after manual changes
+    return main.validate_arguments(parsed_args)
 
 
 class PycgtoolTest(unittest.TestCase):
-    config = Options([("output_name", "out"),
-                      ("output", "gro"),
-                      ("output_xtc", True),
-                      ("map_only", False),
-                      ("map_center", "geom"),
-                      ("constr_threshold", 100000),
-                      ("dump_measurements", False),
-                      ("dump_n_values", 10000),
-                      ("output_forcefield", False),
-                      ("temperature", 310),
-                      ("default_fc", False),
-                      ("generate_angles", True),
-                      ("generate_dihedrals", False)])
+    base_dir = pathlib.Path(__file__).absolute().parent
+    data_dir = base_dir.joinpath('data')
 
     def test_run_help(self):
-        path = os.path.dirname(os.path.dirname(__file__))
-        self.assertEqual(0, subprocess.check_call([os.path.join(path, "pycgtool.py"), "-h"], stdout=subprocess.PIPE))
+        self.assertEqual(
+            0,
+            subprocess.check_call(["python", "-m", "pycgtool", "-h"],
+                                  stdout=subprocess.PIPE))
 
-    @unittest.skipIf(not mdtraj_present, "MDTRAJ or Scipy not present")
+    def test_parse_arguments(self):
+        args = main.parse_arguments([
+            'TOPOLOGY',
+            '-m',
+            'MAP',
+            '--begin',
+            '1000',
+        ])
+
+        self.assertEqual('TOPOLOGY', args.topology)
+        self.assertEqual('MAP', args.mapping)
+        self.assertEqual(1000, args.begin)
+
     def test_map_only(self):
-        logging.disable(logging.WARNING)
-        map_only(Args("sugar"), self.config)
-        logging.disable(logging.NOTSET)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+            args = get_args('sugar', tmp_path, extra={
+                'output_xtc': True,
+                'bnd': None,
+            })
 
-        xtc = XtcTrajectory("out.xtc")
-        xtc_ref = XtcTrajectory("test/data/sugar_out.xtc")
-        self.assertEqual(xtc_ref.numframes, xtc.numframes)
+            # Equivalent to
+            # pycgtool <top> <trj> -m <map> --output-xtc
+            main.PyCGTOOL(args)
 
-        for i in range(xtc_ref.numframes):
-            xtc.get_frame(i)
-            xtc_ref.get_frame(i)
-            np.testing.assert_array_almost_equal(xtc_ref.box, xtc.box, decimal=3)
-            np.testing.assert_array_almost_equal(xtc_ref.x, xtc.x, decimal=3)
+            self.assertTrue(
+                util.compare_trajectories(
+                    self.data_dir.joinpath('sugar_out.xtc'),
+                    tmp_path.joinpath('out.xtc'),
+                    topology_file=self.data_dir.joinpath('sugar_out.gro')))
 
     def test_full(self):
-        path = os.path.dirname(os.path.dirname(__file__))
-        self.assertEqual(0, subprocess.check_call([os.path.join(path, "pycgtool.py"),
-                                                   "-g", "test/data/sugar.gro",
-                                                   "-x", "test/data/sugar.xtc",
-                                                   "-m", "test/data/sugar_only.map",
-                                                   "-b", "test/data/sugar.bnd",
-                                                   ], stdout=subprocess.PIPE, stderr=subprocess.PIPE))
-        self.assertTrue(cmp_whitespace_float("out.itp", "test/data/sugar_out.itp", float_rel_error=0.001))
-        self.assertTrue(cmp_whitespace_float("out.gro", "test/data/sugar_out.gro", float_rel_error=0.001))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+            args = get_args('sugar', tmp_path)
+
+            # Equivalent to
+            # pycgtool <top> <trj> -m <map> -b <bnd>
+            main.PyCGTOOL(args)
+
+            self.assertTrue(
+                util.cmp_file_whitespace_float(
+                    tmp_path.joinpath("out.itp"),
+                    self.data_dir.joinpath("sugar_out.itp"),
+                    rtol=0.001,
+                    verbose=True))
+
+            self.assertTrue(
+                util.compare_trajectories(
+                    self.data_dir.joinpath('sugar_out.gro'),
+                    tmp_path.joinpath('out.gro'),
+                    rtol=0.001))
+
+    def test_full_no_traj(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+            args = get_args('sugar', tmp_path, extra={
+                'trajectory': None,
+            })
+
+            # Equivalent to
+            # pycgtool <top> -m <map> -b <bnd>
+            main.PyCGTOOL(args)
+
+            self.assertFalse(tmp_path.joinpath('out.itp').exists())
+
+            self.assertTrue(
+                util.compare_trajectories(
+                    self.data_dir.joinpath('sugar_out.gro'),
+                    tmp_path.joinpath('out.gro'),
+                    rtol=0.001))
+
+    def test_measure_only(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+            args = get_args('sugar', tmp_path, extra={
+                'mapping': None,
+                'trajectory': None,
+            })
+
+            # Equivalent to
+            # pycgtool <top> -b <bnd>
+            main.PyCGTOOL(args)
+
+            # Does not produce itp file
+            self.assertFalse(tmp_path.joinpath('out.itp').exists())
+
+            # Check bond dump files against reference
+            for bond_type in ['length', 'angle', 'dihedral']:
+                out_file = tmp_path.joinpath(f'ALLA_{bond_type}.dat')
+                self.assertTrue(out_file.exists())
+
+                self.assertTrue(util.cmp_file_whitespace_float(
+                    self.data_dir.joinpath(f'ALLA_{bond_type}_one.dat'),
+                    out_file
+                ))
+
+    def test_forcefield(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+            args = get_args('sugar',
+                            tmp_path,
+                            extra={
+                                'output_forcefield': True,
+                            })
+
+            # Equivalent to
+            # pycgtool <top> <trj> -m <map> -b <bnd> --output-forcefield
+            main.PyCGTOOL(args)
+
+            # Does not produce itp file
+            self.assertFalse(tmp_path.joinpath('out.itp').exists())
+
+            out_ff_dir = tmp_path.joinpath('ffout.ff')
+            self.assertTrue(out_ff_dir.is_dir())
+
+            # Compare all files in ffout.ff to reference versions
+            for out_file in out_ff_dir.iterdir():
+                ref_file = self.data_dir.joinpath(out_file)
+
+                self.assertTrue(
+                    util.cmp_file_whitespace_float(ref_file, out_file))
+
     # TODO more tests
+    # TODO test wrong args.end
 
 
 if __name__ == '__main__':
