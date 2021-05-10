@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 import argparse
 
+EXPECTED_TOKS = {
+    "bonds": 5,
+    "angles": 6,
+    "dihedrals": 8,
+    "constraints": 4,
+    "pairs": -1
+}
+
 
 def main(args):
     with open(args.input) as infile, open(args.output, "w") as outfile:
         section = ""
-        expected_toks = {
-            "bonds": 5,
-            "angles": 6,
-            "dihedrals": 8,
-            "constraints": 4,
-            "pairs": -1
-        }
         has_constr = False
         constr_lines = []
 
@@ -40,10 +41,10 @@ def main(args):
                 print(line, file=outfile)
                 continue
 
-            if len(line.split()) < expected_toks.get(section, 0):
+            if len(line.split()) < EXPECTED_TOKS.get(section, 0):
                 continue
 
-            if expected_toks.get(section, 0) < 0:
+            if EXPECTED_TOKS.get(section, 0) < 0:
                 continue
 
             # Convert high force constants to constraints
@@ -67,6 +68,4 @@ if __name__ == "__main__":
                         default=None,
                         help="Convert high force constants to constraints")
 
-    args = parser.parse_args()
-
-    main(args)
+    main(parser.parse_args())
