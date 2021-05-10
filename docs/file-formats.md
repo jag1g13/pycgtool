@@ -3,7 +3,7 @@
 ## Mapping Definition File
 An example of mapping definition file for the monosaccharide allose taken from `test/data/sugar.map` is shown below.
 
-Molecule names (as present in the gro coordinate file) are used as section headers inside square brackets.
+Molecule names (as present in the coordinate file) are used as section headers inside square brackets.
 Each of the following lines describes a single coarse-grained bead mapping.
 The items on a line are:
 - the name of the bead
@@ -13,8 +13,8 @@ The items on a line are:
 
 All items on a line are whitespace separated.
 Multiple molecules may be specified in their own sections.
-It is not recommended to provide a mapping for water since MARTINI water combines four molecules into a single bead which is not yet supported by PyCGTOOL.
-Note that bead charges in the MARTINI framework are by convention integers and are used only for formally charged functional groups.  An example of a molecule mapping using charges can be found in `test/data/dppc.map`.
+It is not recommended to provide a mapping for water since MARTINI water combines four molecules into a single bead which is not possible to map directly.
+Note that bead charges in the MARTINI framework are by convention integers and are used only for formally charged functional groups.
 
 ```
 ; comments begin with a semicolon
@@ -26,15 +26,26 @@ C4 P3 C4 O4
 C5 P2 C5 C6 O6
 O5 P4 O5
 
-[SOL]
-W P4 OW HW1 HW2
+[DPPC]
+NC3 Q0  1 NC3
+PO4 Qa -1 PO4
+GL1 Na GL1
+GL2 Na GL2
+C1A C1 C1A
+C2A C3 C2A
+C3A C1 C3A
+C4A C1 C4A
+C1B C1 C1B
+C2B C3 C2B
+C3B C1 C3B
+C4B C1 C4B
 ```
 
-The Martini 3.0 force field has now introduced the use of virtual sites for polycylic compounds or polysaccharides in order to improve numerical stability for highly constrained structures.
+The Martini force field has introduced in version 3 the use of virtual sites for polycylic compounds or polysaccharides in order to improve numerical stability for highly constrained structures.
 Below is an example of how virtual sites can be included in the mapping file for naphthalene (see `/test/data/martini3/naphthalene.map`).
 Similar to the previously described mapping syntax, a virtual site is defined with a prefix of ``@v`` as follows `@v [name] [type] [charge] [constructing beads]`.
 The constructing beads refer to a list of space delimited coarse grained bead names from which the position of the virtual site will be calculated.
-Currently virtual sites can be constructed from either the center of geometry or mass of the constructing sites via the `--virtual_map_center` flag.
+Currently virtual sites can be constructed from either the center of geometry or mass of the constructing sites via the `--virtual-map-center` flag.
 
 ```
 [ NAPH ]
@@ -54,7 +65,7 @@ Each line is a list of bead names, using the names defined in the mapping file.
 Two bead names on a line defines a bond length, three defines an angle, and four defines a dihedral.
 
 If no angles are defined for a molecule, PyCGTOOL will construct all angles from the list of bonds. 
-This may also be enabled for dihedrals via the `--generate_dihedrals` flag, but is not recommended as in most cases coarse-grained models do not require dihedrals. 
+This may also be enabled for dihedrals via the `--generate-dihedrals` flag, but is not recommended as in most cases coarse-grained models do not require dihedrals. 
 Additionally, any angles inside a triangle of bond lengths are excluded from the output as they often cause simulation stability issues when used in conjunction with LINCS.
 
 ```
