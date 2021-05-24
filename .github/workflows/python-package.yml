@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9]
+        python-version: [3.5, 3.6, 3.7, 3.8, 3.9]
         os: [ubuntu-latest, macos-latest]
 
     runs-on: ${{ matrix.os }}
@@ -30,7 +30,7 @@ jobs:
     - name: Install project and dependencies
       run: |
         pip install --upgrade pip
-        pip install -r requirements.txt mdtraj mdanalysis
+        pip install -r requirements.txt mdtraj
         pip install pytest coverage
 
     - name: Test with pytest
