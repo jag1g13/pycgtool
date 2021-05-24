@@ -1,0 +1,39 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python package
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9]
+        os: [ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install project and dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt mdtraj mdanalysis
+        pip install pytest coverage
+
+    - name: Test with pytest
+      run: |
+        coverage run --source=pycgtool -m pytest
+        coverage report --skip-covered
