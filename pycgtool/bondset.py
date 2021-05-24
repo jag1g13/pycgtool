@@ -1,5 +1,4 @@
-"""
-Module containing classes to calculate bonded properties from a Frame.
+"""Module containing classes to calculate bonded properties from a Frame.
 
 BondSet contains a dictionary of lists of Bonds.  Each list corresponds to a single molecule.
 """
@@ -26,6 +25,8 @@ from .util import (
 )
 
 logger = logging.getLogger(__name__)
+
+PathLike = typing.Union[str, pathlib.Path]
 
 
 class Bond:
@@ -138,7 +139,7 @@ class BondSet:
 
         return functional_forms
 
-    def __init__(self, filename: str, options):
+    def __init__(self, filename: PathLike, options):
         """Read in bonds from a file.
 
         :param filename: File to read

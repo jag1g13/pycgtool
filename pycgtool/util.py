@@ -15,14 +15,10 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def circular_mean(values):
-    """
-    Return average of angles on a cirle
+def circular_mean(values: typing.Iterable[float]) -> float:
+    """Calculate average of angles on a circle.
 
     See https://en.wikipedia.org/wiki/Mean_of_circular_quantities
-
-    :param values: array values to average
-    :return: average
     """
     if not isinstance(values, np.ndarray):
         values = np.array(values)
@@ -35,12 +31,10 @@ def circular_mean(values):
     return np.arctan2(y_av, x_av)
 
 
-def circular_variance(values):
-    """
-    Return variance of angles on a cirle
+def circular_variance(values: typing.Iterable[float]) -> float:
+    """Calculate variance of angles on a circle.
 
-    :param values: array values
-    :return: average
+    See https://en.wikipedia.org/wiki/Mean_of_circular_quantities
     """
     if not isinstance(values, np.ndarray):
         values = np.array(values)
@@ -308,7 +302,7 @@ def load_optional_topology(
 
 
 def compare_trajectories(
-        *trajectory_files: typing.Iterable[typing.Union[str, pathlib.Path]],
+        *trajectory_files: typing.Union[str, pathlib.Path],
         topology_file: typing.Optional[typing.Union[str, pathlib.Path]] = None,
         rtol: float = 0.001) -> bool:
     """Compare multiple trajectory files for equality.

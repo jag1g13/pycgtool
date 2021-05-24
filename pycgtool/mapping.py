@@ -7,6 +7,7 @@ Each list corresponds to a single molecule.
 
 import copy
 import logging
+import pathlib
 import typing
 
 import mdtraj
@@ -17,6 +18,9 @@ from .frame import Frame
 from .parsers import CFG, ITP
 
 logger = logging.getLogger(__name__)
+
+
+PathLike = typing.Union[str, pathlib.Path]
 
 
 class BeadMap:
@@ -129,7 +133,7 @@ class Mapping:
 
     Contains a dictionary of lists of BeadMaps.  Each list corresponds to a single molecule.
     """
-    def __init__(self, filename: str, options, itp_filename: typing.Optional[str] = None):
+    def __init__(self, filename: PathLike, options, itp_filename: typing.Optional[PathLike] = None):
         """Read in the AA->CG mapping from a file.
 
         :param filename: File from which to read mapping

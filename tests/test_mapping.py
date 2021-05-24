@@ -190,4 +190,4 @@ class MappingTest(unittest.TestCase):
         self.assertAlmostEqual(-1.2, mapping["POPE"][0].charge, delta=0.0001)
         self.assertAlmostEqual(0, mapping["POPG"][0].charge, delta=0.0001)
 
-        self.assertAlmostEqual([94.9716], mapping["POPE"][0].mass, delta=0.0001)
+        self.assertAlmostEqual(94.9716, mapping["POPE"][0].mass, delta=0.0001)
