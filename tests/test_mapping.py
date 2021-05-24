@@ -1,6 +1,7 @@
-import unittest
 import filecmp
 import os
+import pathlib
+import unittest
 
 import numpy as np
 
@@ -41,9 +42,12 @@ class BeadMapTest(unittest.TestCase):
 
 
 class MappingTest(unittest.TestCase):
+    base_dir = pathlib.Path(__file__).absolute().parent
+    data_dir = base_dir.joinpath('data')
+
     def test_mapping_create(self):
         """Test that a mapping can be correctly read from a file."""
-        mapping = Mapping('test/data/water.map', DummyOptions)
+        mapping = Mapping(self.data_dir.joinpath('water.map'), DummyOptions)
         self.assertEqual(2, len(mapping))  # SOL and HOH
         self.assertTrue('SOL' in mapping)
 
@@ -57,7 +61,7 @@ class MappingTest(unittest.TestCase):
 
     def test_mapping_rename(self):
         """Test that an alternate mapping is created using MDTraj conventions."""
-        mapping = Mapping('test/data/water.map', DummyOptions)
+        mapping = Mapping(self.data_dir.joinpath('water.map'), DummyOptions)
         self.assertEqual(2, len(mapping))  # SOL and HOH
         self.assertTrue('HOH' in mapping)
 
@@ -70,7 +74,7 @@ class MappingTest(unittest.TestCase):
         self.assertEqual('H2', sol_map[0].atoms[2])
 
     def test_virtual_mapping_create(self):
-        mapping = Mapping("test/data/martini3/naphthalene.map", DummyOptions)
+        mapping = Mapping(self.data_dir.joinpath('martini3/naphthalene.map'), DummyOptions)
         self.assertEqual(1, len(mapping))
         self.assertTrue("NAPH" in mapping)
         self.assertEqual(5, len(mapping["NAPH"]))
@@ -80,107 +84,107 @@ class MappingTest(unittest.TestCase):
         self.assertEqual(1, [isinstance(bead, VirtualMap) for bead in mapping["NAPH"]].count(True))
 
     def test_mapping_apply(self):
-        mapping = Mapping("test/data/water.map", DummyOptions)
-        frame = Frame("test/data/water.gro")
+        mapping = Mapping(self.data_dir.joinpath('water.map'), DummyOptions)
+        frame = Frame(self.data_dir.joinpath('water.gro'))
         cg_frame = mapping.apply(frame)
 
         self.assertEqual(frame.natoms / 3, cg_frame.natoms)
 
         cg_frame.save("water-cg.gro")
 
-        self.assertTrue(filecmp.cmp("test/data/water-cg.gro", "water-cg.gro"))
+        self.assertTrue(filecmp.cmp(self.data_dir.joinpath('water-cg.gro'), "water-cg.gro"))
         os.remove("water-cg.gro")
 
     def test_mapping_charges(self):
-        mapping = Mapping("test/data/dppc.map", DummyOptions)
+        mapping = Mapping(self.data_dir.joinpath('dppc.map'), DummyOptions)
         self.assertEqual( 1, mapping["DPPC"][0].charge)
         self.assertEqual(-1, mapping["DPPC"][1].charge)
 
     def test_mapping_pbc(self):
-        frame = Frame("test/data/pbcwater.gro")
+        frame = Frame(self.data_dir.joinpath('pbcwater.gro'))
 
-        mapping = Mapping("test/data/water.map", DummyOptions)
+        mapping = Mapping(self.data_dir.joinpath('water.map'), DummyOptions)
         cg_frame = mapping.apply(frame)
 
         np.testing.assert_allclose(frame.atom(0).coords, cg_frame.atom(0).coords)
 
     def test_mapping_weights_geom(self):
-        frame = Frame("test/data/two.gro")
+        frame = Frame(self.data_dir.joinpath('two.gro'))
 
-        mapping = Mapping("test/data/two.map", DummyOptions)
+        mapping = Mapping(self.data_dir.joinpath('two.map'), DummyOptions)
         cg_frame = mapping.apply(frame)
 
         np.testing.assert_allclose(np.array([[1.5, 1.5, 1.5]]),
                                    cg_frame.residue(0).atom(0).coords)
 
     def test_virtual_mapping_weights_geom(self):
-        frame = Frame("test/data/martini3/four.gro")
+        frame = Frame(self.data_dir.joinpath('martini3/four.gro'))
 
-        mapping = Mapping("test/data/martini3/four.map", DummyOptions)
+        mapping = Mapping(self.data_dir.joinpath('martini3/four.map'), DummyOptions)
         cg_frame = mapping.apply(frame)
 
         np.testing.assert_allclose(np.array([[2.5, 2.5, 2.5]]), 
                                    cg_frame.residue(0).atom(2).coords)
 
     def test_mapping_weights_mass(self):
-        frame = Frame("test/data/two.gro")
+        frame = Frame(self.data_dir.joinpath('two.gro'))
         options = DummyOptions()
         options.map_center = "mass"
 
-        mapping = Mapping("test/data/two.map", options, itp_filename="test/data/two.itp")
+        mapping = Mapping(self.data_dir.joinpath('two.map'), options, itp_filename=self.data_dir.joinpath('two.itp'))
         cg_frame = mapping.apply(frame)
 
         np.testing.assert_allclose(np.array([[2., 2., 2.]]),
                                    cg_frame.residue(0).atom(0).coords)
 
     def test_virtual_mapping_weights_mass(self):
-        frame = Frame("test/data/martini3/four.gro")
+        frame = Frame(self.data_dir.joinpath('martini3/four.gro'))
         options = DummyOptions()
         options.virtual_map_center = "mass"
 
-        mapping = Mapping("test/data/martini3/four.map", options, itp_filename="test/data/martini3/four.itp")
+        mapping = Mapping(self.data_dir.joinpath('martini3/four.map'), options, itp_filename=self.data_dir.joinpath('martini3/four.itp'))
         cg_frame = mapping.apply(frame)
 
         np.testing.assert_allclose(np.array([[3.0, 3.0, 3.0]]),
                                    cg_frame.residue(0).atom(2).coords)
 
     def test_mapping_weights_guess_mass(self):
-        frame = Frame("test/data/two.gro")
+        frame = Frame(self.data_dir.joinpath('two.gro'))
         options = DummyOptions()
         options.map_center = "mass"
 
-        mapping = Mapping("test/data/two.map", options)
+        mapping = Mapping(self.data_dir.joinpath('two.map'), options)
         cg_frame = mapping.apply(frame)
 
         np.testing.assert_allclose(np.array([[1.922575,  1.922575,  1.922575]], dtype=np.float32),
                                    cg_frame.residue(0).atom(0).coords, rtol=0.01)
 
     def test_virtual_mapping_weights_guess_mass(self):
-        frame = Frame("test/data/martini3/four.gro")
+        frame = Frame(self.data_dir.joinpath('martini3/four.gro'))
         options = DummyOptions()
         options.virtual_map_center = "mass"
 
-        mapping = Mapping("test/data/martini3/four.map", options)
+        mapping = Mapping(self.data_dir.joinpath('martini3/four.map'), options)
         cg_frame = mapping.apply(frame)
 
         np.testing.assert_allclose(np.array([[2.83337, 2.83337, 2.83337]], dtype=np.float32),
                                    cg_frame.residue(0).atom(2).coords, rtol=0.01)
 
     def test_mapping_weights_first(self):
-        frame = Frame("test/data/two.gro")
+        frame = Frame(self.data_dir.joinpath('two.gro'))
         options = DummyOptions()
         options.map_center = "first"
 
-        mapping = Mapping("test/data/two.map", options, itp_filename="test/data/two.itp")
+        mapping = Mapping(self.data_dir.joinpath('two.map'), options, itp_filename=self.data_dir.joinpath('two.itp'))
         cg_frame = mapping.apply(frame)
 
         np.testing.assert_allclose(np.array([[1., 1., 1.]]),
                                    cg_frame.residue(0).atom(0).coords)
 
     def test_mapping_itp_multi(self):
-        mapping = Mapping("test/data/membrane/membrane.map",
+        mapping = Mapping(self.data_dir.joinpath('membrane/membrane.map'),
                           DummyOptions,
-                          itp_filename="test/data/membrane/membrane.top")
+                          itp_filename=self.data_dir.joinpath('membrane/membrane.top'))
         self.assertAlmostEqual( -1.2, mapping["POPE"][0].charge, delta=0.0001)
         self.assertAlmostEqual(0, mapping["POPG"][0].charge, delta=0.0001)
 

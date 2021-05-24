@@ -1,8 +1,9 @@
-import unittest
-import os
 import logging
-import tempfile
+import os
+import pathlib
 import shutil
+import tempfile
+import unittest
 
 import numpy as np
 
@@ -169,32 +170,35 @@ class UtilFileWriteLinesTest(unittest.TestCase):
 
 
 class CompareTrajectoryTest(unittest.TestCase):
+    base_dir = pathlib.Path(__file__).absolute().parent
+    data_dir = base_dir.joinpath('data')
+
     def test_compare_trajectory_single(self):
         self.assertTrue(util.compare_trajectories(
-            'test/data/sugar.gro',
-            'test/data/sugar.gro'
+            self.data_dir.joinpath('sugar.gro'),
+            self.data_dir.joinpath('sugar.gro')
         ))
 
     def test_compare_trajectory_single_false(self):
         with self.assertRaises(ValueError):
             util.compare_trajectories(
-                'test/data/sugar.gro',
-                'test/data/water.gro'
+                self.data_dir.joinpath('sugar.gro'),
+                self.data_dir.joinpath('water.gro')
             )
 
     def test_compare_trajectory(self):
         self.assertTrue(util.compare_trajectories(
-            'test/data/sugar.xtc',
-            'test/data/sugar.xtc',
-            topology_file='test/data/sugar.gro'
+            self.data_dir.joinpath('sugar.xtc'),
+            self.data_dir.joinpath('sugar.xtc'),
+            topology_file=self.data_dir.joinpath('sugar.gro')
         ))
 
     def test_compare_trajectory_false(self):
         with self.assertRaises(ValueError):
             util.compare_trajectories(
-                'test/data/sugar.xtc',
-                'test/data/water.xtc',
-                topology_file='test/data/sugar.gro'
+                self.data_dir.joinpath('sugar.xtc'),
+                self.data_dir.joinpath('water.xtc'),
+                topology_file=self.data_dir.joinpath('sugar.gro')
             )
 
 

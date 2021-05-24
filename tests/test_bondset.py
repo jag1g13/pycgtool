@@ -59,14 +59,14 @@ class BondSetTest(unittest.TestCase):
     ]
 
     def test_bondset_create(self):
-        measure = BondSet('test/data/sugar.bnd', DummyOptions)
+        measure = BondSet(self.data_dir.joinpath('sugar.bnd'), DummyOptions)
         self.assertEqual(1, len(measure))
         self.assertTrue('ALLA' in measure)
         self.assertEqual(18, len(measure['ALLA']))
 
     def test_bondset_apply(self):
-        measure = BondSet('test/data/sugar.bnd', DummyOptions)
-        frame = Frame('test/data/sugar-cg.gro')
+        measure = BondSet(self.data_dir.joinpath('sugar.bnd'), DummyOptions)
+        frame = Frame(self.data_dir.joinpath('sugar-cg.gro'))
         measure.apply(frame)
 
         # First six are bond lengths
@@ -85,7 +85,7 @@ class BondSetTest(unittest.TestCase):
                                delta=abs(expected) / 500)
 
     def test_bondset_remove_triangles(self):
-        bondset = BondSet('test/data/triangle.bnd', DummyOptions)
+        bondset = BondSet(self.data_dir.joinpath('triangle.bnd'), DummyOptions)
         angles = bondset.get_bond_angles('TRI', exclude_triangle=False)
         self.assertEqual(3, len(angles))
         angles = bondset.get_bond_angles('TRI', exclude_triangle=True)
@@ -104,9 +104,9 @@ class BondSetTest(unittest.TestCase):
                                    delta=abs(ref[i][fc_column_number] * accuracy))
 
     def test_bondset_boltzmann_invert(self):
-        measure = BondSet('test/data/sugar.bnd', DummyOptions)
-        frame = Frame('test/data/sugar.gro', 'test/data/sugar.xtc')
-        mapping = Mapping('test/data/sugar.map', DummyOptions)
+        measure = BondSet(self.data_dir.joinpath('sugar.bnd'), DummyOptions)
+        frame = Frame(self.data_dir.joinpath('sugar.gro'), self.data_dir.joinpath('sugar.xtc'))
+        mapping = Mapping(self.data_dir.joinpath('sugar.map'), DummyOptions)
 
         cg_frame = mapping.apply(frame)
 
@@ -119,9 +119,9 @@ class BondSetTest(unittest.TestCase):
         class DefaultOptions(DummyOptions):
             default_fc = True
 
-        measure = BondSet('test/data/sugar.bnd', DefaultOptions)
-        frame = Frame('test/data/sugar.gro', 'test/data/sugar.xtc')
-        mapping = Mapping('test/data/sugar.map', DefaultOptions)
+        measure = BondSet(self.data_dir.joinpath('sugar.bnd'), DefaultOptions)
+        frame = Frame(self.data_dir.joinpath('sugar.gro'), self.data_dir.joinpath('sugar.xtc'))
+        mapping = Mapping(self.data_dir.joinpath('sugar.map'), DefaultOptions)
 
         cg_frame = mapping.apply(frame)
 
@@ -136,9 +136,9 @@ class BondSetTest(unittest.TestCase):
             angle_form = 'MartiniDefaultAngle'
             dihedral_form = 'MartiniDefaultDihedral'
 
-        measure = BondSet('test/data/sugar.bnd', FuncFormOptions)
-        frame = Frame('test/data/sugar.gro', 'test/data/sugar.xtc')
-        mapping = Mapping('test/data/sugar.map', DummyOptions)
+        measure = BondSet(self.data_dir.joinpath('sugar.bnd'), FuncFormOptions)
+        frame = Frame(self.data_dir.joinpath('sugar.gro'), self.data_dir.joinpath('sugar.xtc'))
+        mapping = Mapping(self.data_dir.joinpath('sugar.map'), DummyOptions)
 
         cg_frame = mapping.apply(frame)
 
@@ -148,8 +148,8 @@ class BondSetTest(unittest.TestCase):
         self.support_check_mean_fc(measure['ALLA'], 2)
 
     def test_bondset_polymer(self):
-        bondset = BondSet('test/data/polyethene.bnd', DummyOptions)
-        frame = Frame('test/data/polyethene.gro')
+        bondset = BondSet(self.data_dir.joinpath('polyethene.bnd'), DummyOptions)
+        frame = Frame(self.data_dir.joinpath('polyethene.gro'))
         bondset.apply(frame)
 
         self.assertEqual(5, len(bondset['ETH'][0].values))
@@ -165,8 +165,8 @@ class BondSetTest(unittest.TestCase):
                                delta=0.107 / 500)
 
     def test_bondset_pbc(self):
-        bondset = BondSet('test/data/polyethene.bnd', DummyOptions)
-        frame = Frame('test/data/pbcpolyethene.gro')
+        bondset = BondSet(self.data_dir.joinpath('polyethene.bnd'), DummyOptions)
+        frame = Frame(self.data_dir.joinpath('pbcpolyethene.gro'))
 
         bondset.apply(frame)
         bondset.boltzmann_invert()
@@ -176,9 +176,9 @@ class BondSetTest(unittest.TestCase):
             self.assertEqual(float('inf'), bond.fconst)
 
     def test_full_itp_sugar(self):
-        measure = BondSet('test/data/sugar.bnd', DummyOptions)
-        frame = Frame('test/data/sugar.gro', 'test/data/sugar.xtc')
-        mapping = Mapping('test/data/sugar.map', DummyOptions)
+        measure = BondSet(self.data_dir.joinpath('sugar.bnd'), DummyOptions)
+        frame = Frame(self.data_dir.joinpath('sugar.gro'), self.data_dir.joinpath('sugar.xtc'))
+        mapping = Mapping(self.data_dir.joinpath('sugar.map'), DummyOptions)
 
         cg_frame = mapping.apply(frame)
 
@@ -202,9 +202,9 @@ class BondSetTest(unittest.TestCase):
         options = DummyOptions()
         options.generate_angles = False
 
-        measure = BondSet('test/data/martini3/naphthalene.bnd', options)
-        frame = Frame('test/data/martini3/naphthalene.gro')
-        mapping = Mapping('test/data/martini3/naphthalene.map', options)
+        measure = BondSet(self.data_dir.joinpath('martini3/naphthalene.bnd'), options)
+        frame = Frame(self.data_dir.joinpath('martini3/naphthalene.gro'))
+        mapping = Mapping(self.data_dir.joinpath('martini3/naphthalene.map'), options)
 
         cg_frame = mapping.apply(frame)
 
@@ -225,12 +225,12 @@ class BondSetTest(unittest.TestCase):
 
     def test_duplicate_atoms_in_bond(self):
         with self.assertRaises(ValueError):
-            _ = BondSet('test/data/duplicate_atoms.bnd', DummyOptions)
+            _ = BondSet(self.data_dir.joinpath('duplicate_atoms.bnd'), DummyOptions)
 
     def test_dump_bonds(self):
-        measure = BondSet('test/data/sugar.bnd', DummyOptions)
-        frame = Frame('test/data/sugar.gro', 'test/data/sugar.xtc')
-        mapping = Mapping('test/data/sugar.map', DummyOptions)
+        measure = BondSet(self.data_dir.joinpath('sugar.bnd'), DummyOptions)
+        frame = Frame(self.data_dir.joinpath('sugar.gro'), self.data_dir.joinpath('sugar.xtc'))
+        mapping = Mapping(self.data_dir.joinpath('sugar.map'), DummyOptions)
 
         cg_frame = mapping.apply(frame)
 
@@ -238,11 +238,10 @@ class BondSetTest(unittest.TestCase):
         measure.boltzmann_invert()
         measure.dump_values()
 
-        data_dir = pathlib.Path('test/data')
         filenames = ('ALLA_length.dat', 'ALLA_angle.dat', 'ALLA_dihedral.dat')
         for filename in filenames:
             self.assertTrue(
-                cmp_file_whitespace_float(data_dir.joinpath(filename),
+                cmp_file_whitespace_float(self.data_dir.joinpath(filename),
                                           filename,
                                           rtol=0.008,
                                           verbose=True))

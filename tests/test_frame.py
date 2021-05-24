@@ -92,25 +92,25 @@ class FrameTest(unittest.TestCase):
         self.assertTrue(residue is frame.residue(0))
 
     def test_frame_read_gro(self):
-        frame = Frame('test/data/water.gro')
+        frame = Frame(self.data_dir.joinpath('water.gro'))
 
         self.check_reference_frame(frame)
 
     def test_frame_read_pdb(self):
-        frame = Frame('test/data/water.pdb')
+        frame = Frame(self.data_dir.joinpath('water.pdb'))
 
         self.check_reference_frame(frame)
 
     def test_frame_read_zero_box(self):
-        frame = Frame('test/data/polyethene.gro')
+        frame = Frame(self.data_dir.joinpath('polyethene.gro'))
         self.assertIsNone(frame.unitcell_lengths)
 
     def test_frame_any_read_unsupported(self):
         with self.assertRaises(UnsupportedFormatException):
-            _ = Frame('test/data/dppc.map')
+            _ = Frame(self.data_dir.joinpath('dppc.map'))
 
     def test_frame_output_gro(self):
-        frame = Frame('test/data/water.gro')
+        frame = Frame(self.data_dir.joinpath('water.gro'))
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = pathlib.Path(tmpdir)
@@ -121,11 +121,11 @@ class FrameTest(unittest.TestCase):
                             tmp_path.joinpath('water-out.gro')))
 
     def test_frame_read_xtc_numframes(self):
-        frame = Frame('test/data/water.gro', 'test/data/water.xtc')
+        frame = Frame(self.data_dir.joinpath('water.gro'), self.data_dir.joinpath('water.xtc'))
         self.assertEqual(11, frame.n_frames)
 
     def test_frame_read_xtc(self):
-        frame = Frame('test/data/water.gro', 'test/data/water.xtc')
+        frame = Frame(self.data_dir.joinpath('water.gro'), self.data_dir.joinpath('water.xtc'))
 
         self.check_reference_trajectory(frame)
 
@@ -151,7 +151,7 @@ class FrameTest(unittest.TestCase):
 
     def test_raise_nonmatching_system_mdtraj(self):
         with self.assertRaises(NonMatchingSystemError):
-            _ = Frame('test/data/water.gro', 'test/data/sugar.xtc')
+            _ = Frame(self.data_dir.joinpath('water.gro'), self.data_dir.joinpath('sugar.xtc'))
 
 
 if __name__ == '__main__':

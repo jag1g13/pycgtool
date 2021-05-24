@@ -12,7 +12,8 @@ import pycgtool.__main__ as main
 
 
 def get_args(name, out_dir, extra: typing.Optional[typing.Mapping] = None):
-    data_dir = pathlib.Path('test/data')
+    base_dir = pathlib.Path(__file__).absolute().parent
+    data_dir = base_dir.joinpath('data')
 
     args = [
         data_dir.joinpath(f'{name}.gro'),
