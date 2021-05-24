@@ -97,7 +97,7 @@ class MappingTest(unittest.TestCase):
 
     def test_mapping_charges(self):
         mapping = Mapping(self.data_dir.joinpath('dppc.map'), DummyOptions)
-        self.assertEqual( 1, mapping["DPPC"][0].charge)
+        self.assertEqual(1, mapping["DPPC"][0].charge)
         self.assertEqual(-1, mapping["DPPC"][1].charge)
 
     def test_mapping_pbc(self):
@@ -123,7 +123,7 @@ class MappingTest(unittest.TestCase):
         mapping = Mapping(self.data_dir.joinpath('martini3/four.map'), DummyOptions)
         cg_frame = mapping.apply(frame)
 
-        np.testing.assert_allclose(np.array([[2.5, 2.5, 2.5]]), 
+        np.testing.assert_allclose(np.array([[2.5, 2.5, 2.5]]),
                                    cg_frame.residue(0).atom(2).coords)
 
     def test_mapping_weights_mass(self):
@@ -142,7 +142,9 @@ class MappingTest(unittest.TestCase):
         options = DummyOptions()
         options.virtual_map_center = "mass"
 
-        mapping = Mapping(self.data_dir.joinpath('martini3/four.map'), options, itp_filename=self.data_dir.joinpath('martini3/four.itp'))
+        mapping = Mapping(self.data_dir.joinpath('martini3/four.map'),
+                          options,
+                          itp_filename=self.data_dir.joinpath('martini3/four.itp'))
         cg_frame = mapping.apply(frame)
 
         np.testing.assert_allclose(np.array([[3.0, 3.0, 3.0]]),
@@ -185,7 +187,7 @@ class MappingTest(unittest.TestCase):
         mapping = Mapping(self.data_dir.joinpath('membrane/membrane.map'),
                           DummyOptions,
                           itp_filename=self.data_dir.joinpath('membrane/membrane.top'))
-        self.assertAlmostEqual( -1.2, mapping["POPE"][0].charge, delta=0.0001)
+        self.assertAlmostEqual(-1.2, mapping["POPE"][0].charge, delta=0.0001)
         self.assertAlmostEqual(0, mapping["POPG"][0].charge, delta=0.0001)
 
         self.assertAlmostEqual([94.9716], mapping["POPE"][0].mass, delta=0.0001)

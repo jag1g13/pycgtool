@@ -67,29 +67,29 @@ class UtilTest(unittest.TestCase):
         os.remove("#testfile.2#")
 
     def test_sliding(self):
-        l = [0, 1, 2, 3, 4]
+        test_list = [0, 1, 2, 3, 4]
         res = [(None, 0, 1), (0, 1, 2), (1, 2, 3), (2, 3, 4), (3, 4, None)]
-        for res, pair in zip(res, sliding(l)):
+        for res, pair in zip(res, sliding(test_list)):
             self.assertEqual(res, pair)
 
     def test_sliding_empty(self):
         """Test that an exception is raised when trying to iterate over empty iterable."""
         with self.assertRaises(ValueError):
-            for _, _ in sliding([]):
+            for _, _, _ in sliding([]):
                 pass
 
     def test_transpose_and_sample_no_sample(self):
-        l = [(1, 2), (3, 4), (5, 6)]
-        l_t = [(1, 3, 5), (2, 4, 6)]
-        self.assertEqual(l_t, transpose_and_sample(l, None))
+        test_list = [(1, 2), (3, 4), (5, 6)]
+        test_list_transpose = [(1, 3, 5), (2, 4, 6)]
+        self.assertEqual(test_list_transpose, transpose_and_sample(test_list, None))
 
     def test_transpose_and_sample(self):
-        l = [(1, 2), (3, 4), (5, 6)]
-        l_t = [(1, 3, 5), (2, 4, 6)]
+        test_list = [(1, 2), (3, 4), (5, 6)]
+        test_list_transpose = [(1, 3, 5), (2, 4, 6)]
 
-        l_t_test = transpose_and_sample(l, n=1)
-        self.assertEqual(1, len(l_t_test))
-        self.assertIn(l_t_test[0], l_t)
+        result = transpose_and_sample(test_list, n=1)
+        self.assertEqual(1, len(result))
+        self.assertIn(result[0], test_list_transpose)
 
     def test_cmp_whitespace_text(self):
         ref = ["Hello World"]
@@ -99,7 +99,7 @@ class UtilTest(unittest.TestCase):
         self.assertFalse(cmp_whitespace_float(ref, test))
 
     def test_cmp_whitespace_float(self):
-        ref =  ["8.3 1.00 -3 0"]
+        ref = ["8.3 1.00 -3 0"]
         test = ["8.3 1.00 -3 0.0"]
         self.assertTrue(cmp_whitespace_float(ref, test))
         test = ["8.3 1.01 -3 0"]
@@ -130,11 +130,10 @@ class UtilTest(unittest.TestCase):
     def test_circular_variance(self):
         values = np.deg2rad(np.array([165, 145], dtype=np.float32))
         test_var = np.var(values)
-        self.assertAlmostEqual( circular_variance(values), test_var, delta=test_var / 500.)
+        self.assertAlmostEqual(circular_variance(values), test_var, delta=test_var / 500.)
 
         values = np.deg2rad(np.array([-175, 165], dtype=np.float32))
         self.assertAlmostEqual(circular_variance(values), test_var, delta=test_var / 500.)
-
 
 
 # TODO test backing up
