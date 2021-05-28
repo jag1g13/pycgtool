@@ -11,10 +11,10 @@ import typing
 
 from rich.logging import RichHandler
 
-from .frame import Frame
-from .mapping import Mapping
-from .bondset import BondSet
-from .forcefield import ForceField
+from pycgtool.frame import Frame
+from pycgtool.mapping import Mapping
+from pycgtool.bondset import BondSet
+from pycgtool.forcefield import ForceField
 
 PathLike = typing.Union[pathlib.Path, str]
 
