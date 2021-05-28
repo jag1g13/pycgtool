@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pycgtool"
-version = "2.0.0-beta.1"
+version = "2.0.0-beta.2"
 description = "Generate coarse-grained molecular dynamics models from atomistic trajectories."
 authors = ["James Graham <j.graham@soton.ac.uk>"]
 license = "GPL-3.0-only"
