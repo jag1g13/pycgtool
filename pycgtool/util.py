@@ -15,6 +15,10 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
+class EmptyIterableError(ValueError):
+    pass
+
+
 def circular_mean(values: typing.Iterable[float]) -> float:
     """Calculate average of angles on a circle.
 
@@ -157,7 +161,7 @@ def sliding(vals: typing.Iterable):
         current = next(it)
 
     except StopIteration:
-        raise ValueError('Cannot make sliding window over empty iterable')
+        raise EmptyIterableError('Cannot make sliding window over empty iterable')
 
     for nxt in it:
         yield (prev, current, nxt)
