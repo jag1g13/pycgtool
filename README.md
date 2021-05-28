@@ -1,8 +1,8 @@
 # PyCGTOOL
 
 [![License](https://img.shields.io/github/license/jag1g13/pycgtool.svg)](LICENSE)
-[![Python package](https://github.com/jag1g13/pycgtool/actions/workflows/python-package.yml/badge.svg?branch=dev)](https://github.acom/jag1g13/pycgtool/actions)
-[![Documentation](https://readthedocs.org/projects/pycgtool/badge/?version=dev)](http://pycgtool.readthedocs.io/en/master/?badge=dev)
+[![Python package](https://github.com/jag1g13/pycgtool/actions/workflows/python-package.yml/badge.svg?branch=dev)](https://github.com/jag1g13/pycgtool/actions)
+[![Documentation](https://readthedocs.org/projects/pycgtool/badge/?version=dev)](http://pycgtool.readthedocs.io/en/dev)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.598143.svg)](https://doi.org/10.5281/zenodo.598143)
 [![PyPi Version](https://img.shields.io/pypi/v/pycgtool.svg)](https://pypi.python.org/pypi/pycgtool/)
 [![Downloads](https://pepy.tech/badge/pycgtool)](https://pepy.tech/project/pycgtool)
@@ -38,10 +38,14 @@ If you find PyCGTOOL useful, please cite our JCIM paper (https://doi.org/10.1021
 
 ## Install
 
-PyCGTOOL requires Python 3.6 or higher and may be installed using pip:
+PyCGTOOL requires Python 3.6 or higher and may be installed using `pip`:
 ```
 pip install pycgtool
 ```
+
+Alternatively, you may download a pre-packaged version for your operating system from the [releases page](https://github.com/jag1g13/pycgtool/releases) on GitHub.
+These pre-packaged versions include all dependencies and should be suitable in cases where you cannot install packages with `pip`.
+**Warning**: This installation method is not extensively tested - installing via `pip` should be prefered in most cases.
 
 ### MDTraj on macOS
 
@@ -91,15 +95,17 @@ James Graham ([@jag1g13](https://github.com/jag1g13))
 
 ## Contributing
 
-If you experience problems using PyCGTOOL or wish to see a new feature added please [open an issue](https://github.com/jag1g13/pycgtool/issues/new) or submit a PR.
+If you experience problems using PyCGTOOL or wish to see a new feature added please [open an issue](https://github.com/jag1g13/pycgtool/issues/new).
 
-To help develop PyCGTOOL, you can create a fork of this repository, clone your fork and install PyCGTOOL using:
+To help develop PyCGTOOL, you can create a fork of this repository, clone your fork and install PyCGTOOL in development mode using [Poetry](https://python-poetry.org/):
 ```
 poetry install
 ```
 
-This will install PyCGTOOL in editable mode (similar to `pip install -e .`) along with all the necessary runtime and development dependencies.
-The Makefile at the root of the repository contains targets for running unit and integration tests (`make test`) and linting (`make lint`).
+This will result in an editable mode install (similar to `pip install -e .`) along with all the necessary runtime and development dependencies.
+Testing and linting is handled by [Tox](https://tox.readthedocs.io/en/latest/) - use `tox` to run the full test suite and linter as they are configured in the Continuous Integration pipeline.
+
+When you're ready for your work to be merged, please submit a Pull Request.
 
 ## License
 
