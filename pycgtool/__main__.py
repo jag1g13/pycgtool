@@ -40,6 +40,9 @@ class PyCGTOOL:
         if self.config.mapping:
             self.mapping, self.out_frame = self.apply_mapping(self.in_frame)
 
+        if self.out_frame.natoms == 0:
+            logger.warning('Mapped trajectory contains no atoms - check your mapping file is correct!')
+
         self.bondset = None
         if self.config.bondset:
             self.bondset = BondSet(self.config.bondset, self.config)

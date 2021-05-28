@@ -212,7 +212,12 @@ class Frame:
 
         # We currently have axes: 0 - each atom, 1 - timestep, 2 - xyz coords
         # Need to convert to axes: 0 - timestep, 1 - each atom, 2 - xyz coords
-        xyz = xyz.swapaxes(0, 1)
+        try:
+            xyz = xyz.swapaxes(0, 1)
+
+        except np.AxisError:
+            # No atoms, so make an empty array with the right shape
+            xyz = np.empty((len(self.time), 0, 3))
 
         optional_values = {
             attr: getattr(self, attr, None)

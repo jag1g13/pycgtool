@@ -191,3 +191,16 @@ class MappingTest(unittest.TestCase):
         self.assertAlmostEqual(0, mapping["POPG"][0].charge, delta=0.0001)
 
         self.assertAlmostEqual(94.9716, mapping["POPE"][0].mass, delta=0.0001)
+
+    def test_empty_result_frame(self):
+        """Test that no error is raised when an empty output frame is encountered.
+
+        This is instead checked and logged as a warning in the outer script.
+        """
+        frame = Frame(self.data_dir.joinpath('sugar.gro'))
+        mapping = Mapping(self.data_dir.joinpath('water.map'), DummyOptions)
+
+        cg_frame = mapping.apply(frame)
+
+        self.assertEqual(0, cg_frame.natoms)
+        self.assertEqual((1, 0, 3), cg_frame._trajectory.xyz.shape)
