@@ -1,9 +1,11 @@
 # PyCGTOOL
 
 [![License](https://img.shields.io/github/license/jag1g13/pycgtool.svg)](LICENSE)
-[![Build Status](https://img.shields.io/github/workflow/status/jag1g13/pycgtool/Python%20package)](https://github.com/jag1g13/pycgtool/actions)
-[![Documentation](https://readthedocs.org/projects/pycgtool/badge/?version=master)](http://pycgtool.readthedocs.io/en/master/?badge=master)
+[![Python package](https://github.com/jag1g13/pycgtool/actions/workflows/python-package.yml/badge.svg?branch=dev)](https://github.acom/jag1g13/pycgtool/actions)
+[![Documentation](https://readthedocs.org/projects/pycgtool/badge/?version=dev)](http://pycgtool.readthedocs.io/en/master/?badge=dev)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.598143.svg)](https://doi.org/10.5281/zenodo.598143)
+[![PyPi Version](https://img.shields.io/pypi/v/pycgtool.svg)](https://pypi.python.org/pypi/pycgtool/)
+[![Downloads](https://pepy.tech/badge/pycgtool)](https://pepy.tech/project/pycgtool)
 
 Generate coarse-grained molecular dynamics models from atomistic trajectories.
 
