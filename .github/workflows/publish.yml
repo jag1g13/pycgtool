@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
 
     runs-on: ${{ matrix.os }}
 
@@ -56,5 +56,5 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifact: dist/pycgtool-${{ matrix.os }}
+          artifacts: dist/pycgtool-${{ matrix.os }}
           token: ${{ secrets.GITHUB_TOKEN }}
