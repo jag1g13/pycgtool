@@ -36,15 +36,16 @@ class FrameTest(unittest.TestCase):
             self.assertEqual('SOL', residue.name)
             self.assertEqual('OW', residue.atom(0).name)
 
-    def check_reference_frame(self, frame):
+    def check_reference_frame(self, frame, check_box: bool = True):
         self.check_reference_topology(frame)
 
         atom0_coords = np.array([[0.696, 1.330, 1.211]])
         box_vectors = np.array([[1.89868, 1.89868, 1.89868]])
 
         np.testing.assert_allclose(atom0_coords, frame.atom(0).coords)
-        np.testing.assert_allclose(box_vectors, frame.unitcell_lengths,
-                                   rtol=1e-4)  # PDB files are f9.3
+        if check_box:
+            np.testing.assert_allclose(box_vectors, frame.unitcell_lengths,
+                                    rtol=1e-4)  # PDB files are f9.3
 
     def check_reference_trajectory(self, frame):
         self.check_reference_topology(frame)
@@ -100,6 +101,12 @@ class FrameTest(unittest.TestCase):
         frame = Frame(self.data_dir.joinpath('water.pdb'))
 
         self.check_reference_frame(frame)
+
+    def test_frame_read_pdb_nobox(self):
+        """Test reading a PDB with zero box volume."""
+        frame = Frame(self.data_dir.joinpath('water-nobox.pdb'))
+
+        self.check_reference_frame(frame, check_box=False)
 
     def test_frame_read_zero_box(self):
         frame = Frame(self.data_dir.joinpath('polyethene.gro'))
