@@ -1030,7 +1030,7 @@ docs = ["Sphinx", "sphinx-autoapi", "sphinx-rtd-theme", "myst-parser"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "c5d9c3b58fa8b5eba2a06b73e25cb08fdeccb866cb95b2280dde281a1d831de7"
+content-hash = "6ae1d63995f0075522493c6bfc1ed82b3cbeaa9d514066e0df712ce98e7cbeeb"
 
 [metadata.files]
 alabaster = [

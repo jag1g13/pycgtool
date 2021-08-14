@@ -34,7 +34,7 @@ numpy = [
 ]
 cython = "^0.29.21"
 astunparse = "1.6.2"  # See https://github.com/mdtraj/mdtraj/issues/1613
-mdtraj = "^1.9.5"
+mdtraj = "^1.9.5, !=1.9.6"
 rich = "^9.2.0"
 mdplus = { version = "^0.0.5", optional = true }
 
