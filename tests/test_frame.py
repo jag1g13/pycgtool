@@ -45,7 +45,7 @@ class FrameTest(unittest.TestCase):
         np.testing.assert_allclose(atom0_coords, frame.atom(0).coords)
         if check_box:
             np.testing.assert_allclose(box_vectors, frame.unitcell_lengths,
-                                    rtol=1e-4)  # PDB files are f9.3
+                                       rtol=1e-4)  # PDB files are f9.3
 
     def check_reference_trajectory(self, frame):
         self.check_reference_topology(frame)

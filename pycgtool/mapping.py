@@ -291,8 +291,7 @@ class Mapping:
 
             try:
                 mol_name = PDBTrajectoryFile._residueNameReplacements[mol_name]
-                atom_replacements = PDBTrajectoryFile._atomNameReplacements[
-                    mol_name]
+                atom_replacements = PDBTrajectoryFile._atomNameReplacements[mol_name]
 
             except KeyError:
                 continue
