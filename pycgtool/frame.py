@@ -34,18 +34,20 @@ class NonMatchingSystemError(ValueError):
         super(NonMatchingSystemError, self).__init__(msg)
 
 
-def try_load_traj(filepath: PathLike, **kwargs) -> mdtraj.Trajectory:
+def load_traj(filepath: PathLike, **kwargs) -> mdtraj.Trajectory:
     """Load a trajectory, if a PDB fails with zero box volume disable volume check and try again."""
     filepath = pathlib.Path(filepath)
 
-    try:
-        return mdtraj.load(str(filepath), **kwargs)
+    if filepath.suffix.lower() == '.pdb':
+        # PDBs have a couple of things that can go wrong - we handle these here...
+        kwargs.pop('top', None)  # Can't specify a topology for `load_pdb`
 
-    except FloatingPointError:
-        # PDB file loading checks density using the simulation box
-        # This can fail if the box volume is zero
-        if filepath.suffix.lower() == '.pdb':
-            kwargs.pop('top', None)  # Can't specify a topology for `load_pdb`
+        try:
+            return mdtraj.load_pdb(str(filepath), **kwargs)
+
+        except FloatingPointError:
+            # PDB file loading checks density using the simulation box
+            # This can fail if the box volume is zero
             trajectory = mdtraj.load_pdb(str(filepath), no_boxchk=True, **kwargs)
             logger.warning(
                 'Unitcell has zero volume - periodic boundaries will not be accounted for. '
@@ -54,7 +56,7 @@ def try_load_traj(filepath: PathLike, **kwargs) -> mdtraj.Trajectory:
 
             return trajectory
 
-        raise
+    return mdtraj.load(str(filepath), **kwargs)
 
 
 class Frame:
@@ -74,14 +76,14 @@ class Frame:
         if topology_file is not None:
             try:
                 logging.info('Loading topology file')
-                self._trajectory = try_load_traj(topology_file)
+                self._trajectory = load_traj(topology_file)
                 self._topology = self._trajectory.topology
                 logging.info('Finished loading topology file')
 
                 if trajectory_file is not None:
                     try:
                         logging.info('Loading trajectory file - this may take a while')
-                        self._trajectory = try_load_traj(trajectory_file, top=self._topology)
+                        self._trajectory = load_traj(trajectory_file, top=self._topology)
                         self._trajectory = self._slice_trajectory(frame_start, frame_end)
                         logging.info(
                             'Finished loading trajectory file - loaded %d frames',
