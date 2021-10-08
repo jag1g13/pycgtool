@@ -417,7 +417,7 @@ class Mapping:
                     coords = np.array(
                         [cg_res.atom(atom).coords for atom in bmap],
                         dtype=np.float32)
-                    bead.coords = calc_coords_weight(ref_coords, coords,
+                    bead.coords = calc_coords_weight(coords[0], coords,
                                                      bmap.weights,
                                                      unitcell_lengths)
 
