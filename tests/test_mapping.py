@@ -95,6 +95,22 @@ class MappingTest(unittest.TestCase):
         self.assertTrue(filecmp.cmp(self.data_dir.joinpath('water-cg.gro'), "water-cg.gro"))
         os.remove("water-cg.gro")
 
+    def test_mapping_duplicate_atom_weight(self):
+        """Test that an atom can be duplicated in a bead specification to act as a weighting."""
+        frame = Frame(self.data_dir.joinpath('water.gro'))
+
+        mapping = Mapping(self.data_dir.joinpath('water.map'), DummyOptions)
+        cg_frame = mapping.apply(frame)
+
+        np.testing.assert_allclose(np.array([[0.716, 1.300, 1.198]]),
+                                   cg_frame.residue(0).atom(0).coords, atol=0.0005)
+
+        mapping = Mapping(self.data_dir.joinpath('water_double_weight.map'), DummyOptions)
+        cg_frame = mapping.apply(frame)
+
+        np.testing.assert_allclose(np.array([[0.720, 1.294, 1.195]]),
+                                   cg_frame.residue(0).atom(0).coords, atol=0.0005)
+
     def test_mapping_charges(self):
         mapping = Mapping(self.data_dir.joinpath('dppc.map'), DummyOptions)
         self.assertEqual(1, mapping["DPPC"][0].charge)
