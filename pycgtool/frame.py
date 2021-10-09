@@ -11,6 +11,8 @@ import typing
 import mdtraj
 import numpy as np
 
+from . import util
+
 logger = logging.getLogger(__name__)
 
 np.seterr(all="raise")
@@ -223,11 +225,13 @@ class Frame:
         """Write trajctory to file.
 
         :param filename: Name of output file
+        :param frame_number: Which trajectory frame to save - defaults to all
         """
         traj = self._trajectory
         if frame_number is not None:
             traj = traj.slice(frame_number)
 
+        util.backup_file(filename)
         traj.save(str(filename), **kwargs)
 
     def build_trajectory(self) -> None:

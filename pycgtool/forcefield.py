@@ -5,48 +5,58 @@ This module contains a single class ForceField used to output a GROMACS .ff forc
 import os
 import pathlib
 import shutil
+import typing
 
 from .parsers import CFG
-from .util import dir_up, any_starts_with, file_write_lines
+from .util import any_starts_with, file_write_lines
+
+PathLike = typing.Union[pathlib.Path, str]
+
+
+def copy_files(src_dir: pathlib.Path, dest_dir: pathlib.Path, files: typing.Iterable[str]) -> None:
+    """Copy files from one directory to another."""
+    for f in files:
+        src_path = src_dir.joinpath(f)
+        dest_path = dest_dir.joinpath(f)
+        shutil.copyfile(str(src_path), str(dest_path))
 
 
 class ForceField:
     """
     Class used to output a GROMACS .ff forcefield
     """
-    def __init__(self, name, dir_path=pathlib.Path('.')):
+    def __init__(self, name: str, dir_path: PathLike = pathlib.Path('.')):
         """
         Open a named forcefield directory.  If it does not exist it is created.
 
         :param str name: Forcefield name to open/create
         """
-        self.dirname = dir_path.joinpath("ff{0}.ff".format(name))
-        os.makedirs(self.dirname, exist_ok=True)
+        self.directory = pathlib.Path(dir_path).joinpath(f'ff{name}.ff')
+        self.directory.mkdir(parents=True, exist_ok=True)
 
-        with open(os.path.join(self.dirname, "forcefield.itp"), "w") as itp:
-            print("#define _FF_PYCGTOOL_{0}".format(name), file=itp)
+        with open(self.directory.joinpath('forcefield.itp'), 'w') as itp:
+            print(f'#define _FF_PYCGTOOL_{name}', file=itp)
             print('#include "martini_v2.2.itp"', file=itp)
 
-        data_dir = os.path.join(dir_up(os.path.realpath(__file__), 2), "data")
-        # Copy main MARTINI itp
-        martini_itp = os.path.join(data_dir, "martini_v2.2.itp")
-        shutil.copyfile(martini_itp, os.path.join(self.dirname, "martini_v2.2.itp"))
-        # Copy water models
-        shutil.copyfile(os.path.join(data_dir, "watermodels.dat"),
-                        os.path.join(self.dirname, "watermodels.dat"))
-        shutil.copyfile(os.path.join(data_dir, "w.itp"),
-                        os.path.join(self.dirname, "w.itp"))
+        data_dir = pathlib.Path(__file__).parents[1].joinpath('data')
+
+        # Copy MARTINI files
+        copy_files(data_dir, self.directory, [
+            'martini_v2.2.itp',
+            'watermodels.dat',
+            'w.itp',
+        ])
 
         # Create atomtypes.atp required for correct masses with pdb2gmx
-        atomtypes_atp = os.path.join(self.dirname, "atomtypes.atp")
-        with CFG(martini_itp) as itp, open(atomtypes_atp, 'w') as atomtypes:
-            for toks in itp["atomtypes"]:
-                print(" ".join(toks), file=atomtypes)
+        atomtypes_atp = os.path.join(self.directory, 'atomtypes.atp')
+        with CFG(data_dir.joinpath('martini_v2.2.itp')) as itp, open(atomtypes_atp, 'w') as atomtypes:
+            for toks in itp['atomtypes']:
+                print(' '.join(toks), file=atomtypes)
 
-        with open(os.path.join(self.dirname, "forcefield.doc"), "w") as doc:
-            print("PyCGTOOL produced MARTINI force field - {0}".format(name), file=doc)
+        with open(self.directory.joinpath('forcefield.doc'), 'w') as doc:
+            print(f'PyCGTOOL produced MARTINI force field - {name}', file=doc)
 
-    def write(self, filename, mapping, bonds):
+    def write(self, filename: str, mapping, bonds):
         """
         Write RTP and R2B files for this forcefield.
 
@@ -55,10 +65,10 @@ class ForceField:
         :param Iterable[Bond] bonds: CG Bonds object
         """
         lines, nterms, cterms = ForceField.write_rtp(mapping, bonds)
-        file_write_lines(os.path.join(self.dirname, filename + ".rtp"), lines)
+        file_write_lines(self.directory.joinpath(f'{filename}.rtp'), lines)
 
         lines = ForceField.write_r2b(nterms, cterms)
-        file_write_lines(os.path.join(self.dirname, filename + ".r2b"), lines)
+        file_write_lines(self.directory.joinpath(f'{filename}.r2b'), lines)
 
     @staticmethod
     def bond_section(bonds, section_header, multiplicity=None):
