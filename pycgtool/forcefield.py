@@ -8,7 +8,7 @@ import shutil
 import typing
 
 from .parsers import CFG
-from .util import any_starts_with, file_write_lines
+from .util import any_starts_with, backup_file, file_write_lines
 
 PathLike = typing.Union[pathlib.Path, str]
 
@@ -32,6 +32,7 @@ class ForceField:
         :param str name: Forcefield name to open/create
         """
         self.directory = pathlib.Path(dir_path).joinpath(f'ff{name}.ff')
+        backup_file(self.directory)
         self.directory.mkdir(parents=True, exist_ok=True)
 
         with open(self.directory.joinpath('forcefield.itp'), 'w') as itp:

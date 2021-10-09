@@ -1,6 +1,7 @@
-import unittest
-import os
 import collections
+import pathlib
+import tempfile
+import unittest
 
 from pycgtool.forcefield import ForceField
 
@@ -57,13 +58,18 @@ class ForceFieldTest(unittest.TestCase):
         self.bondset = DummyBondSet(self.bonds, "Dummy")
 
     def test_create(self):
-        name = "test"
-        dirname = "fftest.ff"
+        with tempfile.TemporaryDirectory() as t:
+            tmp_dir = pathlib.Path(t)
 
-        ForceField(name)
-        self.assertTrue(os.path.exists(dirname))
-        self.assertTrue(os.path.isdir(dirname))
-        ForceField(name)
+            name = "test"
+            ff_dir = tmp_dir.joinpath('fftest.ff')
+
+            ForceField(name, dir_path=tmp_dir)
+            self.assertTrue(ff_dir.exists())
+            self.assertTrue(ff_dir.is_dir())
+
+            # Makes a backup of the existing ff and replaces it
+            ForceField(name, dir_path=tmp_dir)
 
     def test_bond_section(self):
         expected = [
