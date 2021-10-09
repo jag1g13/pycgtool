@@ -45,26 +45,81 @@ class UtilTest(unittest.TestCase):
         self.assertEqual(os.path.dirname(os.path.dirname(path)), dir_up(path, 2))
 
     def test_backup_file(self):
-        try:
-            os.remove("testfile")
-            os.remove("#testfile.1#")
-            os.remove("#testfile.2#")
-        except OSError:
-            pass
+        with tempfile.TemporaryDirectory() as t:
+            tmp_dir = pathlib.Path(t)
 
-        logging.disable(logging.WARNING)
-        open("testfile", "a").close()
-        self.assertEqual("#testfile.1#", backup_file("testfile"))
-        open("testfile", "a").close()
-        self.assertTrue(os.path.exists("#testfile.1#"))
-        self.assertEqual("#testfile.2#", backup_file("testfile"))
-        open("testfile", "a").close()
-        self.assertTrue(os.path.exists("#testfile.2#"))
-        logging.disable(logging.NOTSET)
+            paths = [
+                tmp_dir.joinpath('testfile'),
+                tmp_dir.joinpath('#testfile.1#'),
+                tmp_dir.joinpath('#testfile.2#'),
+            ]
+            path = paths[0]
 
-        os.remove("testfile")
-        os.remove("#testfile.1#")
-        os.remove("#testfile.2#")
+            logging.disable(logging.WARNING)
+
+            path.touch()
+            self.assertTrue(path.exists())
+
+            # Backup file with no existing backups
+            new_path = backup_file(path)
+
+            self.assertEqual(paths[1], new_path)
+            self.assertFalse(path.exists())
+            self.assertTrue(paths[1].exists())
+
+            path.touch()
+            self.assertTrue(path.exists())
+
+            # Backup file that already has a backup
+            new_path = backup_file(path)
+
+            self.assertEqual(paths[2], new_path)
+            self.assertFalse(path.exists())
+            self.assertTrue(paths[1].exists())
+            self.assertTrue(paths[2].exists())
+
+            logging.disable(logging.NOTSET)
+
+    def test_backup_directory(self):
+        with tempfile.TemporaryDirectory() as t:
+            tmp_dir = pathlib.Path(t)
+
+            paths = [
+                tmp_dir.joinpath('testfile'),
+                tmp_dir.joinpath('#testfile.1#'),
+                tmp_dir.joinpath('#testfile.2#'),
+            ]
+            path = paths[0]
+
+            logging.disable(logging.WARNING)
+
+            path.mkdir()
+            self.assertTrue(path.exists())
+            self.assertTrue(path.is_dir())
+
+            # Backup directory with no existing backups
+            new_path = backup_file(path)
+
+            self.assertEqual(paths[1], new_path)
+            self.assertFalse(path.exists())
+            self.assertTrue(paths[1].exists())
+            self.assertTrue(paths[1].is_dir())
+
+            path.mkdir()
+            self.assertTrue(path.exists())
+            self.assertTrue(path.is_dir())
+
+            # Backup directory that already has a backup
+            new_path = backup_file(path)
+
+            self.assertEqual(paths[2], new_path)
+            self.assertFalse(path.exists())
+            self.assertTrue(paths[1].exists())
+            self.assertTrue(paths[1].is_dir())
+            self.assertTrue(paths[2].exists())
+            self.assertTrue(paths[2].is_dir())
+
+            logging.disable(logging.NOTSET)
 
     def test_sliding(self):
         test_list = [0, 1, 2, 3, 4]
@@ -136,7 +191,6 @@ class UtilTest(unittest.TestCase):
         self.assertAlmostEqual(circular_variance(values), test_var, delta=test_var / 500.)
 
 
-# TODO test backing up
 class UtilFileWriteLinesTest(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()

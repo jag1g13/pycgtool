@@ -14,6 +14,8 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+PathLike = typing.Union[pathlib.Path, str]
+
 
 class EmptyIterableError(ValueError):
     pass
@@ -125,27 +127,27 @@ def dir_up(name, n=1):
     return name
 
 
-def backup_file(name):
+def backup_file(path: PathLike) -> pathlib.Path:
     """
     Backup a file using the GROMACS backup naming scheme.
     name -> #name.x#
 
-    :param name: File to backup
+    :param path: Path to file to backup
     :return: New name of file after backup
     """
-    if not os.path.exists(name):
-        return None
+    path = pathlib.Path(path)
+    new_path = path
+    counter = 1
 
-    directory, basename = os.path.split(name)
-    for i in itertools.count(1):
-        new_base = "#{0}.{1}#".format(basename, i)
-        new_name = os.path.join(directory, new_base)
-        if not os.path.exists(new_name):
-            break
+    while new_path.exists():
+        new_path = path.parent.joinpath(f'#{path.name}.{counter}#')
+        counter += 1
 
-    os.rename(name, new_name)
-    logger.warning('Existing file %s backed up as %s', name, new_name)
-    return new_name
+    if new_path != path:
+        path.rename(new_path)
+        logger.warning('Existing file %s backed up as %s', path.name, new_path.name)
+
+    return new_path
 
 
 def sliding(vals: typing.Iterable):
