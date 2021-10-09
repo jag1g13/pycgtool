@@ -38,7 +38,7 @@ class ForceField:
             print(f'#define _FF_PYCGTOOL_{name}', file=itp)
             print('#include "martini_v2.2.itp"', file=itp)
 
-        data_dir = pathlib.Path(__file__).parents[1].joinpath('data')
+        data_dir = pathlib.Path(__file__).parent.joinpath('data')
 
         # Copy MARTINI files
         copy_files(data_dir, self.directory, [
