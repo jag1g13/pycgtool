@@ -227,7 +227,7 @@ class Progress:
         self._dowhile = dowhile
         self._quiet = quiet
         self._its = -1
-        self._start_time = time.clock()
+        self._start_time = time.perf_counter()
 
     def __len__(self):
         """
@@ -298,13 +298,13 @@ class Progress:
 
     def _stop(self):
         if not self._quiet:
-            time_taken = int(time.clock() - self._start_time)
+            time_taken = int(time.perf_counter() - self._start_time)
             print(self._bar + " took {0}s".format(time_taken))
         raise StopIteration
 
     def _display(self):
         try:
-            time_remain = int((time.clock() - self._start_time) * ((self._maxits - self._its) / self._its))
+            time_remain = int((time.perf_counter() - self._start_time) * ((self._maxits - self._its) / self._its))
         except ZeroDivisionError:
             time_remain = "-"
         print(self._bar + " {0}s left".format(time_remain), end="\r")

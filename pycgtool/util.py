@@ -270,11 +270,18 @@ def sliding(vals):
     """
     it = iter(vals)
     prev = None
-    current = next(it)
+
+    try:
+        current = next(it)
+
+    except StopIteration:
+        raise ValueError('Iterable contains no items')
+    
     for nxt in it:
         yield (prev, current, nxt)
         prev = current
         current = nxt
+
     yield (prev, current, None)
 
 

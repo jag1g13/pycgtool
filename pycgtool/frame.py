@@ -111,7 +111,7 @@ class Frame:
     """
     Hold Atom data separated into Residues
     """
-    def __init__(self, gro=None, xtc=None, itp=None, frame_start=0, xtc_reader="simpletraj"):
+    def __init__(self, gro=None, xtc=None, itp=None, frame_start=0, xtc_reader=None):
         """
         Return Frame instance having read Residues and Atoms from GRO if provided
 
@@ -132,7 +132,7 @@ class Frame:
 
         if gro is not None:
             from .framereader import get_frame_reader
-            self._trajreader = get_frame_reader(gro, traj=xtc, frame_start=frame_start)
+            self._trajreader = get_frame_reader(gro, traj=xtc, frame_start=frame_start, name=xtc_reader)
 
             self._trajreader.initialise_frame(self)
 
