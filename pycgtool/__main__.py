@@ -54,8 +54,12 @@ class PyCGTOOL:
             self.out_frame.save(self.get_output_filepath('xtc'))
 
     def get_output_filepath(self, ext: PathLike) -> pathlib.Path:
-        """Get file path for an output file by extension."""
+        """Get file path for an output file by extension.
+
+        Creates the output directory if missing.
+        """
         out_dir = pathlib.Path(self.config.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
         return out_dir.joinpath(self.config.output_name + '.' + ext)
 
     def apply_mapping(self, in_frame: Frame) -> typing.Tuple[Mapping, Frame]:
