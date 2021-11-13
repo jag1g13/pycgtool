@@ -75,6 +75,7 @@ def extend_graph_chain(extend, pairs):
             for pair2 in pairs:
                 if node2 == pair2[0] and pair2[1] not in chain:
                     append_if_not_in(ret, spare + (node1, node2, pair2[1]))
+
                 elif node2 == pair2[1] and pair2[0] not in chain:
                     append_if_not_in(ret, spare + (node1, node2, pair2[0]))
 
@@ -82,14 +83,12 @@ def extend_graph_chain(extend, pairs):
                 # Support GROMACS RTP + to link to next residue
                 if node2.startswith("+"):
                     for pair2 in pairs:
-                        if node2.strip("+") == pair2[
-                                0] and "+" + pair2[1] not in chain:
-                            append_if_not_in(
-                                ret, spare + (node1, node2, "+" + pair2[1]))
-                        elif node2.strip("+") == pair2[
-                                1] and "+" + pair2[0] not in chain:
-                            append_if_not_in(
-                                ret, spare + (node1, node2, "+" + pair2[0]))
+                        if node2.strip("+") == pair2[0] and "+" + pair2[1] not in chain:
+                            append_if_not_in(ret, spare + (node1, node2, "+" + pair2[1]))
+
+                        elif node2.strip("+") == pair2[1] and "+" + pair2[0] not in chain:
+                            append_if_not_in(ret, spare + (node1, node2, "+" + pair2[0]))
+
             except AttributeError:
                 pass
 
@@ -177,10 +176,7 @@ def sliding(vals: typing.Iterable):
     yield (prev, current, None)
 
 
-def cmp_file_whitespace_float(ref_filename,
-                              test_filename,
-                              rtol=0.01,
-                              verbose=False):
+def cmp_file_whitespace_float(ref_filename, test_filename, rtol=0.01, verbose=False):
     """
     Compare two files ignoring spacing on a line and using a tolerance on floats
 
@@ -197,10 +193,7 @@ def cmp_file_whitespace_float(ref_filename,
         ref_lines = ref.readlines()
         test_lines = test.readlines()
 
-        return cmp_whitespace_float(ref_lines,
-                                    test_lines,
-                                    rtol=rtol,
-                                    verbose=verbose)
+        return cmp_whitespace_float(ref_lines, test_lines, rtol=rtol, verbose=verbose)
 
 
 def number_or_string(string: str) -> typing.Union[float, int, str]:
@@ -228,8 +221,7 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
     :return: True if all lines are the same, else False
     """
     diff_lines = []
-    for i, (ref_line, test_line) in enumerate(
-            itertools.zip_longest(ref_lines, test_lines)):
+    for i, (ref_line, test_line) in enumerate(itertools.zip_longest(ref_lines, test_lines)):
         # Shortcut trivial comparisons
         if ref_line is None or test_line is None:
             diff_lines.append((i, ref_line, test_line))
@@ -242,9 +234,8 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
         test_toks = test_line.split()
 
         # Check for float comparison of tokens on line
-        for ref_tok, test_tok in itertools.zip_longest(
-                map(number_or_string, ref_toks),
-                map(number_or_string, test_toks)):
+        for ref_tok, test_tok in itertools.zip_longest(map(number_or_string, ref_toks),
+                                                       map(number_or_string, test_toks)):
             if ref_tok != test_tok:
                 try:
                     if abs(ref_tok - test_tok) > abs(ref_tok) * rtol:
@@ -296,9 +287,8 @@ def any_starts_with(iterable: typing.Iterable, char: str) -> bool:
 
 
 def load_optional_topology(
-    trajfile: typing.Union[str, pathlib.Path],
-    topfile: typing.Optional[typing.Union[str, pathlib.Path]] = None
-) -> mdtraj.Trajectory:
+        trajfile: typing.Union[str, pathlib.Path],
+        topfile: typing.Optional[typing.Union[str, pathlib.Path]] = None) -> mdtraj.Trajectory:
     """Load an MDTraj trajectory with or without a separate topology file.
 
     :param trajfile: Trajectory file
@@ -311,10 +301,9 @@ def load_optional_topology(
     return mdtraj.load(str(trajfile), top=str(topfile))
 
 
-def compare_trajectories(
-        *trajectory_files: typing.Union[str, pathlib.Path],
-        topology_file: typing.Optional[typing.Union[str, pathlib.Path]] = None,
-        rtol: float = 0.001) -> bool:
+def compare_trajectories(*trajectory_files: typing.Union[str, pathlib.Path],
+                         topology_file: typing.Optional[typing.Union[str, pathlib.Path]] = None,
+                         rtol: float = 0.001) -> bool:
     """Compare multiple trajectory files for equality.
 
     :param trajectory_files: Paths of trajectory file to compare
@@ -333,14 +322,17 @@ def compare_trajectories(
         # Conditions from Trajectory.__hash__
         if traj.topology != ref_traj.topology:
             raise ValueError('Topology does not match')
+
         if len(traj) != len(ref_traj):
             raise ValueError('Length does not match')
+
         if not np.allclose(traj.xyz, ref_traj.xyz, rtol=rtol):
             raise ValueError('Coordinates do not match')
+
         if not np.allclose(traj.time, ref_traj.time, rtol=rtol):
             raise ValueError('Time does not match')
-        if not np.allclose(
-                traj.unitcell_vectors, ref_traj.unitcell_vectors, rtol=rtol):
+
+        if not np.allclose(traj.unitcell_vectors, ref_traj.unitcell_vectors, rtol=rtol):
             raise ValueError('Unitcell does not match')
 
     return True
