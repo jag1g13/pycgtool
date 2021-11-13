@@ -4,6 +4,7 @@ import argparse
 import cProfile
 import logging
 import pathlib
+import pkg_resources
 import sys
 import textwrap
 import time
@@ -143,9 +144,13 @@ class BooleanAction(argparse.Action):
 def parse_arguments(arg_list):
     # yapf: disable
     parser = argparse.ArgumentParser(
+        prog='pycgtool',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Generate coarse-grained molecular dynamics models from atomistic trajectories."
     )
+
+    parser.add_argument('-v', '--version', action='version',
+                        version=pkg_resources.get_distribution('pycgtool').version)
 
     # Input files
     input_files = parser.add_argument_group("input files")

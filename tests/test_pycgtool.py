@@ -42,11 +42,13 @@ class PycgtoolTest(unittest.TestCase):
     base_dir = pathlib.Path(__file__).absolute().parent
     data_dir = base_dir.joinpath('data')
 
-    def test_run_help(self):
-        self.assertEqual(
-            0,
-            subprocess.check_call(["python", "-m", "pycgtool", "-h"],
-                                  stdout=subprocess.PIPE))
+    def test_pycgtool_help(self):
+        subprocess.check_call(["python", "-m", "pycgtool", "-h"])
+        subprocess.check_call(["python", "-m", "pycgtool", "--help"])
+
+    def test_pycgtool_version(self):
+        subprocess.check_call(['python', '-m', 'pycgtool', '-v'])
+        subprocess.check_call(['python', '-m', 'pycgtool', '--version'])
 
     def test_parse_arguments(self):
         args = main.parse_arguments([
