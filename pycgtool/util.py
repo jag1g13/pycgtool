@@ -99,14 +99,18 @@ def extend_graph_chain(extend, pairs):
     return ret
 
 
-def transpose_and_sample(sequence, n=None):
-    """
-    Transpose a sequence of lists and sample to provide target number of rows.
+def transpose_and_sample(sequence: typing.Iterable, n: typing.Optional[int] = None) -> typing.List:
+    """Transpose a sequence of lists and sample to provide target number of rows.
+
+    Skip rows containing non-finite numbers (e.g. NaN).
 
     :param sequence: 2d sequence object to transpose
     :param n: Number of samples to take
     """
-    rows = list(zip(*sequence))
+    def no_nans(row):
+        return np.isfinite(row).all()
+
+    rows = list(filter(no_nans, zip(*sequence)))
 
     if n is not None and len(rows) > n:
         rows = random.sample(rows, n)
