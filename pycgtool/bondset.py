@@ -62,10 +62,12 @@ class Bond:
         :param temp: Temperature at which the simulation was performed
         """
         if len(self.values) == 0:
-            raise ValueError("No bonds were measured between atoms {0}".format(
+            raise ValueError("No bonds were measured between beads {0}".format(
                 self.atoms))
 
-        values = np.array(self.values)
+        values = self.values
+        if not isinstance(self.values, np.ndarray):
+            values = np.array(self.values)
 
         with np.errstate(divide="raise"):
             self.eqm = self._func_form.eqm(values, temp)
