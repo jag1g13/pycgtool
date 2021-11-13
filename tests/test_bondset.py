@@ -173,7 +173,7 @@ class BondSetTest(unittest.TestCase):
 
         for bond in bondset.get_bond_lengths('ETH', True):
             self.assertAlmostEqual(1., bond.eqm)
-            self.assertEqual(float('inf'), bond.fconst)
+            self.assertEqual(math.inf, bond.fconst)
 
     def test_full_itp_sugar(self):
         measure = BondSet(self.data_dir.joinpath('sugar.bnd'), DummyOptions)

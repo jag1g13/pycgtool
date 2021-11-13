@@ -82,7 +82,7 @@ class Bond:
 
             except FloatingPointError:
                 # Happens when variance is 0, i.e. we only have one value
-                self.fconst = float("inf")
+                self.fconst = math.inf
 
     def __repr__(self) -> str:
         try:
