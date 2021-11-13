@@ -5,18 +5,18 @@
 [![Documentation](https://readthedocs.org/projects/pycgtool/badge/?version=dev)](http://pycgtool.readthedocs.io/en/dev)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.598143.svg)](https://doi.org/10.5281/zenodo.598143)
 [![PyPi Version](https://img.shields.io/pypi/v/pycgtool.svg)](https://pypi.python.org/pypi/pycgtool/)
-[![Downloads](https://pepy.tech/badge/pycgtool)](https://pepy.tech/project/pycgtool)
+[![conda-forge Version](https://anaconda.org/conda-forge/pycgtool/badges/version.svg)](https://anaconda.org/conda-forge/pycgtool/badges/version.svg)
 
 Generate coarse-grained molecular dynamics models from atomistic trajectories.
 
-The aim of this project is to provide a tool to aid in parametrising coarse-grained (CG) molecular mechanics models.
-PyCGTOOL generates coarse-grained models from atomistic simulation trajectories using a user-provided mapping. 
+PyCGTOOL is a tool to aid in parametrising coarse-grained (CG) molecular mechanics models of small molecules, for example for simulations using the popular MARTINI model.
+It generates coarse-grained model parameters from atomistic simulation trajectories using a user-provided mapping.
 Equilibrium values and force constants of bonded terms are calculated by Boltzmann Inversion of bond distributions collected from the input trajectory.
 
 Alternatively map-only mode (behaving similarly to MARTINIZE) may be used to generate initial coordinates to use with existing CG topologies such as the MARTINI lipid models.
-For instance, a pre-equilibrated atomistic membrane may be used to create starting coordinates for a MARTINI membrane simulation.
+For instance, a pre-equilibrated atomistic membrane may be used to create starting coordinates for a CG membrane simulation.
 
-PyCGTOOL makes it easy to test multiple variations in mapping and bond topology by making simple changes to the config files.
+PyCGTOOL makes it quick and easy to test multiple variations in mapping and bond topology by making simple changes to the config files.
 
 If you find PyCGTOOL useful, please cite our JCIM paper (https://doi.org/10.1021/acs.jcim.7b00096) and the code itself (https://doi.org/10.5281/zenodo.598143).
 
@@ -38,29 +38,34 @@ If you find PyCGTOOL useful, please cite our JCIM paper (https://doi.org/10.1021
 
 ## Install
 
-PyCGTOOL requires Python 3.6 or higher and may be installed using `pip`:
+PyCGTOOL requires Python 3.6 or higher and may be installed using either `pip` or `conda`:
 ```
 pip install pycgtool
 ```
 
+```
+conda install -c conda-forge pycgtool
+```
+
 Alternatively, you may download a pre-packaged version for your operating system from the [releases page](https://github.com/jag1g13/pycgtool/releases) on GitHub.
-These pre-packaged versions include all dependencies and should be suitable in cases where you cannot install packages with `pip`.
-**Warning**: This installation method is not extensively tested - installing via `pip` should be prefered in most cases.
+These pre-packaged versions include all dependencies and should be suitable in cases where you cannot install packages using one of the above methods.
+**Warning**: This installation method is not extensively tested - installing via `pip` or `conda` should be prefered in most cases.
 
 ### MDTraj on macOS
 
 On some versions macOS, with some versions of the Clang compiler, MDTraj may fail to load GROMACS XTC simulation trajectories.
-If you encounter this issue, make sure you have the latest version of MDTraj.
+If you encounter this issue, please make sure you have the latest version of MDTraj installed.
 
 For more information see [MDTraj/#1572](https://github.com/mdtraj/mdtraj/issues/1572).
 
 ## Usage
 
-Input to PyCGTOOL is an atomistic simulation trajectory in the form of a topology (e.g. PDB, GRO, etc.) and a trajectory file (e.g. XTC, DCD, etc.), along with two custom files: MAP and BND.
-These files provide the atomistic-to-CG mapping and bonded topology respectively.
+Input to PyCGTOOL is an atomistic simulation trajectory in the form of a topology (e.g. PDB, GRO, etc.) and a trajectory file (e.g. XTC, DCD, etc.), along with two custom files which describe the CG model to be generated: mapping (`.map`) and bonding (`.bnd`).
+These files provide the atomistic-to-CG mapping and bonded topology respectively and use a format similar to GROMACS `.itp` files.
+Topology and trajectory files are processed using [MDTraj](https://www.mdtraj.org) so most common formats are accepted.
 
-Example files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/master/test/data) directory.
-The format of these files is described in the [full documentation](https://pycgtool.readthedocs.io/en/master/index.html).
+Example mapping and bond files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/master/test/data) directory.
+The format of these files is described fully in the [documentation page on file formats](https://pycgtool.readthedocs.io/en/dev/file-formats.html).
 
 For more information, see [the tutorial](https://pycgtool.readthedocs.io/en/master/tutorial.html).
 It is important to perform validation of any new parameter set - a brief example is present at the end of the tutorial.
