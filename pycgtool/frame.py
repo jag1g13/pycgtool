@@ -97,7 +97,7 @@ class Frame:
                 self._load_trajectory()
 
             except OSError as exc:
-                if 'no loader' in str(exc):
+                if 'no loader' in str(exc) or 'format is not supported' in str(exc):
                     raise UnsupportedFormatException from exc
 
                 raise
