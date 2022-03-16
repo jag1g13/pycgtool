@@ -1,0 +1,67 @@
+[tool.poetry]
+name = "pycgtool"
+version = "2.0.0-beta.5"
+description = "Generate coarse-grained molecular dynamics models from atomistic trajectories."
+authors = ["James Graham <j.graham@soton.ac.uk>"]
+license = "GPL-3.0-only"
+
+readme = "README.md"
+homepage = "https://github.com/jag1g13/pycgtool"
+repository = "https://github.com/jag1g13/pycgtool"
+documentation = "https://pycgtool.readthedocs.io/en/master/"
+
+keywords = [
+    "molecular-dynamics",
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+
+[tool.poetry.scripts]
+# The actual entrypoint that users will call
+pycgtool = "pycgtool.__main__:main"
+
+[tool.poetry.dependencies]
+python = "^3.6.2"
+wheel = "^0.35.1"
+numpy = [
+    { version = "^1.19.1", python = "<3.7" },  # Support for Python 3.6 was dropped in 1.20
+    { version = "^1.20.0", python = ">=3.7" }  # But 1.20 should resolve issue with MDTraj on macOS
+]
+astunparse = "1.6.2"  # See https://github.com/mdtraj/mdtraj/issues/1613
+mdtraj = "^1.9.5, !=1.9.6"
+rich = "^9.2.0"
+cowsay = { version = "^4.0", optional = true }
+mdplus = { version = "^0.0.5", optional = true }
+
+# Extra for building docs
+Sphinx = { version = "^3.4.3", optional = true }
+sphinx-autoapi = { version = "^1.5.1", optional = true }
+sphinx-rtd-theme = { version = "^0.5.1", optional = true }
+myst-parser = { version = "^0.13.5", optional = true }
+
+[tool.poetry.dev-dependencies]
+prospector = "^1.3.0"
+pytest = "^6.0.1"
+pytest-cov = "^2.10.1"
+vulture = "^2.1"
+rstcheck = "^3.3.1"
+flake8 = "^3.8.4"
+Sphinx = "^3.4.3"
+sphinx-autoapi = "^1.5.1"
+sphinx-rtd-theme = "^0.5.1"
+myst-parser = "^0.13.5"
+tox = "^3.23.0"
+black = "^22.1.0"
+
+[tool.poetry.extras]
+backmapping = ["mdplus"]
+docs = ["Sphinx", "sphinx-autoapi", "sphinx-rtd-theme", "myst-parser"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

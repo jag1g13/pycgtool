@@ -1,3 +1,4 @@
 from .cfg import CFG
+from .itp import ITP
 
-ITP = CFG
+__all__ = ["CFG", "ITP"]

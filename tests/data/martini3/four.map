@@ -1,0 +1,4 @@
+[FOUR]
+CD1 C C1 H1
+CD2 C C2 N2
+@v CV1 C CD1 CD2

@@ -1,76 +1,61 @@
+"""Utilities for describing the functional forms of bonded potentials being calculated.
+
+See http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html
+and http://manual.gromacs.org/documentation/current/reference-manual/topologies/topology-file-formats.html#tab-topfile2
+
+The links above list the bonded potentials available for use in GROMACS force fields.
+These can be implemented as functional forms in PyCGTOOL by subclassing :class:`FunctionalForm`.
+"""
 import abc
+import enum
 import math
+import typing
 
 import numpy as np
 
-from pycgtool.util import SimpleEnum
+
+def get_functional_forms() -> enum.Enum:
+    """Get enum of known functional forms."""
+    enum_dict = {}
+    for subclass in FunctionalForm.__subclasses__():
+        name = subclass.__name__
+        enum_dict[name] = subclass
+
+    return enum.Enum("FunctionalForms", enum_dict)
 
 
-class FunctionalForms(object):
-    """
-    Class holding list of all defined functional forms for Boltzmann Inversion.
+class FunctionalForm(metaclass=abc.ABCMeta):
+    """Parent class of any functional form used in Boltzmann Inversion to convert variance to a force constant."""
 
-    Creating an instance causes the Enum of functional forms to be updated with
-    all new subclasses of FunctionalForm.  These may then be accessed by name,
-    either as attributes or using square brackets.
-    """
-    FormsEnum = SimpleEnum.enum("FormsEnum")
+    def __init__(
+        self,
+        mean_func: typing.Callable = np.nanmean,
+        variance_func: typing.Callable = np.nanvar,
+    ):
+        """Inject functions for calculating the mean and variance into the Boltzmann Inversion equations.
 
-    @classmethod
-    def _refresh(cls):
+        :param mean_func: Function to calculate the mean - default is np.nanmean
+        :param variance_func: Function to calculate the variance - default is np.nanvar
         """
-        Update the functional forms Enum to include all new subclasses of FunctionalForm.
-        """
-        enum_dict = cls.FormsEnum.as_dict()
-        for subclass in FunctionalForm.__subclasses__():
-            name = subclass.__name__
-            if name not in cls.FormsEnum:
-                enum_dict[name] = subclass()
+        self._mean_func = mean_func
+        self._variance_func = variance_func
 
-        cls.FormsEnum = SimpleEnum.enum_from_dict("FormsEnum", enum_dict)
+    def eqm(
+        self, values: typing.Iterable[float], temp: float
+    ) -> float:  # pylint: disable=unused-argument
+        """Calculate equilibrium value.
 
-    def __init__(self, **kwargs):
-        self._kwargs = kwargs
-        type(self)._refresh()
-
-    def __getattr__(self, item):
-        return type(self).FormsEnum[item].value
-
-    def __getitem__(self, item):
-        return getattr(self, item)
-
-    def __repr__(self):
-        return "<FunctionalForms: {0} defined>".format(len(self))
-
-    def __len__(self):
-        return len(type(self).FormsEnum)
-
-    def __contains__(self, item):
-        return item in type(self).FormsEnum
-
-
-class FunctionalForm(object, metaclass=abc.ABCMeta):
-    """
-    Parent class of any functional form used in Boltzmann Inversion to convert variance to a force constant.
-
-    New functional forms must define a static __call__ method.
-    """
-    @staticmethod
-    def eqm(values, temp):
-        """
-        Calculate equilibrium value.
         May be overridden by functional forms.
 
         :param values: Measured internal coordinate values from which to calculate equilibrium value
         :param temp: Temperature of simulation
         :return: Calculated equilibrium value
         """
-        return np.nanmean(values)
+        return self._mean_func(values)
 
-    @abc.abstractstaticmethod
-    def fconst(values, temp):
-        """
-        Calculate force constant.
+    @abc.abstractmethod
+    def fconst(self, values: typing.Iterable[float], temp: float) -> float:
+        """Calculate force constant.
         Abstract static method to be defined by all functional forms.
 
         :param values: Measured internal coordinate values from which to calculate force constant
@@ -80,68 +65,84 @@ class FunctionalForm(object, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractproperty
-    def gromacs_type_ids(self):
-        """
-        Return tuple of GROMACS potential type ids when used as length, angle, dihedral.
-        
+    def gromacs_type_ids(self) -> typing.Tuple[int]:
+        """Return tuple of GROMACS potential type ids when used as length, angle, dihedral.
+
         :return tuple[int]: Tuple of GROMACS potential type ids
         """
         raise NotImplementedError
 
     @classmethod
-    def gromacs_type_id_by_natoms(cls, natoms):
-        """
-        Return the GROMACS potential type id for this functional form when used with natoms.
-        
-        :param int natoms: 
-        :return int: GROMACS potential type id 
+    def gromacs_type_id_by_natoms(cls, natoms: int) -> int:
+        """Return the GROMACS potential type id for this functional form when used with natoms.
+
+        :param int natoms: Number of atoms in bond
+        :return int: GROMACS potential type id
         """
         tipe = cls.gromacs_type_ids[natoms - 2]
         if tipe is None:
-            raise TypeError("The functional form {0} does not have a defined GROMACS potential type when used with {1} atoms.".format(cls.__name__, natoms))
+            raise TypeError(
+                f"The functional form {cls.__name__} does not have a defined GROMACS "
+                f"potential type when used with {natoms} atoms."
+            )
+
         return tipe
 
 
 class Harmonic(FunctionalForm):
-    gromacs_type_ids = (1, 1, 1)  # Consider whether to use improper (type 2) instead, it is actually harmonic
+    """Simple harmonic potential.
 
-    @staticmethod
-    def fconst(values, temp):
-        rt = 8.314 * temp / 1000.
-        var = np.nanvar(values)
+    See http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html#harmonic-potential  # noqa
+    """
+
+    # TODO: Consider whether to use improper (type 2) instead, it is actually harmonic
+    gromacs_type_ids = (1, 1, 1)
+
+    def fconst(self, values: typing.Iterable[float], temp: float) -> float:
+        rt = 8.314 * temp / 1000.0  # pylint: disable=invalid-name
+        var = self._variance_func(values)
         return rt / var
 
 
 class CosHarmonic(FunctionalForm):
+    """Cosine based angle potential.
+
+    See http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html#cosine-based-angle-potential  # noqa
+
+    Uses the transformation in eqn 20 of the above source.
+    """
+
     gromacs_type_ids = (None, 2, None)
 
-    @staticmethod
-    def fconst(values, temp):
-        rt = 8.314 * temp / 1000.
-        mean = CosHarmonic.eqm(values, temp)
-        var = np.nanvar(values)
-        return rt / (math.sin(mean)**2 * var)
+    def fconst(self, values: typing.Iterable[float], temp: float) -> float:
+        rt = 8.314 * temp / 1000.0  # pylint: disable=invalid-name
+        mean = self.eqm(values, temp)
+        var = self._variance_func(values)
+        return rt / (math.sin(mean) ** 2 * var)
 
 
 class MartiniDefaultLength(FunctionalForm):
+    """Dummy functional form which returns a fixed force constant."""
+
     gromacs_type_ids = (1, None, None)
 
-    @staticmethod
-    def fconst(values, temp):
-        return 1250.
+    def fconst(self, values: typing.Iterable[float], temp: float) -> float:
+        return 1250.0
 
 
 class MartiniDefaultAngle(FunctionalForm):
+    """Dummy functional form which returns a fixed force constant."""
+
     gromacs_type_ids = (None, 2, None)
 
-    @staticmethod
-    def fconst(values, temp):
-        return 25.
+    def fconst(self, values: typing.Iterable[float], temp: float) -> float:
+        return 25.0
 
 
 class MartiniDefaultDihedral(FunctionalForm):
+    """Dummy functional form which returns a fixed force constant."""
+
     gromacs_type_ids = (None, None, 1)
 
-    @staticmethod
-    def fconst(values, temp):
-        return 50.
+    def fconst(self, values: typing.Iterable[float], temp: float) -> float:
+        return 50.0

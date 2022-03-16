@@ -1,0 +1,34 @@
+
+; 7.3.2 Preprocessing
+define                  =   ; defines to pass to the preprocessor
+
+; 7.3.3 Run Control
+integrator              = steep        ; steepest descents energy minimization
+nsteps                  = 2000          ; maximum number of steps to integrate
+
+; 7.3.5 Energy Minimization
+emtol                   = 0           ; [kJ/mol/nm] minimization is converged when max force is < emtol
+emstep                  = 0.01          ; [nm] initial step-size
+
+; 7.3.8 Output Control
+nstxout                 = 100           ; [steps] freq to write coordinates to trajectory
+nstvout                 = 100           ; [steps] freq to write velocities to trajectory
+nstfout                 = 100           ; [steps] freq to write forces to trajectory
+nstlog                  = 1             ; [steps] freq to write energies to log file
+nstenergy               = 1             ; [steps] freq to write energies to energy file
+energygrps              = System        ; group(s) to write to energy file
+
+; 7.3.9 Neighbor Searching
+nstlist                 = 1             ; [steps] freq to update neighbor list
+ns_type                 = grid          ; method of updating neighbor list
+pbc                     = xyz           ; periodic boundary conditions in all directions
+rlist                   = 0.8           ; [nm] cut-off distance for the short-range neighbor list
+cutoff-scheme           = verlet
+
+; 7.3.10 Electrostatics
+coulombtype             = cut-off          ; Particle-Mesh Ewald electrostatics
+rcoulomb                = 0.8           ; [nm] distance for Coulomb cut-off
+
+; 7.3.11 VdW
+vdwtype                 = cut-off       ; twin-range cut-off with rlist where rvdw >= rlist
+rvdw                    = 0.8           ; [nm] distance for LJ cut-off

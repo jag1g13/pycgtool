@@ -1,77 +1,88 @@
-"""
-Module containing classes used to parse custom CFG file format.
+"""Module containing classes used to parse custom CFG file format.
 
 Format is based upon GROMACS .itp files but does not support nesting of sections.
 """
-import os
 
 import collections
+import contextlib
+import pathlib
+import typing
+
+PathLike = typing.Union[str, pathlib.Path]
 
 
 class DuplicateSectionError(KeyError):
-    """
-    Exception used to indicate that a section has appeared twice in a file.
-    """
+    """Exception used to indicate that a section has appeared twice in a file."""
+
     def __init__(self, section, filename):
-        msg = "Section '{0}' appears twice in file '{1}'.".format(section, filename)
-        super(DuplicateSectionError, self).__init__(msg)
+        msg = f"Section '{section}' appears twice in file '{filename}'."
+        super().__init__(msg)
 
 
 class NoSectionError(KeyError):
-    """
-    Exception used to indicate that a file contains no sections.
-    """
+    """Exception used to indicate that a file contains no sections."""
+
     def __init__(self, filename):
-        msg = "File '{0}' contains no '[]' section headers.".format(filename)
-        super(NoSectionError, self).__init__(msg)
+        msg = f"File '{filename}' contains no '[]' section headers."
+        super().__init__(msg)
 
 
-class CFG(collections.OrderedDict):
-    """
-    Class representing a CFG file.
+class CFG(collections.OrderedDict, contextlib.AbstractContextManager):
+    """Class representing a CFG file using a format similar to a GROMACS .itp file.
 
     Contains a dictionary of Sections.
     """
-    __slots__ = ["filename"]
 
-    def __init__(self, filename=None):
-        """
-        Parse a config file and extract Sections.
+    def __init__(self, filepath: typing.Optional[PathLike] = None):
+        """Parse a config file and extract Sections."""
+        super().__init__()
+        self.filepath = None
 
-        :param filename: Name of file to read
-        :return: Instance of CFG
-        """
-        super(CFG, self).__init__()
-        self.filename = filename
+        if filepath is not None:
+            self.filepath = pathlib.Path(filepath)
+            self._read_file(self.filepath)
 
-        with open(self.filename) as f:
+    def _read_line(self, line: str, filepath: pathlib.Path) -> str:
+        # Strip comments
+        line = line.split(";")[0].strip()
+
+        # Handle include directive
+        if line.startswith("#include"):
+            include_file = line.split()[1].strip('"')
+            other = type(self)(filepath.parent.joinpath(include_file))
+            self.update(other)
+
+            return ""  # Handle include then treat as empty line
+
+        return line
+
+    def _read_file(self, filepath: pathlib.Path) -> None:
+        with open(filepath) as cfg_file:
             curr_section = None
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith(";"):
+
+            for line in cfg_file:
+                line = self._read_line(line, filepath)
+
+                if not line:
                     continue
 
-                elif line.startswith("#include"):
-                    cfg2 = CFG(os.path.join(os.path.dirname(self.filename),
-                                            line.split()[1]))
-                    self.update(cfg2)
-                    continue
-
-                elif line.startswith("["):
+                if line.startswith("["):
                     curr_section = line.strip("[ ]")
+
                     if curr_section in self:
-                        raise DuplicateSectionError(curr_section, self.filename)
+                        raise DuplicateSectionError(curr_section, filepath)
+
                     self[curr_section] = []
+
                     continue
 
                 toks = tuple(line.split())
+
                 try:
                     self[curr_section].append(toks)
-                except KeyError as e:
-                    raise NoSectionError(self.filename) from e
 
-    def __enter__(self):
-        return self
+                except KeyError as exc:
+                    raise NoSectionError(filepath) from exc
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback):
         pass

@@ -1,0 +1,11 @@
+; comments begin with a semicolon
+[ALLA]
+C1 P3 C1 O1
+C2 P3 C2 O2
+C3 P3 C3 O3
+C4 P3 C4 O4
+C5 P2 C5 C6 O6
+O5 P4 O5
+
+[SOL]
+W P4 OW HW1 HW2

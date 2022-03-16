@@ -5,16 +5,16 @@ name: Python package
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, dev ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, dev ]
 
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.6", "3.7", "3.8", "3.9"]
         os: [ubuntu-latest, macos-latest]
 
     runs-on: ${{ matrix.os }}
@@ -27,13 +27,30 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install project and dependencies
+    - name: Update pip
       run: |
-        pip install --upgrade pip
-        pip install -r requirements.txt mdtraj
-        pip install pytest coverage
+        python -m pip install --upgrade pip
 
-    - name: Test with pytest
+    - name: Get pip cache dir
+      id: pip-cache
       run: |
-        coverage run --source=pycgtool -m pytest
-        coverage report --skip-covered
+        echo "::set-output name=dir::$(pip cache dir)"
+
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        # This path is specific to Ubuntu
+        path: ${{ steps.pip-cache.outputs.dir }}
+        # Look to see if there is a cache hit for the corresponding requirements file
+        key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          ${{ runner.os }}-    
+
+    - name: Install dependencies
+      run: |
+        pip install tox
+
+    - name: Run tests / linter
+      run: |
+        tox

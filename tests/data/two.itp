@@ -1,0 +1,6 @@
+[ moleculetype ]
+TWO     1
+
+[ atoms ]
+   1 H       1 TWO  H1      1    0.000    0.000
+   2 C       1 TWO  C2      1    0.000    1.000
