@@ -29,7 +29,9 @@ class DummyBondSet:
     def get_bonds(self, mol, natoms, select=lambda x: True):
         if natoms == -1:
             return [bond for bond in self.bonds if select(bond)]
-        return [bond for bond in self.bonds if len(bond.atoms) == natoms and select(bond)]
+        return [
+            bond for bond in self.bonds if len(bond.atoms) == natoms and select(bond)
+        ]
 
     def get_bond_lengths(self, *args, **kwargs):
         return self.get_bonds(None, 2)
@@ -44,16 +46,18 @@ class DummyBondSet:
 class ForceFieldTest(unittest.TestCase):
     def setUp(self):
         self.bonds = [
-            DummyBond(["a",  "b"], 1, 100),
-            DummyBond(["b",  "c"], 2,  50),
-            DummyBond(["c", "+a"], 3,  20),
+            DummyBond(["a", "b"], 1, 100),
+            DummyBond(["b", "c"], 2, 50),
+            DummyBond(["c", "+a"], 3, 20),
         ]
 
-        self.mapping = {"Dummy": [
-                DummyBMap("a", "a1",  1),
+        self.mapping = {
+            "Dummy": [
+                DummyBMap("a", "a1", 1),
                 DummyBMap("b", "b2", -1),
-                DummyBMap("c", "c3",  0),
-        ]}
+                DummyBMap("c", "c3", 0),
+            ]
+        }
 
         self.bondset = DummyBondSet(self.bonds, "Dummy")
 
@@ -62,7 +66,7 @@ class ForceFieldTest(unittest.TestCase):
             tmp_dir = pathlib.Path(t)
 
             name = "test"
-            ff_dir = tmp_dir.joinpath('fftest.ff')
+            ff_dir = tmp_dir.joinpath("fftest.ff")
 
             ForceField(name, dir_path=tmp_dir)
             self.assertTrue(ff_dir.exists())
@@ -76,7 +80,7 @@ class ForceFieldTest(unittest.TestCase):
             "  [ section ]",
             "       a    b      1.00000    100.00000",
             "       b    c      2.00000     50.00000",
-            "       c   +a      3.00000     20.00000"
+            "       c   +a      3.00000     20.00000",
         ]
 
         self.assertListEqual(expected, ForceField.bond_section(self.bonds, "section"))
@@ -91,7 +95,7 @@ class ForceFieldTest(unittest.TestCase):
             "a     a     Na    Ca    2a   ",
             "b     b     Nb    -     -    ",
             "c     c     -     Cc    -    ",
-            "d     d     Nd    Cd    2d   "
+            "d     d     Nd    Cd    2d   ",
         ]
 
         output = ForceField.write_r2b(nter, cter)
@@ -117,7 +121,7 @@ class ForceFieldTest(unittest.TestCase):
             "       c   c3 0.000000    0",
             "  [ bonds ]",
             "       a    b      1.00000    100.00000",
-            "       b    c      2.00000     50.00000"
+            "       b    c      2.00000     50.00000",
         ]
 
         output, nter, cter = ForceField.write_rtp(self.mapping, self.bondset)
@@ -135,5 +139,5 @@ class ForceFieldTest(unittest.TestCase):
         self.assertTrue(cter)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

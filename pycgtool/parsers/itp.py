@@ -14,6 +14,7 @@ class ITP(CFG):
 
     Contains a dictionary of sections for every molecule definition.
     """
+
     def _read_file(self, filepath: pathlib.Path) -> None:
         mol_sections = ["atoms", "bonds", "angles", "dihedrals"]
 
@@ -54,5 +55,8 @@ class ITP(CFG):
                     raise NoSectionError(filepath)
 
                 else:
-                    logger.info("File '%s' contains unexpected section '%s'",
-                                filepath, curr_section)
+                    logger.info(
+                        "File '%s' contains unexpected section '%s'",
+                        filepath,
+                        curr_section,
+                    )

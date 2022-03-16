@@ -84,10 +84,16 @@ def extend_graph_chain(extend, pairs):
                 if node2.startswith("+"):
                     for pair2 in pairs:
                         if node2.strip("+") == pair2[0] and "+" + pair2[1] not in chain:
-                            append_if_not_in(ret, spare + (node1, node2, "+" + pair2[1]))
+                            append_if_not_in(
+                                ret, spare + (node1, node2, "+" + pair2[1])
+                            )
 
-                        elif node2.strip("+") == pair2[1] and "+" + pair2[0] not in chain:
-                            append_if_not_in(ret, spare + (node1, node2, "+" + pair2[0]))
+                        elif (
+                            node2.strip("+") == pair2[1] and "+" + pair2[0] not in chain
+                        ):
+                            append_if_not_in(
+                                ret, spare + (node1, node2, "+" + pair2[0])
+                            )
 
             except AttributeError:
                 pass
@@ -98,7 +104,9 @@ def extend_graph_chain(extend, pairs):
     return ret
 
 
-def transpose_and_sample(sequence: typing.Iterable, n: typing.Optional[int] = None) -> typing.List:
+def transpose_and_sample(
+    sequence: typing.Iterable, n: typing.Optional[int] = None
+) -> typing.List:
     """Transpose a sequence of lists and sample to provide target number of rows.
 
     Skip rows containing non-finite numbers (e.g. NaN).
@@ -106,6 +114,7 @@ def transpose_and_sample(sequence: typing.Iterable, n: typing.Optional[int] = No
     :param sequence: 2d sequence object to transpose
     :param n: Number of samples to take
     """
+
     def no_nans(row):
         return np.isfinite(row).all()
 
@@ -143,12 +152,12 @@ def backup_file(path: PathLike) -> pathlib.Path:
     counter = 1
 
     while new_path.exists():
-        new_path = path.parent.joinpath(f'#{path.name}.{counter}#')
+        new_path = path.parent.joinpath(f"#{path.name}.{counter}#")
         counter += 1
 
     if new_path != path:
         path.rename(new_path)
-        logger.warning('Existing file %s backed up as %s', path.name, new_path.name)
+        logger.warning("Existing file %s backed up as %s", path.name, new_path.name)
 
     return new_path
 
@@ -166,7 +175,7 @@ def sliding(vals: typing.Iterable):
         current = next(it)
 
     except StopIteration:
-        raise EmptyIterableError('Cannot make sliding window over empty iterable')
+        raise EmptyIterableError("Cannot make sliding window over empty iterable")
 
     for nxt in it:
         yield (prev, current, nxt)
@@ -221,7 +230,9 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
     :return: True if all lines are the same, else False
     """
     diff_lines = []
-    for i, (ref_line, test_line) in enumerate(itertools.zip_longest(ref_lines, test_lines)):
+    for i, (ref_line, test_line) in enumerate(
+        itertools.zip_longest(ref_lines, test_lines)
+    ):
         # Shortcut trivial comparisons
         if ref_line is None or test_line is None:
             diff_lines.append((i, ref_line, test_line))
@@ -234,8 +245,9 @@ def cmp_whitespace_float(ref_lines, test_lines, rtol=0.01, verbose=False):
         test_toks = test_line.split()
 
         # Check for float comparison of tokens on line
-        for ref_tok, test_tok in itertools.zip_longest(map(number_or_string, ref_toks),
-                                                       map(number_or_string, test_toks)):
+        for ref_tok, test_tok in itertools.zip_longest(
+            map(number_or_string, ref_toks), map(number_or_string, test_toks)
+        ):
             if ref_tok != test_tok:
                 try:
                     if abs(ref_tok - test_tok) > abs(ref_tok) * rtol:
@@ -287,8 +299,9 @@ def any_starts_with(iterable: typing.Iterable, char: str) -> bool:
 
 
 def load_optional_topology(
-        trajfile: typing.Union[str, pathlib.Path],
-        topfile: typing.Optional[typing.Union[str, pathlib.Path]] = None) -> mdtraj.Trajectory:
+    trajfile: typing.Union[str, pathlib.Path],
+    topfile: typing.Optional[typing.Union[str, pathlib.Path]] = None,
+) -> mdtraj.Trajectory:
     """Load an MDTraj trajectory with or without a separate topology file.
 
     :param trajfile: Trajectory file
@@ -301,9 +314,11 @@ def load_optional_topology(
     return mdtraj.load(str(trajfile), top=str(topfile))
 
 
-def compare_trajectories(*trajectory_files: typing.Union[str, pathlib.Path],
-                         topology_file: typing.Optional[typing.Union[str, pathlib.Path]] = None,
-                         rtol: float = 0.001) -> bool:
+def compare_trajectories(
+    *trajectory_files: typing.Union[str, pathlib.Path],
+    topology_file: typing.Optional[typing.Union[str, pathlib.Path]] = None,
+    rtol: float = 0.001,
+) -> bool:
     """Compare multiple trajectory files for equality.
 
     :param trajectory_files: Paths of trajectory file to compare
@@ -317,22 +332,22 @@ def compare_trajectories(*trajectory_files: typing.Union[str, pathlib.Path],
             traj = load_optional_topology(traj_file, topology_file)
 
         except ValueError as exc:
-            raise ValueError('Topology does not match') from exc
+            raise ValueError("Topology does not match") from exc
 
         # Conditions from Trajectory.__hash__
         if traj.topology != ref_traj.topology:
-            raise ValueError('Topology does not match')
+            raise ValueError("Topology does not match")
 
         if len(traj) != len(ref_traj):
-            raise ValueError('Length does not match')
+            raise ValueError("Length does not match")
 
         if not np.allclose(traj.xyz, ref_traj.xyz, rtol=rtol):
-            raise ValueError('Coordinates do not match')
+            raise ValueError("Coordinates do not match")
 
         if not np.allclose(traj.time, ref_traj.time, rtol=rtol):
-            raise ValueError('Time does not match')
+            raise ValueError("Time does not match")
 
         if not np.allclose(traj.unitcell_vectors, ref_traj.unitcell_vectors, rtol=rtol):
-            raise ValueError('Unitcell does not match')
+            raise ValueError("Unitcell does not match")
 
     return True

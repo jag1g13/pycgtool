@@ -29,7 +29,7 @@ class FunctionalFormTest(unittest.TestCase):
                 return "TestResultFconst"
 
         funcs = get_functional_forms()
-        test_func = funcs['TestFunc'].value
+        test_func = funcs["TestFunc"].value
 
         self.assertEqual("TestResultEqm", test_func.eqm(None, None))
         self.assertEqual("TestResultFconst", test_func.fconst(None, None))
@@ -43,18 +43,11 @@ class FunctionalFormTest(unittest.TestCase):
 
         func = funcs["Harmonic"].value()
 
-        np.testing.assert_allclose(
-            func.eqm(vals, None), np.pi
-        )
+        np.testing.assert_allclose(func.eqm(vals, None), np.pi)
 
-        func = funcs["Harmonic"].value(
-            mean_func=circular_mean
-        )
+        func = funcs["Harmonic"].value(mean_func=circular_mean)
 
-        np.testing.assert_allclose(
-            func.eqm(vals, None), 0,
-            atol=1e-6
-        )
+        np.testing.assert_allclose(func.eqm(vals, None), 0, atol=1e-6)
 
     def test_inject_variance_function(self):
         """
@@ -62,19 +55,14 @@ class FunctionalFormTest(unittest.TestCase):
         """
         funcs = get_functional_forms()
 
-        func = funcs["Harmonic"].value(
-            variance_func=circular_variance
-        )
+        func = funcs["Harmonic"].value(variance_func=circular_variance)
 
         vals = [0, 0.5 * np.pi]
         ref = func.fconst(vals, 300)
 
         vals = [0.25 * np.pi, 1.75 * np.pi]
-        np.testing.assert_allclose(
-            func.fconst(vals, 300), ref,
-            atol=0
-        )
+        np.testing.assert_allclose(func.fconst(vals, 300), ref, atol=0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

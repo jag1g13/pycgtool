@@ -49,9 +49,9 @@ class UtilTest(unittest.TestCase):
             tmp_dir = pathlib.Path(t)
 
             paths = [
-                tmp_dir.joinpath('testfile'),
-                tmp_dir.joinpath('#testfile.1#'),
-                tmp_dir.joinpath('#testfile.2#'),
+                tmp_dir.joinpath("testfile"),
+                tmp_dir.joinpath("#testfile.1#"),
+                tmp_dir.joinpath("#testfile.2#"),
             ]
             path = paths[0]
 
@@ -85,9 +85,9 @@ class UtilTest(unittest.TestCase):
             tmp_dir = pathlib.Path(t)
 
             paths = [
-                tmp_dir.joinpath('testfile'),
-                tmp_dir.joinpath('#testfile.1#'),
-                tmp_dir.joinpath('#testfile.2#'),
+                tmp_dir.joinpath("testfile"),
+                tmp_dir.joinpath("#testfile.1#"),
+                tmp_dir.joinpath("#testfile.2#"),
             ]
             path = paths[0]
 
@@ -168,27 +168,31 @@ class UtilTest(unittest.TestCase):
 
     def test_cmp_whitespace_float_diff_lengths(self):
         """Test that lists of different lengths are considered different."""
-        ref = ['1']
-        test = ['1', '2']
+        ref = ["1"]
+        test = ["1", "2"]
 
         self.assertFalse(cmp_whitespace_float(ref, test))
 
     def test_circular_mean(self):
         values = np.deg2rad(np.array([-175, 165], dtype=np.float32))
-        test = np.deg2rad(175.)
-        self.assertAlmostEqual(circular_mean(values),  test, delta=test / 500.)
+        test = np.deg2rad(175.0)
+        self.assertAlmostEqual(circular_mean(values), test, delta=test / 500.0)
 
         values = np.deg2rad(np.array([165, 145], dtype=np.float32))
-        test = np.deg2rad(155.)
-        self.assertAlmostEqual(circular_mean(values), test, delta=test / 500.)
+        test = np.deg2rad(155.0)
+        self.assertAlmostEqual(circular_mean(values), test, delta=test / 500.0)
 
     def test_circular_variance(self):
         values = np.deg2rad(np.array([165, 145], dtype=np.float32))
         test_var = np.var(values)
-        self.assertAlmostEqual(circular_variance(values), test_var, delta=test_var / 500.)
+        self.assertAlmostEqual(
+            circular_variance(values), test_var, delta=test_var / 500.0
+        )
 
         values = np.deg2rad(np.array([-175, 165], dtype=np.float32))
-        self.assertAlmostEqual(circular_variance(values), test_var, delta=test_var / 500.)
+        self.assertAlmostEqual(
+            circular_variance(values), test_var, delta=test_var / 500.0
+        )
 
 
 class UtilFileWriteLinesTest(unittest.TestCase):
@@ -224,36 +228,38 @@ class UtilFileWriteLinesTest(unittest.TestCase):
 
 class CompareTrajectoryTest(unittest.TestCase):
     base_dir = pathlib.Path(__file__).absolute().parent
-    data_dir = base_dir.joinpath('data')
+    data_dir = base_dir.joinpath("data")
 
     def test_compare_trajectory_single(self):
-        self.assertTrue(util.compare_trajectories(
-            self.data_dir.joinpath('sugar.gro'),
-            self.data_dir.joinpath('sugar.gro')
-        ))
+        self.assertTrue(
+            util.compare_trajectories(
+                self.data_dir.joinpath("sugar.gro"), self.data_dir.joinpath("sugar.gro")
+            )
+        )
 
     def test_compare_trajectory_single_false(self):
         with self.assertRaises(ValueError):
             util.compare_trajectories(
-                self.data_dir.joinpath('sugar.gro'),
-                self.data_dir.joinpath('water.gro')
+                self.data_dir.joinpath("sugar.gro"), self.data_dir.joinpath("water.gro")
             )
 
     def test_compare_trajectory(self):
-        self.assertTrue(util.compare_trajectories(
-            self.data_dir.joinpath('sugar.xtc'),
-            self.data_dir.joinpath('sugar.xtc'),
-            topology_file=self.data_dir.joinpath('sugar.gro')
-        ))
+        self.assertTrue(
+            util.compare_trajectories(
+                self.data_dir.joinpath("sugar.xtc"),
+                self.data_dir.joinpath("sugar.xtc"),
+                topology_file=self.data_dir.joinpath("sugar.gro"),
+            )
+        )
 
     def test_compare_trajectory_false(self):
         with self.assertRaises(ValueError):
             util.compare_trajectories(
-                self.data_dir.joinpath('sugar.xtc'),
-                self.data_dir.joinpath('water.xtc'),
-                topology_file=self.data_dir.joinpath('sugar.gro')
+                self.data_dir.joinpath("sugar.xtc"),
+                self.data_dir.joinpath("water.xtc"),
+                topology_file=self.data_dir.joinpath("sugar.gro"),
             )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

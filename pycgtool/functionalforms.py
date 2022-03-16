@@ -21,14 +21,17 @@ def get_functional_forms() -> enum.Enum:
         name = subclass.__name__
         enum_dict[name] = subclass
 
-    return enum.Enum('FunctionalForms', enum_dict)
+    return enum.Enum("FunctionalForms", enum_dict)
 
 
 class FunctionalForm(metaclass=abc.ABCMeta):
     """Parent class of any functional form used in Boltzmann Inversion to convert variance to a force constant."""
-    def __init__(self,
-                 mean_func: typing.Callable = np.nanmean,
-                 variance_func: typing.Callable = np.nanvar):
+
+    def __init__(
+        self,
+        mean_func: typing.Callable = np.nanmean,
+        variance_func: typing.Callable = np.nanvar,
+    ):
         """Inject functions for calculating the mean and variance into the Boltzmann Inversion equations.
 
         :param mean_func: Function to calculate the mean - default is np.nanmean
@@ -37,7 +40,9 @@ class FunctionalForm(metaclass=abc.ABCMeta):
         self._mean_func = mean_func
         self._variance_func = variance_func
 
-    def eqm(self, values: typing.Iterable[float], temp: float) -> float:  # pylint: disable=unused-argument
+    def eqm(
+        self, values: typing.Iterable[float], temp: float
+    ) -> float:  # pylint: disable=unused-argument
         """Calculate equilibrium value.
 
         May be overridden by functional forms.
@@ -78,7 +83,8 @@ class FunctionalForm(metaclass=abc.ABCMeta):
         if tipe is None:
             raise TypeError(
                 f"The functional form {cls.__name__} does not have a defined GROMACS "
-                f"potential type when used with {natoms} atoms.")
+                f"potential type when used with {natoms} atoms."
+            )
 
         return tipe
 
@@ -88,11 +94,12 @@ class Harmonic(FunctionalForm):
 
     See http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html#harmonic-potential  # noqa
     """
+
     # TODO: Consider whether to use improper (type 2) instead, it is actually harmonic
     gromacs_type_ids = (1, 1, 1)
 
     def fconst(self, values: typing.Iterable[float], temp: float) -> float:
-        rt = 8.314 * temp / 1000.  # pylint: disable=invalid-name
+        rt = 8.314 * temp / 1000.0  # pylint: disable=invalid-name
         var = self._variance_func(values)
         return rt / var
 
@@ -104,34 +111,38 @@ class CosHarmonic(FunctionalForm):
 
     Uses the transformation in eqn 20 of the above source.
     """
+
     gromacs_type_ids = (None, 2, None)
 
     def fconst(self, values: typing.Iterable[float], temp: float) -> float:
-        rt = 8.314 * temp / 1000.  # pylint: disable=invalid-name
+        rt = 8.314 * temp / 1000.0  # pylint: disable=invalid-name
         mean = self.eqm(values, temp)
         var = self._variance_func(values)
-        return rt / (math.sin(mean)**2 * var)
+        return rt / (math.sin(mean) ** 2 * var)
 
 
 class MartiniDefaultLength(FunctionalForm):
     """Dummy functional form which returns a fixed force constant."""
+
     gromacs_type_ids = (1, None, None)
 
     def fconst(self, values: typing.Iterable[float], temp: float) -> float:
-        return 1250.
+        return 1250.0
 
 
 class MartiniDefaultAngle(FunctionalForm):
     """Dummy functional form which returns a fixed force constant."""
+
     gromacs_type_ids = (None, 2, None)
 
     def fconst(self, values: typing.Iterable[float], temp: float) -> float:
-        return 25.
+        return 25.0
 
 
 class MartiniDefaultDihedral(FunctionalForm):
     """Dummy functional form which returns a fixed force constant."""
+
     gromacs_type_ids = (None, None, 1)
 
     def fconst(self, values: typing.Iterable[float], temp: float) -> float:
-        return 50.
+        return 50.0

@@ -34,7 +34,8 @@ class PyCGTOOL:
             topology_file=self.config.topology,
             trajectory_file=self.config.trajectory,  # May be None
             frame_start=self.config.begin,
-            frame_end=self.config.end)
+            frame_end=self.config.end,
+        )
 
         self.mapping = None
         self.out_frame = self.in_frame
@@ -43,7 +44,9 @@ class PyCGTOOL:
 
         if self.out_frame.natoms == 0:
             # The following steps won't work with frames containing no atoms
-            logger.warning('Mapped trajectory contains no atoms - check your mapping file is correct!')
+            logger.warning(
+                "Mapped trajectory contains no atoms - check your mapping file is correct!"
+            )
             return
 
         self.bondset = None
@@ -52,7 +55,7 @@ class PyCGTOOL:
             self.measure_bonds()
 
         if self.config.output_xtc:
-            self.out_frame.save(self.get_output_filepath('xtc'))
+            self.out_frame.save(self.get_output_filepath("xtc"))
 
     def get_output_filepath(self, ext: PathLike) -> pathlib.Path:
         """Get file path for an output file by extension.
@@ -61,22 +64,22 @@ class PyCGTOOL:
         """
         out_dir = pathlib.Path(self.config.out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
-        return out_dir.joinpath(self.config.output_name + '.' + ext)
+        return out_dir.joinpath(self.config.output_name + "." + ext)
 
     def apply_mapping(self, in_frame: Frame) -> typing.Tuple[Mapping, Frame]:
         """Map input frame to output using requested mapping file."""
-        mapping = Mapping(self.config.mapping,
-                          self.config,
-                          itp_filename=self.config.itp)
+        mapping = Mapping(
+            self.config.mapping, self.config, itp_filename=self.config.itp
+        )
         out_frame = mapping.apply(in_frame)
-        out_frame.save(self.get_output_filepath('gro'), frame_number=0)
+        out_frame.save(self.get_output_filepath("gro"), frame_number=0)
 
         if self.config.backmapper_resname and self.out_frame.n_frames > 1:
             try:
                 self.train_backmapper(self.config.resname)
 
             except ImportError:
-                logger.error('MDPlus must be installed to perform backmapping')
+                logger.error("MDPlus must be installed to perform backmapping")
 
         return mapping, out_frame
 
@@ -87,46 +90,47 @@ class PyCGTOOL:
         if self.mapping is not None and self.out_frame.n_frames > 1:
             # Only perform Boltzmann Inversion if we have a mapping and a trajectory.
             # Otherwise we get infinite force constants.
-            logger.info('Starting Boltzmann Inversion')
+            logger.info("Starting Boltzmann Inversion")
             self.bondset.boltzmann_invert()
-            logger.info('Finished Boltzmann Inversion')
+            logger.info("Finished Boltzmann Inversion")
 
             if self.config.output_forcefield:
                 logger.info("Writing GROMACS forcefield directory")
                 out_dir = pathlib.Path(self.config.out_dir)
-                forcefield = ForceField(self.config.output_name,
-                                        dir_path=out_dir)
-                forcefield.write(self.config.output_name, self.mapping,
-                                 self.bondset)
+                forcefield = ForceField(self.config.output_name, dir_path=out_dir)
+                forcefield.write(self.config.output_name, self.mapping, self.bondset)
                 logger.info("Finished writing GROMACS forcefield directory")
 
             else:
-                self.bondset.write_itp(self.get_output_filepath('itp'),
-                                       mapping=self.mapping)
+                self.bondset.write_itp(
+                    self.get_output_filepath("itp"), mapping=self.mapping
+                )
 
         if self.config.dump_measurements:
-            logger.info('Writing bond measurements to file')
-            self.bondset.dump_values(self.config.dump_n_values,
-                                     self.config.out_dir)
-            logger.info('Finished writing bond measurements to file')
+            logger.info("Writing bond measurements to file")
+            self.bondset.dump_values(self.config.dump_n_values, self.config.out_dir)
+            logger.info("Finished writing bond measurements to file")
 
     def train_backmapper(self, resname: str):
         from mdplus.multiscale import GLIMPS
-        sel = f'resname {resname}'
+
+        sel = f"resname {resname}"
 
         aa_subset_traj = self.in_frame._trajectory.atom_slice(
-            self.in_frame._trajectory.topology.select(sel))
+            self.in_frame._trajectory.topology.select(sel)
+        )
         cg_subset_traj = self.out_frame._trajectory.atom_slice(
-            self.out_frame._trajectory.topology.select(sel))
+            self.out_frame._trajectory.topology.select(sel)
+        )
 
-        logger.info('Training backmapper')
+        logger.info("Training backmapper")
         # Param x_valence is approximate number of bonds per CG bead
         # Values greater than 2 fail for small molecules e.g. sugar test case
         backmapper = GLIMPS(x_valence=2)
         backmapper.fit(cg_subset_traj.xyz, aa_subset_traj.xyz)
-        logger.info('Finished training backmapper')
+        logger.info("Finished training backmapper")
 
-        backmapper.save(self.get_output_filepath('backmapper.pkl'))
+        backmapper.save(self.get_output_filepath("backmapper.pkl"))
 
 
 class BooleanAction(argparse.Action):
@@ -134,15 +138,16 @@ class BooleanAction(argparse.Action):
 
     Based on https://thisdataguy.com/2017/07/03/no-options-with-argparse-and-python/
     """
+
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         super().__init__(option_strings, dest, nargs=0, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, not option_string.startswith('--no-'))
+        setattr(namespace, self.dest, not option_string.startswith("--no-"))
 
 
 def parse_arguments(arg_list):
-    # yapf: disable
+    # fmt: off
     parser = argparse.ArgumentParser(
         prog='pycgtool',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -236,7 +241,7 @@ def parse_arguments(arg_list):
                                 help=argparse.SUPPRESS)
     secret_options.add_argument('--cow', default=False, action='store_true',
                                 help=argparse.SUPPRESS)
-    # yapf: enable
+    # fmt: on
 
     args = parser.parse_args(arg_list)
 
@@ -257,15 +262,15 @@ def validate_arguments(args):
     if not args.dump_measurements:
         args.dump_measurements = bool(args.bondset) and not bool(args.mapping)
         logger.info(
-            'Argument --dump-measurements has been set because you have provided a bondset but no mapping'
+            "Argument --dump-measurements has been set because you have provided a bondset but no mapping"
         )
 
     if not args.mapping and not args.bondset:
-        raise ArgumentValidationError('One or both of -m and -b is required')
+        raise ArgumentValidationError("One or both of -m and -b is required")
 
     if args.backmapper_resname:
         logger.warning(
-            'Backmapping is an experimental feature and has not yet been fully validated'
+            "Backmapping is an experimental feature and has not yet been fully validated"
         )
 
     return args
@@ -279,10 +284,12 @@ def main():
         logging.basicConfig(level=args.log_level)
 
     else:
-        logging.basicConfig(level=args.log_level,
-                            format='%(message)s',
-                            datefmt='[%X]',
-                            handlers=[RichHandler(rich_tracebacks=True)])
+        logging.basicConfig(
+            level=args.log_level,
+            format="%(message)s",
+            datefmt="[%X]",
+            handlers=[RichHandler(rich_tracebacks=True)],
+        )
 
         banner = r"""
              _____        _____ _____ _______ ____   ____  _      
@@ -299,37 +306,39 @@ def main():
         if args.cow:
             try:
                 import cowsay
-                banner = cowsay.cow('PyCGTOOL')
+
+                banner = cowsay.cow("PyCGTOOL")
 
             except ImportError:
                 pass
 
         else:
-            logger.info('[bold blue]%s[/]',
-                        textwrap.dedent(banner),
-                        extra={'markup': True})
+            logger.info(
+                "[bold blue]%s[/]", textwrap.dedent(banner), extra={"markup": True}
+            )
 
-    logger.info(30 * '-')
-    logger.info('Topology:\t%s', args.topology)
-    logger.info('Trajectory:\t%s', args.trajectory)
-    logger.info('Mapping:\t%s', args.mapping)
-    logger.info('Bondset:\t%s', args.bondset)
-    logger.info(30 * '-')
+    logger.info(30 * "-")
+    logger.info("Topology:\t%s", args.topology)
+    logger.info("Trajectory:\t%s", args.trajectory)
+    logger.info("Mapping:\t%s", args.mapping)
+    logger.info("Bondset:\t%s", args.bondset)
+    logger.info(30 * "-")
 
     try:
         if args.profile:
             with cProfile.Profile() as profiler:
                 pycgtool = PyCGTOOL(args)
 
-            profiler.dump_stats('gprof.out')
+            profiler.dump_stats("gprof.out")
 
         else:
             pycgtool = PyCGTOOL(args)
 
         elapsed_time = time.time() - start_time
-        logger.info('Processed %d frames in %.2f s',
-                    pycgtool.out_frame.n_frames, elapsed_time)
-        logger.info('Finished processing - goodbye!')
+        logger.info(
+            "Processed %d frames in %.2f s", pycgtool.out_frame.n_frames, elapsed_time
+        )
+        logger.info("Finished processing - goodbye!")
 
     except Exception as exc:
         logger.exception(exc)

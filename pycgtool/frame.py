@@ -22,6 +22,7 @@ PathLike = typing.Union[pathlib.Path, str]
 
 class UnsupportedFormatException(Exception):
     """Exception raised when a topology/trajectory format cannot be parsed."""
+
     def __init__(self, msg=None):
         if msg is None:
             msg = "Topology/Trajectory format not supported by this reader"
@@ -30,6 +31,7 @@ class UnsupportedFormatException(Exception):
 
 class NonMatchingSystemError(ValueError):
     """Exception raised when topology and trajectory do not match."""
+
     def __init__(self, msg=None):
         if msg is None:
             msg = "Number of atoms does not match between topology and trajectory files"
@@ -40,9 +42,9 @@ def load_traj(filepath: PathLike, **kwargs) -> mdtraj.Trajectory:
     """Load a trajectory, if a PDB fails with zero box volume disable volume check and try again."""
     filepath = pathlib.Path(filepath)
 
-    if filepath.suffix.lower() == '.pdb':
+    if filepath.suffix.lower() == ".pdb":
         # PDBs have a couple of things that can go wrong - we handle these here...
-        kwargs.pop('top', None)  # Can't specify a topology for `load_pdb`
+        kwargs.pop("top", None)  # Can't specify a topology for `load_pdb`
 
         try:
             return mdtraj.load_pdb(str(filepath), **kwargs)
@@ -52,8 +54,8 @@ def load_traj(filepath: PathLike, **kwargs) -> mdtraj.Trajectory:
             # This can fail if the box volume is zero
             trajectory = mdtraj.load_pdb(str(filepath), no_boxchk=True, **kwargs)
             logger.warning(
-                'Unitcell has zero volume - periodic boundaries will not be accounted for. '
-                'If the molecule is split by a periodic boundary, results will be incorrect.'
+                "Unitcell has zero volume - periodic boundaries will not be accounted for. "
+                "If the molecule is split by a periodic boundary, results will be incorrect."
             )
 
             return trajectory
@@ -63,11 +65,14 @@ def load_traj(filepath: PathLike, **kwargs) -> mdtraj.Trajectory:
 
 class Frame:
     """Load and store data from a simulation trajectory."""
-    def __init__(self,
-                 topology_file: typing.Optional[PathLike] = None,
-                 trajectory_file: typing.Optional[PathLike] = None,
-                 frame_start: int = 0,
-                 frame_end: typing.Optional[int] = None):
+
+    def __init__(
+        self,
+        topology_file: typing.Optional[PathLike] = None,
+        trajectory_file: typing.Optional[PathLike] = None,
+        frame_start: int = 0,
+        frame_end: typing.Optional[int] = None,
+    ):
         """Load a simulation trajectory.
 
         :param topology_file: File containing system topology
@@ -77,19 +82,24 @@ class Frame:
         """
         if topology_file is not None:
             try:
-                logging.info('Loading topology file')
+                logging.info("Loading topology file")
                 self._trajectory = load_traj(topology_file)
                 self._topology = self._trajectory.topology
-                logging.info('Finished loading topology file')
+                logging.info("Finished loading topology file")
 
                 if trajectory_file is not None:
                     try:
-                        logging.info('Loading trajectory file - this may take a while')
-                        self._trajectory = load_traj(trajectory_file, top=self._topology)
-                        self._trajectory = self._slice_trajectory(frame_start, frame_end)
+                        logging.info("Loading trajectory file - this may take a while")
+                        self._trajectory = load_traj(
+                            trajectory_file, top=self._topology
+                        )
+                        self._trajectory = self._slice_trajectory(
+                            frame_start, frame_end
+                        )
                         logging.info(
-                            'Finished loading trajectory file - loaded %d frames',
-                            self._trajectory.n_frames)
+                            "Finished loading trajectory file - loaded %d frames",
+                            self._trajectory.n_frames,
+                        )
 
                     except ValueError as exc:
                         raise NonMatchingSystemError from exc
@@ -97,7 +107,7 @@ class Frame:
                 self._load_trajectory()
 
             except OSError as exc:
-                if 'no loader' in str(exc) or 'format is not supported' in str(exc):
+                if "no loader" in str(exc) or "format is not supported" in str(exc):
                     raise UnsupportedFormatException from exc
 
                 raise
@@ -107,9 +117,8 @@ class Frame:
             self._topology = mdtraj.Topology()
 
     def _slice_trajectory(
-            self,
-            frame_start: int = 0,
-            frame_end: typing.Optional[int] = None) -> mdtraj.Trajectory:
+        self, frame_start: int = 0, frame_end: typing.Optional[int] = None
+    ) -> mdtraj.Trajectory:
         """Slice input simulation trajectory to a subset of frames.
 
         :param frame_start: First frame of trajectory to use
@@ -177,20 +186,20 @@ class Frame:
         """Number of frames in the trajectory."""
         return self._trajectory.n_frames
 
-    def add_residue(self,
-                    name,
-                    chain: typing.Optional[
-                        mdtraj.core.topology.Residue] = None,
-                    **kwargs) -> mdtraj.core.topology.Residue:
+    def add_residue(
+        self,
+        name,
+        chain: typing.Optional[mdtraj.core.topology.Residue] = None,
+        **kwargs
+    ) -> mdtraj.core.topology.Residue:
         """Add a residue to the frame topology.
 
         :param name: Name of residue
         :param chain: MDTraj chain of residue
         :return: New residue
         """
-        if hasattr(self, '_trajectory'):
-            raise TypeError(
-                'Cannot edit residues if a trajectory has been loaded')
+        if hasattr(self, "_trajectory"):
+            raise TypeError("Cannot edit residues if a trajectory has been loaded")
 
         if chain is None:
             try:
@@ -202,8 +211,10 @@ class Frame:
         return self._topology.add_residue(name, chain, **kwargs)
 
     def add_atom(
-            self, name: str, element: typing.Optional[mdtraj.element.Element],
-            residue: mdtraj.core.topology.Residue
+        self,
+        name: str,
+        element: typing.Optional[mdtraj.element.Element],
+        residue: mdtraj.core.topology.Residue,
     ) -> mdtraj.core.topology.Atom:
         """Add an atom or CG bead to the frame topology.
 
@@ -212,16 +223,14 @@ class Frame:
         :param residue: MDTraj residue of atom
         :return: New atom
         """
-        if hasattr(self, '_trajectory'):
-            raise TypeError(
-                'Cannot edit atoms if a trajectory has been loaded')
+        if hasattr(self, "_trajectory"):
+            raise TypeError("Cannot edit atoms if a trajectory has been loaded")
 
         return self._topology.add_atom(name, element, residue)
 
-    def save(self,
-             filename: PathLike,
-             frame_number: typing.Optional[int] = None,
-             **kwargs) -> None:
+    def save(
+        self, filename: PathLike, frame_number: typing.Optional[int] = None, **kwargs
+    ) -> None:
         """Write trajctory to file.
 
         :param filename: Name of output file
@@ -249,14 +258,14 @@ class Frame:
 
         optional_values = {
             attr: getattr(self, attr, None)
-            for attr in {'time', 'unitcell_lengths', 'unitcell_angles'}
-        }  # yapf: disable
+            for attr in {"time", "unitcell_lengths", "unitcell_angles"}
+        }
 
-        new_trajectory = mdtraj.Trajectory(xyz,
-                                           topology=self._topology,
-                                           **optional_values)
+        new_trajectory = mdtraj.Trajectory(
+            xyz, topology=self._topology, **optional_values
+        )
 
-        if hasattr(self, '_trajectory'):
+        if hasattr(self, "_trajectory"):
             self._trajectory += new_trajectory
 
         else:

@@ -13,6 +13,7 @@ PathLike = typing.Union[str, pathlib.Path]
 
 class DuplicateSectionError(KeyError):
     """Exception used to indicate that a section has appeared twice in a file."""
+
     def __init__(self, section, filename):
         msg = f"Section '{section}' appears twice in file '{filename}'."
         super().__init__(msg)
@@ -20,6 +21,7 @@ class DuplicateSectionError(KeyError):
 
 class NoSectionError(KeyError):
     """Exception used to indicate that a file contains no sections."""
+
     def __init__(self, filename):
         msg = f"File '{filename}' contains no '[]' section headers."
         super().__init__(msg)
@@ -30,6 +32,7 @@ class CFG(collections.OrderedDict, contextlib.AbstractContextManager):
 
     Contains a dictionary of Sections.
     """
+
     def __init__(self, filepath: typing.Optional[PathLike] = None):
         """Parse a config file and extract Sections."""
         super().__init__()
@@ -41,15 +44,15 @@ class CFG(collections.OrderedDict, contextlib.AbstractContextManager):
 
     def _read_line(self, line: str, filepath: pathlib.Path) -> str:
         # Strip comments
-        line = line.split(';')[0].strip()
+        line = line.split(";")[0].strip()
 
         # Handle include directive
-        if line.startswith('#include'):
+        if line.startswith("#include"):
             include_file = line.split()[1].strip('"')
             other = type(self)(filepath.parent.joinpath(include_file))
             self.update(other)
 
-            return ''  # Handle include then treat as empty line
+            return ""  # Handle include then treat as empty line
 
         return line
 

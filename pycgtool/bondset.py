@@ -34,10 +34,13 @@ class Bond:
 
     Bond lengths, angles and dihedrals are all equivalent, distinguished by the number of atoms present.
     """
-    def __init__(self,
-                 atoms: typing.Iterable[str],
-                 atom_numbers: typing.Optional[typing.Iterable[int]] = None,
-                 func_form=None):
+
+    def __init__(
+        self,
+        atoms: typing.Iterable[str],
+        atom_numbers: typing.Optional[typing.Iterable[int]] = None,
+        func_form=None,
+    ):
         """Create a single bond definition.
 
         :param List[str] atoms: List of atom names defining the bond
@@ -62,8 +65,9 @@ class Bond:
         :param temp: Temperature at which the simulation was performed
         """
         if len(self.values) == 0:
-            raise ValueError("No bonds were measured between beads {0}".format(
-                self.atoms))
+            raise ValueError(
+                "No bonds were measured between beads {0}".format(self.atoms)
+            )
 
         values = self.values
         if not isinstance(self.values, np.ndarray):
@@ -77,7 +81,7 @@ class Bond:
             if len(self.atoms) == 4:
                 two_pi = 2 * np.pi
                 self.eqm -= np.pi
-                self.eqm = (((self.eqm + np.pi) % two_pi) - np.pi)
+                self.eqm = ((self.eqm + np.pi) % two_pi) - np.pi
 
             try:
                 self.fconst = self._func_form.fconst(values, temp)
@@ -89,7 +93,8 @@ class Bond:
     def __repr__(self) -> str:
         try:
             return "<Bond containing atoms {0} with r_0 {1:.3f} and force constant {2:.3e}>".format(
-                ", ".join(self.atoms), self.eqm, self.fconst)
+                ", ".join(self.atoms), self.eqm, self.fconst
+            )
         except (AttributeError, TypeError):
             return "<Bond containing atoms {0}>".format(", ".join(self.atoms))
 
@@ -99,6 +104,7 @@ class BondSet:
 
     BondSet contains a dictionary of lists of Bonds. Each list corresponds to a single molecule.
     """
+
     def _get_default_func_forms(self, options):
 
         try:
@@ -109,33 +115,32 @@ class BondSet:
 
         if default_fc:
             default_forms = [
-                'MartiniDefaultLength', 'MartiniDefaultAngle',
-                'MartiniDefaultDihedral'
+                "MartiniDefaultLength",
+                "MartiniDefaultAngle",
+                "MartiniDefaultDihedral",
             ]
         else:
-            default_forms = ['Harmonic', 'CosHarmonic', 'Harmonic']
+            default_forms = ["Harmonic", "CosHarmonic", "Harmonic"]
 
         functional_forms_map = get_functional_forms()
 
         functional_forms = [None, None]
         functional_forms.extend(
-            [functional_forms_map[ff].value for ff in default_forms])
+            [functional_forms_map[ff].value for ff in default_forms]
+        )
 
         try:
-            functional_forms[2] = functional_forms_map[
-                options.length_form].value
+            functional_forms[2] = functional_forms_map[options.length_form].value
         except AttributeError:
             pass
 
         try:
-            functional_forms[3] = functional_forms_map[
-                options.angle_form].value
+            functional_forms[3] = functional_forms_map[options.angle_form].value
         except AttributeError:
             pass
 
         try:
-            functional_forms[4] = functional_forms_map[
-                options.dihedral_form].value
+            functional_forms[4] = functional_forms_map[options.dihedral_form].value
         except AttributeError:
             pass
 
@@ -154,7 +159,7 @@ class BondSet:
         try:
             self._temperature = options.temperature
         except AttributeError:
-            self._temperature = 310.
+            self._temperature = 310.0
 
         self._functional_forms = self._get_default_func_forms(options)
 
@@ -166,19 +171,26 @@ class BondSet:
                 angles_defined = False
                 for atomlist in mol_section:
                     is_angle_or_dihedral = len(atomlist) > 2
-                    mean_function = circular_mean if is_angle_or_dihedral else np.nanmean
-                    variance_function = circular_variance if is_angle_or_dihedral else np.nanvar
+                    mean_function = (
+                        circular_mean if is_angle_or_dihedral else np.nanmean
+                    )
+                    variance_function = (
+                        circular_variance if is_angle_or_dihedral else np.nanvar
+                    )
 
                     # Construct instance of Boltzmann Inversion function and
                     # inject dependencies for mean and variance functions
                     # TODO: Should we allow overriding functional forms per bond?
                     func_form = self._functional_forms[len(atomlist)](
-                        mean_function, variance_function)
+                        mean_function, variance_function
+                    )
 
                     if {x for x in atomlist if atomlist.count(x) > 1}:
                         raise ValueError(
-                            "Defined bond '{0}' contains duplicate atoms".
-                            format(atomlist))
+                            "Defined bond '{0}' contains duplicate atoms".format(
+                                atomlist
+                            )
+                        )
 
                     mol_bonds.append(Bond(atoms=atomlist, func_form=func_form))
                     if len(atomlist) > 2:
@@ -190,16 +202,24 @@ class BondSet:
                     if options.generate_angles:
                         for atomlist in angles:
                             mol_bonds.append(
-                                Bond(atoms=atomlist,
-                                     func_form=self._functional_forms[3](
-                                         circular_mean, circular_variance)))
+                                Bond(
+                                    atoms=atomlist,
+                                    func_form=self._functional_forms[3](
+                                        circular_mean, circular_variance
+                                    ),
+                                )
+                            )
 
                     if options.generate_dihedrals:
                         for atomlist in dihedrals:
                             mol_bonds.append(
-                                Bond(atoms=atomlist,
-                                     func_form=self._functional_forms[4](
-                                         circular_mean, circular_variance)))
+                                Bond(
+                                    atoms=atomlist,
+                                    func_form=self._functional_forms[4](
+                                        circular_mean, circular_variance
+                                    ),
+                                )
+                            )
 
     @staticmethod
     def _create_angles(mol_bonds):
@@ -217,7 +237,7 @@ class BondSet:
         self,
         mol: str,
         natoms: int,
-        select: typing.Callable[[Bond], bool] = lambda x: True
+        select: typing.Callable[[Bond], bool] = lambda x: True,
     ) -> typing.List[Bond]:
         """Return list of bonds from molecule containing natoms atoms.
 
@@ -230,7 +250,8 @@ class BondSet:
             return [bond for bond in self._molecules[mol] if select(bond)]
 
         return [
-            bond for bond in self._molecules[mol]
+            bond
+            for bond in self._molecules[mol]
             if len(bond.atoms) == natoms and select(bond)
         ]
 
@@ -242,13 +263,12 @@ class BondSet:
         :return: List of bonds
         """
         if with_constr:
-            return [
-                bond for bond in self._molecules[mol] if len(bond.atoms) == 2
-            ]
+            return [bond for bond in self._molecules[mol] if len(bond.atoms) == 2]
 
         return [
-            bond for bond in self._molecules[mol] if len(bond.atoms) == 2
-            and bond.fconst < self._fconst_constr_threshold
+            bond
+            for bond in self._molecules[mol]
+            if len(bond.atoms) == 2 and bond.fconst < self._fconst_constr_threshold
         ]
 
     def get_bond_length_constraints(self, mol):
@@ -258,8 +278,9 @@ class BondSet:
         :return: List of bonds
         """
         return [
-            bond for bond in self._molecules[mol] if len(bond.atoms) == 2
-            and bond.fconst >= self._fconst_constr_threshold
+            bond
+            for bond in self._molecules[mol]
+            if len(bond.atoms) == 2 and bond.fconst >= self._fconst_constr_threshold
         ]
 
     def get_bond_angles(self, mol, exclude_triangle=True):
@@ -269,9 +290,7 @@ class BondSet:
         :param exclude_triangle: Exclude angles that are part of a triangle?
         :return: List of bonds
         """
-        angles = [
-            bond for bond in self._molecules[mol] if len(bond.atoms) == 3
-        ]
+        angles = [bond for bond in self._molecules[mol] if len(bond.atoms) == 3]
 
         if exclude_triangle:
             edges = [
@@ -282,15 +301,14 @@ class BondSet:
             def is_triangle(atoms):
                 triangle_edges = 0
                 for j in range(3):
-                    if (atoms[j - 1],
-                            atoms[j]) in edges or (atoms[j],
-                                                   atoms[j - 1]) in edges:
+                    if (atoms[j - 1], atoms[j]) in edges or (
+                        atoms[j],
+                        atoms[j - 1],
+                    ) in edges:
                         triangle_edges += 1
                 return triangle_edges >= 3
 
-            angles = [
-                angle for angle in angles if not is_triangle(angle.atoms)
-            ]
+            angles = [angle for angle in angles if not is_triangle(angle.atoms)]
 
         return angles
 
@@ -332,12 +350,13 @@ class BondSet:
                     ]
                 except ValueError as e:
                     missing = [
-                        atom for atom in bond.atoms
-                        if atom.lstrip("+-") not in index
+                        atom for atom in bond.atoms if atom.lstrip("+-") not in index
                     ]
                     e.args = (
                         "Bead(s) {0} do(es) not exist in residue {1}".format(
-                            missing, mol), )
+                            missing, mol
+                        ),
+                    )
                     raise
 
     def write_itp(self, filename, mapping):
@@ -352,22 +371,19 @@ class BondSet:
     def itp_text(self, mapping):
         atom_template = {
             "nomass": "{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f}",
-            "mass":
-            "{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f} {7:8.3f}"
+            "mass": "{0:4d} {1:4s} {2:4d} {3:4s} {4:4s} {5:4d} {6:8.3f} {7:8.3f}",
         }
 
-        def write_bond_angle_dih(bonds,
-                                 section_header,
-                                 print_fconst=True,
-                                 multiplicity=None,
-                                 rad2deg=False):
+        def write_bond_angle_dih(
+            bonds, section_header, print_fconst=True, multiplicity=None, rad2deg=False
+        ):
             ret_lines = []
             if bonds:
                 ret_lines.append("\n[ {0:s} ]".format(section_header))
             for bond in bonds:
-                line = " ".join([
-                    "{0:4d}".format(atnum + 1) for atnum in bond.atom_numbers
-                ])
+                line = " ".join(
+                    ["{0:4d}".format(atnum + 1) for atnum in bond.atom_numbers]
+                )
                 eqm = math.degrees(bond.eqm) if rad2deg else bond.eqm
                 line += " {0:4d} {1:12.5f}".format(bond.gromacs_type_id, eqm)
                 if print_fconst:
@@ -384,20 +400,29 @@ class BondSet:
             "; James Graham <J.A.Graham@soton.ac.uk> 2016",
             "; University of Southampton",
             "; https://github.com/jag1g13/pycgtool",
-            ";"
-        ]  # yapf: disable
+            ";",
+        ]  # fmt: skip
 
         # Print molecule
         for mol in self._molecules:
             if mol not in mapping:
-                logger.warning((
-                    "Molecule '%s' present in bonding file, but not in mapping. "
-                    "Parameters have not been calculated."), mol)
+                logger.warning(
+                    (
+                        "Molecule '%s' present in bonding file, but not in mapping. "
+                        "Parameters have not been calculated."
+                    ),
+                    mol,
+                )
                 continue
 
             if not all(bond.fconst is not None for bond in self._molecules[mol]):
-                logger.warning(("Molecule '%s' has no measured bond values. "
-                                "Parameters have not been calculated."), mol)
+                logger.warning(
+                    (
+                        "Molecule '%s' has no measured bond values. "
+                        "Parameters have not been calculated."
+                    ),
+                    mol,
+                )
                 continue
 
             ret_lines.append("\n[ moleculetype ]")
@@ -408,48 +433,63 @@ class BondSet:
             for i, bead in enumerate(mapping[mol], start=1):
                 # atnum type resnum resname atname c-group charge (mass)
                 if isinstance(bead, VirtualMap):
-                    ret_lines.append(atom_template["mass"].format(
-                        i, bead.type, 1, mol, bead.name, i, bead.charge,
-                        bead.mass))
+                    ret_lines.append(
+                        atom_template["mass"].format(
+                            i, bead.type, 1, mol, bead.name, i, bead.charge, bead.mass
+                        )
+                    )
                 else:
-                    ret_lines.append(atom_template["nomass"].format(
-                        i, bead.type, 1, mol, bead.name, i, bead.charge))
+                    ret_lines.append(
+                        atom_template["nomass"].format(
+                            i, bead.type, 1, mol, bead.name, i, bead.charge
+                        )
+                    )
 
             virtual_beads = self.get_virtual_beads(mapping[mol])
             if len(virtual_beads) != 0:
                 ret_lines.append("\n[ virtual_sitesn ]")
-                excl_lines = ["\n[ exclusions ]"
-                              ]  # Exclusions section for virtual sites
+                excl_lines = [
+                    "\n[ exclusions ]"
+                ]  # Exclusions section for virtual sites
 
                 for vbead in virtual_beads:
-                    cg_ids = sorted([
-                        bead.num + 1 for bead in mapping[mol]
-                        if bead.name in vbead.atoms
-                    ])
+                    cg_ids = sorted(
+                        [
+                            bead.num + 1
+                            for bead in mapping[mol]
+                            if bead.name in vbead.atoms
+                        ]
+                    )
                     cg_ids_string = " ".join(map(str, cg_ids))
-                    ret_lines.append("{0:^6d} {1:^6d} {2}".format(
-                        vbead.num + 1, vbead.gromacs_type_id, cg_ids_string))
-                    vsite_exclusions = "{} ".format(vbead.num +
-                                                    1) + cg_ids_string
+                    ret_lines.append(
+                        "{0:^6d} {1:^6d} {2}".format(
+                            vbead.num + 1, vbead.gromacs_type_id, cg_ids_string
+                        )
+                    )
+                    vsite_exclusions = "{} ".format(vbead.num + 1) + cg_ids_string
                     excl_lines.append(vsite_exclusions)
 
                 ret_lines.extend(excl_lines)
 
+            ret_lines.extend(write_bond_angle_dih(self.get_bond_lengths(mol), "bonds"))
             ret_lines.extend(
-                write_bond_angle_dih(self.get_bond_lengths(mol), "bonds"))
+                write_bond_angle_dih(self.get_bond_angles(mol), "angles", rad2deg=True)
+            )
             ret_lines.extend(
-                write_bond_angle_dih(self.get_bond_angles(mol),
-                                     "angles",
-                                     rad2deg=True))
+                write_bond_angle_dih(
+                    self.get_bond_dihedrals(mol),
+                    "dihedrals",
+                    multiplicity=1,
+                    rad2deg=True,
+                )
+            )
             ret_lines.extend(
-                write_bond_angle_dih(self.get_bond_dihedrals(mol),
-                                     "dihedrals",
-                                     multiplicity=1,
-                                     rad2deg=True))
-            ret_lines.extend(
-                write_bond_angle_dih(self.get_bond_length_constraints(mol),
-                                     "constraints",
-                                     print_fconst=False))
+                write_bond_angle_dih(
+                    self.get_bond_length_constraints(mol),
+                    "constraints",
+                    print_fconst=False,
+                )
+            )
 
         return ret_lines
 
@@ -461,25 +501,27 @@ class BondSet:
         calc = {
             2: mdtraj.compute_distances,
             3: mdtraj.compute_angles,
-            4: mdtraj.compute_dihedrals
+            4: mdtraj.compute_dihedrals,
         }
 
         for mol_name, mol_bonds in self._molecules.items():
             for bond in mol_bonds:
                 bond_indices = []
 
-                for prev_residue, residue, next_residue in sliding(
-                        frame.residues):
+                for prev_residue, residue, next_residue in sliding(frame.residues):
                     adj_res = {"-": prev_residue, "+": next_residue}
 
                     # Need access to adjacent residues, so can't just iterate over these directly
                     if residue.name == mol_name:
                         try:
-                            bond_indices.append([
-                                adj_res.get(atom_name[0], residue).atom(
-                                    atom_name.lstrip('-+')).index
-                                for atom_name in bond.atoms
-                            ])
+                            bond_indices.append(
+                                [
+                                    adj_res.get(atom_name[0], residue)
+                                    .atom(atom_name.lstrip("-+"))
+                                    .index
+                                    for atom_name in bond.atoms
+                                ]
+                            )
 
                         except AttributeError:
                             # AttributeError is raised when residues on end of chain calc bond to next
@@ -497,9 +539,9 @@ class BondSet:
                 pass
 
     @staticmethod
-    def _get_lines_for_bond_dump(bonds,
-                                 target_number: typing.Optional[int] = None,
-                                 rad2deg: bool = False) -> typing.List[str]:
+    def _get_lines_for_bond_dump(
+        bonds, target_number: typing.Optional[int] = None, rad2deg: bool = False
+    ) -> typing.List[str]:
         """Return a dump of bond measurements as a list of lines of text.
 
         :param bonds: Iterable of bonds
@@ -508,49 +550,53 @@ class BondSet:
         :return List[str]: Lines of bond measurements dump
         """
         ret_lines = []
-        for row in transpose_and_sample((bond.values for bond in bonds),
-                                        n=target_number):
+        for row in transpose_and_sample(
+            (bond.values for bond in bonds), n=target_number
+        ):
             if rad2deg:
                 row = [math.degrees(val) for val in row]
 
-            ret_lines.append((len(row) * '{:12.5f}').format(*row))
+            ret_lines.append((len(row) * "{:12.5f}").format(*row))
         return ret_lines
 
-    def dump_values(self, target_number: int = 10000,
-                    output_dir: typing.Optional[typing.Union[pathlib.Path, str]] = None) -> None:
+    def dump_values(
+        self,
+        target_number: int = 10000,
+        output_dir: typing.Optional[typing.Union[pathlib.Path, str]] = None,
+    ) -> None:
         """Output measured bond values to files for length, angles and dihedrals.
 
         :param int target_number: Approx number of sample measurements to output. If None, all samples will be output.
         :param output_dir: Directory to write output files to.
         """
         if output_dir is None:
-            output_dir = '.'
+            output_dir = "."
 
         # Cast to Path type
         output_dir = pathlib.Path(output_dir)
 
         for mol in self._molecules:
-            if mol == 'SOL':
+            if mol == "SOL":
                 continue
 
             bonds = self.get_bond_lengths(mol, with_constr=True)
             if bonds:
                 lines = BondSet._get_lines_for_bond_dump(bonds, target_number)
-                file_write_lines(output_dir.joinpath(f'{mol}_length.dat'), lines)
+                file_write_lines(output_dir.joinpath(f"{mol}_length.dat"), lines)
 
             bonds = self.get_bond_angles(mol)
             if bonds:
-                lines = BondSet._get_lines_for_bond_dump(bonds,
-                                                         target_number,
-                                                         rad2deg=True)
-                file_write_lines(output_dir.joinpath(f'{mol}_angle.dat'), lines)
+                lines = BondSet._get_lines_for_bond_dump(
+                    bonds, target_number, rad2deg=True
+                )
+                file_write_lines(output_dir.joinpath(f"{mol}_angle.dat"), lines)
 
             bonds = self.get_bond_dihedrals(mol)
             if bonds:
-                lines = BondSet._get_lines_for_bond_dump(bonds,
-                                                         target_number,
-                                                         rad2deg=True)
-                file_write_lines(output_dir.joinpath(f'{mol}_dihedral.dat'), lines)
+                lines = BondSet._get_lines_for_bond_dump(
+                    bonds, target_number, rad2deg=True
+                )
+                file_write_lines(output_dir.joinpath(f"{mol}_dihedral.dat"), lines)
 
     def __len__(self):
         return len(self._molecules)
