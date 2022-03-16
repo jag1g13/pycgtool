@@ -64,13 +64,13 @@ Input to PyCGTOOL is an atomistic simulation trajectory in the form of a topolog
 These files provide the atomistic-to-CG mapping and bonded topology respectively and use a format similar to GROMACS `.itp` files.
 Topology and trajectory files are processed using [MDTraj](https://www.mdtraj.org) so most common formats are accepted.
 
-Example mapping and bond files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/master/test/data) directory.
+Example mapping and bond files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/main/test/data) directory.
 The format of these files is described fully in the [documentation page on file formats](https://pycgtool.readthedocs.io/en/dev/file-formats.html).
 
-For more information, see [the tutorial](https://pycgtool.readthedocs.io/en/master/tutorial.html).
+For more information, see [the tutorial](https://pycgtool.readthedocs.io/en/main/tutorial.html).
 It is important to perform validation of any new parameter set - a brief example is present at the end of the tutorial.
 
-For a full list of options, see the [documentation](https://pycgtool.readthedocs.io/en/master/index.html) or use:
+For a full list of options, see the [documentation](https://pycgtool.readthedocs.io/en/main/index.html) or use:
 ```
 pycgtool -h
 ```

@@ -8,7 +8,7 @@ license = "GPL-3.0-only"
 readme = "README.md"
 homepage = "https://github.com/jag1g13/pycgtool"
 repository = "https://github.com/jag1g13/pycgtool"
-documentation = "https://pycgtool.readthedocs.io/en/master/"
+documentation = "https://pycgtool.readthedocs.io/en/main/"
 
 keywords = [
     "molecular-dynamics",
