@@ -228,6 +228,14 @@ def parse_arguments(arg_list):
     run_options.add_argument('--log-level', default='INFO',
                              choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
                              help="Which log messages should be shown?")
+
+    # Secret options
+
+    secret_options = parser.add_argument_group("secret options")
+    secret_options.add_argument('--curmudgeon', default=False, action='store_true',
+                                help=argparse.SUPPRESS)
+    secret_options.add_argument('--cow', default=False, action='store_true',
+                                help=argparse.SUPPRESS)
     # yapf: enable
 
     args = parser.parse_args(arg_list)
@@ -267,25 +275,39 @@ def main():
     start_time = time.time()
     args = parse_arguments(sys.argv[1:])
 
-    logging.basicConfig(level=args.log_level,
-                        format='%(message)s',
-                        datefmt='[%X]',
-                        handlers=[RichHandler(rich_tracebacks=True)])
+    if args.curmudgeon:
+        logging.basicConfig(level=args.log_level)
 
-    banner = r"""
-         _____        _____ _____ _______ ____   ____  _      
-        |  __ \      / ____/ ____|__   __/ __ \ / __ \| |     
-        | |__) |   _| |   | |  __   | | | |  | | |  | | |     
-        |  ___/ | | | |   | | |_ |  | | | |  | | |  | | |     
-        | |   | |_| | |___| |__| |  | | | |__| | |__| | |____ 
-        |_|    \__, |\_____\_____|  |_|  \____/ \____/|______|
-                __/ |                                         
-               |___/                                          
-    """  # noqa
+    else:
+        logging.basicConfig(level=args.log_level,
+                            format='%(message)s',
+                            datefmt='[%X]',
+                            handlers=[RichHandler(rich_tracebacks=True)])
 
-    logger.info('[bold blue]%s[/]',
-                textwrap.dedent(banner),
-                extra={'markup': True})
+        banner = r"""
+             _____        _____ _____ _______ ____   ____  _      
+            |  __ \      / ____/ ____|__   __/ __ \ / __ \| |     
+            | |__) |   _| |   | |  __   | | | |  | | |  | | |     
+            |  ___/ | | | |   | | |_ |  | | | |  | | |  | | |     
+            | |   | |_| | |___| |__| |  | | | |__| | |__| | |____ 
+            |_|    \__, |\_____\_____|  |_|  \____/ \____/|______|
+                    __/ |                                         
+                   |___/                                          
+        """  # noqa
+
+        banner = textwrap.dedent(banner)
+        if args.cow:
+            try:
+                import cowsay
+                banner = cowsay.cow('PyCGTOOL')
+
+            except ImportError:
+                pass
+
+        else:
+            logger.info('[bold blue]%s[/]',
+                        textwrap.dedent(banner),
+                        extra={'markup': True})
 
     logger.info(30 * '-')
     logger.info('Topology:\t%s', args.topology)
