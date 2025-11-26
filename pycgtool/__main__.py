@@ -4,12 +4,12 @@ import argparse
 import cProfile
 import logging
 import pathlib
-import pkg_resources
 import sys
 import textwrap
 import time
 import typing
 
+import importlib.metadata
 from rich.logging import RichHandler
 
 from pycgtool.frame import Frame
@@ -155,7 +155,7 @@ def parse_arguments(arg_list):
     )
 
     parser.add_argument('-v', '--version', action='version',
-                        version=pkg_resources.get_distribution('pycgtool').version)
+                        version=importlib.metadata.version('pycgtool'))
 
     # Input files
     input_files = parser.add_argument_group("input files")
