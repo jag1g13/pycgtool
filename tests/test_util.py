@@ -8,10 +8,17 @@ import unittest
 import numpy as np
 
 from pycgtool import util
-from pycgtool.util import extend_graph_chain, transpose_and_sample
-from pycgtool.util import dir_up, backup_file, sliding
-from pycgtool.util import file_write_lines, cmp_whitespace_float
-from pycgtool.util import circular_mean, circular_variance
+from pycgtool.util import (
+    backup_file,
+    circular_mean,
+    circular_variance,
+    cmp_whitespace_float,
+    dir_up,
+    extend_graph_chain,
+    file_write_lines,
+    sliding,
+    transpose_and_sample,
+)
 
 
 class UtilTest(unittest.TestCase):

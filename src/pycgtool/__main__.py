@@ -2,6 +2,7 @@
 
 import argparse
 import cProfile
+import importlib.metadata
 import logging
 import pathlib
 import sys
@@ -9,13 +10,12 @@ import textwrap
 import time
 import typing
 
-import importlib.metadata
 from rich.logging import RichHandler
 
-from pycgtool.frame import Frame
-from pycgtool.mapping import Mapping
 from pycgtool.bondset import BondSet
 from pycgtool.forcefield import ForceField
+from pycgtool.frame import Frame
+from pycgtool.mapping import Mapping
 
 PathLike = typing.Union[pathlib.Path, str]
 

@@ -1,14 +1,13 @@
 import filecmp
 import os
 import pathlib
-import unittest
 import tempfile
+import unittest
 
 import numpy as np
 
-from pycgtool.frame import NonMatchingSystemError, UnsupportedFormatException
-from pycgtool.frame import Frame
 from pycgtool import util
+from pycgtool.frame import Frame, NonMatchingSystemError, UnsupportedFormatException
 
 
 def try_remove(filename) -> None:

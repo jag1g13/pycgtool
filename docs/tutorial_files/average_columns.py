@@ -2,6 +2,7 @@
 """Calculate mean and standard deviation of column data using Welford's one pass algorithm."""
 
 import sys
+
 import numpy as np
 
 np.set_printoptions(formatter={"float": lambda x: "{0:10.3f}".format(x)})

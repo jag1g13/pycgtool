@@ -7,8 +7,8 @@ import tempfile
 import typing
 import unittest
 
-from pycgtool import util
 import pycgtool.__main__ as main
+from pycgtool import util
 
 
 def get_args(name, out_dir, extra: typing.Optional[typing.Mapping] = None):

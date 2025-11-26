@@ -9,11 +9,11 @@ import math
 import pathlib
 import typing
 
-import numpy as np
 import mdtraj
+import numpy as np
 
-from .mapping import VirtualMap
 from .functionalforms import get_functional_forms
+from .mapping import VirtualMap
 from .parsers.cfg import CFG
 from .util import (
     circular_mean,

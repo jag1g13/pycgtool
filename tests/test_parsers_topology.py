@@ -1,8 +1,8 @@
 import pathlib
 import unittest
 
-from pycgtool.parsers.cfg import DuplicateSectionError, NoSectionError
 from pycgtool.parsers import ITP
+from pycgtool.parsers.cfg import DuplicateSectionError, NoSectionError
 
 
 class TestParsersITP(unittest.TestCase):
