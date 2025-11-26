@@ -43,4 +43,4 @@ jobs:
           uv run coverage report --skip-covered --fail-under=80
 
       - name: Run linter
-        run: ruff check
+        run: uv run ruff check
