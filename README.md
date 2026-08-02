@@ -6,6 +6,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.598143.svg)](https://doi.org/10.5281/zenodo.598143)
 [![PyPi Version](https://img.shields.io/pypi/v/pycgtool.svg)](https://pypi.python.org/pypi/pycgtool/)
 [![conda-forge Version](https://anaconda.org/conda-forge/pycgtool/badges/version.svg)](https://anaconda.org/conda-forge/pycgtool/badges/version.svg)
+[![SPEC 0 — Minimum Supported Dependencies](https://img.shields.io/badge/SPEC-0-green?labelColor=%23004811&color=%235CA038)](https://scientific-python.org/specs/spec-0000/)
 
 Generate coarse-grained molecular dynamics models from atomistic trajectories.
 
@@ -115,6 +116,8 @@ uv sync --all-extras --dev
 ```
 
 This creates a project environment with the runtime, optional, and development dependencies.
+
+PyCGTOOL follows [Scientific Python SPEC 0](https://scientific-python.org/specs/spec-0000/) for Python and dependency support. The `scripts/dev/support.py` helper reports the support windows and can update the minimum supported versions.
 
 Run the test suite and linter with:
 
