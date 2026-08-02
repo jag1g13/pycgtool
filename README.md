@@ -39,7 +39,7 @@ If you find PyCGTOOL useful, please cite our JCIM paper (https://doi.org/10.1021
 
 ## Install
 
-PyCGTOOL requires Python 3.10 or higher and may be installed using either `pip` or `conda`:
+PyCGTOOL requires Python 3.12 or higher and may be installed using either `pip` or `conda`:
 ```
 pip install pycgtool
 ```
