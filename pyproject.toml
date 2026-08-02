@@ -4,7 +4,6 @@ version = "2.1.0a1"
 description = "Generate coarse-grained molecular dynamics models from atomistic trajectories."
 authors = [
     {name = "James Graham", email = "james.a.graham@kcl.ac.uk"},
-    
 ]
 license = "GPL-3.0-only"
 
@@ -48,6 +47,7 @@ backmapping = [
 
 [dependency-groups]
 dev = [
+    "prek>=0.4.11",
     "pytest>=9.0.1",
     "pytest-cov>=7.0.0",
     "ruff>=0.14.6",
