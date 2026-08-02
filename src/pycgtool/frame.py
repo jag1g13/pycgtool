@@ -10,6 +10,7 @@ import typing
 
 import mdtraj
 import numpy as np
+import numpy.exceptions as np_exc
 
 from . import util
 
@@ -252,7 +253,7 @@ class Frame:
         try:
             xyz = xyz.swapaxes(0, 1)
 
-        except np.AxisError:
+        except np_exc.AxisError:
             # No atoms, so make an empty array with the right shape
             xyz = np.empty((len(self.time), 0, 3))
 

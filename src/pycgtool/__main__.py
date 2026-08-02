@@ -2,9 +2,9 @@
 
 import argparse
 import cProfile
+import importlib.metadata
 import logging
 import pathlib
-import pkg_resources
 import sys
 import textwrap
 import time
@@ -12,10 +12,10 @@ import typing
 
 from rich.logging import RichHandler
 
-from pycgtool.frame import Frame
-from pycgtool.mapping import Mapping
 from pycgtool.bondset import BondSet
 from pycgtool.forcefield import ForceField
+from pycgtool.frame import Frame
+from pycgtool.mapping import Mapping
 
 PathLike = typing.Union[pathlib.Path, str]
 
@@ -155,7 +155,7 @@ def parse_arguments(arg_list):
     )
 
     parser.add_argument('-v', '--version', action='version',
-                        version=pkg_resources.get_distribution('pycgtool').version)
+                        version=importlib.metadata.version('pycgtool'))
 
     # Input files
     input_files = parser.add_argument_group("input files")

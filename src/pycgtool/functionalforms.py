@@ -92,7 +92,7 @@ class FunctionalForm(metaclass=abc.ABCMeta):
 class Harmonic(FunctionalForm):
     """Simple harmonic potential.
 
-    See http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html#harmonic-potential  # noqa
+    See http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html#harmonic-potential
     """
 
     # TODO: Consider whether to use improper (type 2) instead, it is actually harmonic
@@ -107,7 +107,7 @@ class Harmonic(FunctionalForm):
 class CosHarmonic(FunctionalForm):
     """Cosine based angle potential.
 
-    See http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html#cosine-based-angle-potential  # noqa
+    See http://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html#cosine-based-angle-potential
 
     Uses the transformation in eqn 20 of the above source.
     """

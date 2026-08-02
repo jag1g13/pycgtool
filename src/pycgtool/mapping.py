@@ -11,8 +11,8 @@ import pathlib
 import typing
 
 import mdtraj
-from mdtraj.formats.pdb import PDBTrajectoryFile
 import numpy as np
+from mdtraj.formats.pdb import PDBTrajectoryFile
 
 from .frame import Frame
 from .parsers import CFG, ITP

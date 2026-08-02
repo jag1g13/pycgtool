@@ -5,8 +5,8 @@ import unittest
 
 import numpy as np
 
-from pycgtool.mapping import BeadMap, Mapping, VirtualMap
 from pycgtool.frame import Frame
+from pycgtool.mapping import BeadMap, Mapping, VirtualMap
 
 
 class DummyOptions:

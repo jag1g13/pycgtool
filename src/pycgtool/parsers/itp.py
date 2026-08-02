@@ -4,7 +4,7 @@ import collections
 import logging
 import pathlib
 
-from .cfg import CFG, NoSectionError, DuplicateSectionError
+from .cfg import CFG, DuplicateSectionError, NoSectionError
 
 logger = logging.getLogger(__name__)
 
