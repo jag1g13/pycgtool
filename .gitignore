@@ -37,3 +37,6 @@ settings.json
 /notes/
 *.offsets
 *.pkl
+
+# Local tool data
+.cauldron/
