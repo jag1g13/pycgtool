@@ -4,7 +4,6 @@ version = "2.1.0a1"
 description = "Generate coarse-grained molecular dynamics models from atomistic trajectories."
 authors = [
     {name = "James Graham", email = "james.a.graham@kcl.ac.uk"},
-    
 ]
 license = "GPL-3.0-only"
 
@@ -23,7 +22,7 @@ classifiers = [
 
 requires-python = ">=3.11"
 dependencies = [
-    "mdtraj>=1.10.3",
+    "mdtraj>=1.11.0",
     "numpy>=2.2.6",
     "rich>=14.2.0",
 ]
@@ -44,15 +43,6 @@ cow = [
 backmapping = [
     "mdplus>=0.1.2",
 ]
-
-
-[dependency-groups]
-dev = [
-    "prek>=0.5.9",
-    "pytest>=9.0.1",
-    "pytest-cov>=7.0.0",
-    "ruff>=0.14.6",
-]
 docs = [
     "myst-parser>=4.0.1",
     "sphinx>=8.1.3",
@@ -60,12 +50,22 @@ docs = [
     "sphinx-rtd-theme>=3.0.2",
 ]
 
+
+[dependency-groups]
+dev = [
+    "packaging>=26.2",
+    "prek>=0.5.9",
+    "pytest>=9.0.1",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.6",
+]
+
 [build-system]
-requires = ["uv_build>=0.8.4,<0.9.0"]
+requires = ["uv_build>=0.11.0,<0.12"]
 build-backend = "uv_build"
 
 [tool.uv]
-exclude-newer = "7 days"
+exclude-newer = "1 week"
 
 [tool.ruff]
 line-length = 120

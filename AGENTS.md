@@ -2,6 +2,7 @@
 
 ## General
 
+- Specifications for new features will be described in `docs/spec/`.
 - Favour simplicity in implementation where possible.
 - Don't add additional dependencies / tools unless they're useful.
 - Ask before adding any new dependencies / tools.
@@ -11,7 +12,7 @@
 
 - Manage dependencies with `uv` only (`pyproject.toml` + `uv.lock`); never reintroduce poetry or edit the lock by hand.
 - Dependency updates must respect the `exclude-newer` cooldown in `[tool.uv]`; use `uv lock --upgrade` and run the full test suite afterwards.
-- The minimum supported Python version is set by `requires-python`; bumping it (or the CI matrix) requires explicit confirmation, and `xdrlib`-style stdlib backport shims must be re-checked when it changes.
+- PyCGTOOL follows [Scientific Python SPEC 0](https://scientific-python.org/specs/spec-0000/); `scripts/dev/support.py` reports the support windows and updates minimum supported versions. Bumping the floor requires explicit confirmation, and stdlib backport shims must be re-checked when it changes.
 - Reference data (e.g. `src/pycgtool/data/`) is scientific input: never regenerate or silently reformat it; document the provenance of any change.
 
 ## Scientific correctness

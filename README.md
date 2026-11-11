@@ -6,6 +6,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.598143.svg)](https://doi.org/10.5281/zenodo.598143)
 [![PyPi Version](https://img.shields.io/pypi/v/pycgtool.svg)](https://pypi.python.org/pypi/pycgtool/)
 [![conda-forge Version](https://anaconda.org/conda-forge/pycgtool/badges/version.svg)](https://anaconda.org/conda-forge/pycgtool/badges/version.svg)
+[![SPEC 0 — Minimum Supported Dependencies](https://img.shields.io/badge/SPEC-0-green?labelColor=%23004811&color=%235CA038)](https://scientific-python.org/specs/spec-0000/)
 
 Generate coarse-grained molecular dynamics models from atomistic trajectories.
 
@@ -38,17 +39,30 @@ If you find PyCGTOOL useful, please cite our JCIM paper (https://doi.org/10.1021
 
 ## Install
 
-PyCGTOOL requires Python 3.11 or higher and may be installed using either `uv`, `pip` or `conda`:
+PyCGTOOL requires Python 3.11 or higher and may be installed using `uv`, `pip` or `conda`:
 
-```bash
-uv tool install pycgtool  # or
-pip install pycgtool  # or
+```
+uv tool install pycgtool
+```
+
+```
+pip install pycgtool
+```
+
+Optional features can be installed with extras:
+
+```
+pip install "pycgtool[cow]"          # Enable the cow banner
+pip install "pycgtool[backmapping]"  # Enable experimental backmapping
+```
+
+```
 conda install -c conda-forge pycgtool
 ```
 
 Alternatively, you may download a pre-packaged version for your operating system from the [releases page](https://github.com/jag1g13/pycgtool/releases) on GitHub.
 These pre-packaged versions include all dependencies and should be suitable in cases where you cannot install packages using one of the above methods.
-**Warning**: This installation method is not extensively tested - installing via `pip` or `conda` should be prefered in most cases.
+**Warning**: This installation method is not extensively tested - installing via `pip` or `conda` should be preferred in most cases.
 
 ### MDTraj on macOS
 
@@ -63,7 +77,7 @@ Input to PyCGTOOL is an atomistic simulation trajectory in the form of a topolog
 These files provide the atomistic-to-CG mapping and bonded topology respectively and use a format similar to GROMACS `.itp` files.
 Topology and trajectory files are processed using [MDTraj](https://www.mdtraj.org) so most common formats are accepted.
 
-Example mapping and bond files are present in the [test/data](https://github.com/jag1g13/pycgtool/tree/main/test/data) directory.
+Example mapping and bond files are present in the [tests/data](https://github.com/jag1g13/pycgtool/tree/main/tests/data) directory.
 The format of these files is described fully in the [documentation page on file formats](https://pycgtool.readthedocs.io/en/dev/file-formats.html).
 
 For more information, see [the tutorial](https://pycgtool.readthedocs.io/en/main/tutorial.html).
@@ -101,13 +115,34 @@ James Graham ([@jag1g13](https://github.com/jag1g13))
 
 If you experience problems using PyCGTOOL or wish to see a new feature added please [open an issue](https://github.com/jag1g13/pycgtool/issues/new).
 
-To help develop PyCGTOOL, you can create a fork of this repository, clone your fork and install PyCGTOOL in development mode using [uv](https://docs.astral.sh/uv/):
-```bash
-uv sync
+To help develop PyCGTOOL, you can create a fork of this repository, clone your fork, and install [uv](https://docs.astral.sh/uv/):
+```
+uv sync --all-extras --dev
 ```
 
-This will set up PyCGTOOL along with all the necessary runtime and development dependencies.
-Testing and linting are handled by pytest and ruff - run them via `uv run pytest tests/` and `uv run ruff check`, or let [prek](https://prek.j178.dev/) pre-commit hooks run both automatically after running `uv run prek install`.
+This creates a project environment with the runtime, optional, and development dependencies.
+
+PyCGTOOL follows [Scientific Python SPEC 0](https://scientific-python.org/specs/spec-0000/) for Python and dependency support. The `scripts/dev/support.py` helper reports the support windows and can update the minimum supported versions.
+
+Run the test suite and linter with:
+
+```
+uv run pytest tests/
+uv run ruff check
+```
+
+Install the pre-commit hooks and run them across the repository with:
+
+```
+uv run prek install
+uv run prek run --all-files
+```
+
+To build the documentation locally, install the documentation extra and run:
+
+```
+uv run --extra docs sphinx-build -W -b html docs docs/_build/html
+```
 
 When you're ready for your work to be merged, please submit a Pull Request.
 

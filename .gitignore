@@ -16,6 +16,7 @@ poetry.toml
 
 # Development and Testing
 .cache
+.cauldron/
 .coverage
 .python-version
 .tox/
