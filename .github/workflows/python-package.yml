@@ -37,10 +37,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked --all-extras --dev
 
-      - name: Run tests
-        run: |
-          uv run coverage run --source=pycgtool -m pytest tests/
-          uv run coverage report --skip-covered --fail-under=80
+      - name: Run pre-commit hooks
+        # pytest is run as part of the coverage check
+        run: uv run prek run --all-files --skip pytest
 
-      - name: Run linter
-        run: uv run ruff check
+      - name: Run coverage gate
+        run: uv run prek run coverage --all-files

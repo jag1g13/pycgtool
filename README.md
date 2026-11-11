@@ -38,12 +38,11 @@ If you find PyCGTOOL useful, please cite our JCIM paper (https://doi.org/10.1021
 
 ## Install
 
-PyCGTOOL requires Python 3.6 or higher and may be installed using either `pip` or `conda`:
-```
-pip install pycgtool
-```
+PyCGTOOL requires Python 3.11 or higher and may be installed using either `uv`, `pip` or `conda`:
 
-```
+```bash
+uv tool install pycgtool  # or
+pip install pycgtool  # or
 conda install -c conda-forge pycgtool
 ```
 
@@ -71,14 +70,14 @@ For more information, see [the tutorial](https://pycgtool.readthedocs.io/en/main
 It is important to perform validation of any new parameter set - a brief example is present at the end of the tutorial.
 
 For a full list of options, see the [documentation](https://pycgtool.readthedocs.io/en/main/index.html) or use:
-```
+```bash
 pycgtool -h
 ```
 
 ### Generate a Model
 
 To generate a CG model from an atomistic simulation:
-```
+```bash
 pycgtool <topology file> <trajectory file> -m <MAP file> -b <BND file>
 ```
 
@@ -102,13 +101,13 @@ James Graham ([@jag1g13](https://github.com/jag1g13))
 
 If you experience problems using PyCGTOOL or wish to see a new feature added please [open an issue](https://github.com/jag1g13/pycgtool/issues/new).
 
-To help develop PyCGTOOL, you can create a fork of this repository, clone your fork and install PyCGTOOL in development mode using [Poetry](https://python-poetry.org/):
-```
-poetry install
+To help develop PyCGTOOL, you can create a fork of this repository, clone your fork and install PyCGTOOL in development mode using [uv](https://docs.astral.sh/uv/):
+```bash
+uv sync
 ```
 
-This will result in an editable mode install (similar to `pip install -e .`) along with all the necessary runtime and development dependencies.
-Testing and linting is handled by [Tox](https://tox.readthedocs.io/en/latest/) - use `tox` to run the full test suite and linter as they are configured in the Continuous Integration pipeline.
+This will set up PyCGTOOL along with all the necessary runtime and development dependencies.
+Testing and linting are handled by pytest and ruff - run them via `uv run pytest tests/` and `uv run ruff check`, or let [prek](https://prek.j178.dev/) pre-commit hooks run both automatically after running `uv run prek install`.
 
 When you're ready for your work to be merged, please submit a Pull Request.
 

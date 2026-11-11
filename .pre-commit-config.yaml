@@ -12,3 +12,10 @@ repos:
         entry: uv run --frozen pytest tests/ -q
         language: system
         pass_filenames: false
+
+      - id: coverage
+        name: pytest coverage (80% gate)
+        entry: uv run --frozen pytest tests/ -q --cov=pycgtool --cov-report=term:skip-covered --cov-fail-under=80
+        language: system
+        pass_filenames: false
+        stages: [manual]
