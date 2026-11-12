@@ -43,7 +43,7 @@ jobs:
 
       - name: Run pre-commit hooks
         # pytest is run as part of the coverage check
-        run: uv run prek run --all-files --skip pytest
+        run: uv run prek run --all-files --skip pytest -v
 
       - name: Run coverage gate
-        run: uv run prek run coverage --all-files
+        run: uv run prek run coverage --stage manual --all-files -v
