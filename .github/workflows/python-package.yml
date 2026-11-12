@@ -15,6 +15,7 @@ jobs:
       fail-fast: true
       matrix:
         python-version:
+          - "3.11"
           - "3.12"
           - "3.13"
           - "3.14"
@@ -35,12 +36,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --locked --all-extras --dev
+        # no --all-extras: mdplus (backmapping) is sdist-only and fails to
+        # build on the GCC 15 / -std=c23 default in current runner images;
+        # no test imports it
+        run: uv sync --locked --dev
 
-      - name: Run tests
-        run: |
-          uv run coverage run --source=pycgtool -m pytest tests/
-          uv run coverage report --skip-covered --fail-under=80
+      - name: Run pre-commit hooks
+        # pytest is run as part of the coverage check
+        run: uv run prek run --all-files --skip pytest -v
 
-      - name: Run linter
-        run: uv run ruff check
+      - name: Run coverage gate
+        run: uv run prek run coverage --stage manual --all-files -v

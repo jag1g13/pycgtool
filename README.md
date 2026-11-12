@@ -39,7 +39,12 @@ If you find PyCGTOOL useful, please cite our JCIM paper (https://doi.org/10.1021
 
 ## Install
 
-PyCGTOOL requires Python 3.12 or higher and may be installed using either `pip` or `conda`:
+PyCGTOOL requires Python 3.11 or higher and may be installed using `uv`, `pip` or `conda`:
+
+```
+uv tool install pycgtool
+```
+
 ```
 pip install pycgtool
 ```
@@ -79,14 +84,14 @@ For more information, see [the tutorial](https://pycgtool.readthedocs.io/en/main
 It is important to perform validation of any new parameter set - a brief example is present at the end of the tutorial.
 
 For a full list of options, see the [documentation](https://pycgtool.readthedocs.io/en/main/index.html) or use:
-```
+```bash
 pycgtool -h
 ```
 
 ### Generate a Model
 
 To generate a CG model from an atomistic simulation:
-```
+```bash
 pycgtool <topology file> <trajectory file> -m <MAP file> -b <BND file>
 ```
 

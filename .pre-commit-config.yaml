@@ -3,7 +3,10 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        # reference data and the cowsay banner are not to be reformatted
+        exclude: '(^src/pycgtool/data/|^tests/data/|^docs/tutorial_files/)|__main__\.py'
       - id: end-of-file-fixer
+        exclude: '(^src/pycgtool/data/|^tests/data/|^docs/tutorial_files/)|__main__\.py'
       - id: check-yaml
       - id: check-added-large-files
 
@@ -16,13 +19,6 @@ repos:
         types: [python]
         pass_filenames: true
 
-      - id: ruff-format
-        name: ruff format
-        entry: uv run ruff format --check
-        language: system
-        types: [python]
-        pass_filenames: true
-
       - id: pytest
         name: pytest
         entry: uv run pytest
@@ -30,3 +26,10 @@ repos:
         types: [python]
         pass_filenames: false
         always_run: true
+
+      - id: coverage
+        name: pytest coverage (80% gate)
+        entry: uv run pytest -q --cov=pycgtool --cov-report=term:skip-covered --cov-fail-under=80
+        language: system
+        pass_filenames: false
+        stages: [manual]

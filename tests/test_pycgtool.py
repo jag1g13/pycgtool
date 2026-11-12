@@ -3,6 +3,7 @@
 import itertools
 import pathlib
 import subprocess
+import sys
 import tempfile
 import typing
 import unittest
@@ -45,12 +46,12 @@ class PycgtoolTest(unittest.TestCase):
     data_dir = base_dir.joinpath("data")
 
     def test_pycgtool_help(self):
-        subprocess.check_call(["python", "-m", "pycgtool", "-h"])
-        subprocess.check_call(["python", "-m", "pycgtool", "--help"])
+        subprocess.check_call([sys.executable, "-m", "pycgtool", "-h"])
+        subprocess.check_call([sys.executable, "-m", "pycgtool", "--help"])
 
     def test_pycgtool_version(self):
-        subprocess.check_call(["python", "-m", "pycgtool", "-v"])
-        subprocess.check_call(["python", "-m", "pycgtool", "--version"])
+        subprocess.check_call([sys.executable, "-m", "pycgtool", "-v"])
+        subprocess.check_call([sys.executable, "-m", "pycgtool", "--version"])
 
     def test_parse_arguments(self):
         args = main.parse_arguments(

@@ -59,13 +59,13 @@ R5 TC4 C3 H3 C4 H4
 ## Bond Definition File
 An example bond definition file for the monosaccharide allose taken from `test/data/sugar.bnd` is shown below.
 
-As in the mapping definition file, molecule names are used as section headers inside square brackets. 
-The following lines define bonds lengths, angles and dihedrals between coarse-grained beads. 
-Each line is a list of bead names, using the names defined in the mapping file. 
+As in the mapping definition file, molecule names are used as section headers inside square brackets.
+The following lines define bonds lengths, angles and dihedrals between coarse-grained beads.
+Each line is a list of bead names, using the names defined in the mapping file.
 Two bead names on a line defines a bond length, three defines an angle, and four defines a dihedral.
 
-If no angles are defined for a molecule, PyCGTOOL will construct all angles from the list of bonds. 
-This may also be enabled for dihedrals via the `--generate-dihedrals` flag, but is not recommended as in most cases coarse-grained models do not require dihedrals. 
+If no angles are defined for a molecule, PyCGTOOL will construct all angles from the list of bonds.
+This may also be enabled for dihedrals via the `--generate-dihedrals` flag, but is not recommended as in most cases coarse-grained models do not require dihedrals.
 Additionally, any angles inside a triangle of bond lengths are excluded from the output as they often cause simulation stability issues when used in conjunction with LINCS.
 
 ```
